@@ -40,3 +40,4 @@ coverage/
 
 # Local config (user-specific)
 statusline.conf
+blogs/
