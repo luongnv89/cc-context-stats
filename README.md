@@ -2,6 +2,8 @@
 
 Custom status line scripts for [Claude Code](https://claude.com/claude-code).
 
+📖 **Blog Post:** [Closing the Gap Between MVP and Production with Feature-Dev](https://medium.com/@luongnv89/closing-the-gap-between-mvp-and-production-with-feature-dev-an-official-plugin-from-anthropic-444e2f00a0ad) - Learn about the process of building this project.
+
 ## Screenshot
 
 ![Claude Code Status Line](images/claude-statusline.png)
