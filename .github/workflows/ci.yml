@@ -117,7 +117,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
           flags: python
@@ -175,7 +175,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./coverage/node/lcov.info
           flags: node
