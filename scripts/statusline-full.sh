@@ -1,6 +1,14 @@
 #!/bin/bash
 # Full-featured status line with context window usage
 # Usage: Copy to ~/.claude/statusline.sh and make executable
+#
+# Autocompact Configuration:
+# The AC (autocompact) setting must be manually synced with Claude Code.
+# Create/edit ~/.claude/statusline.conf and set:
+#   autocompact=true   (when autocompact is enabled in Claude Code - default)
+#   autocompact=false  (when you disable autocompact via /config in Claude Code)
+#
+# When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
 
 # Colors
 BLUE='\033[0;34m'
@@ -36,9 +44,10 @@ if [[ -d "$project_dir/.git" ]]; then
     fi
 fi
 
-# Autocompact setting - read from statusline config file
-# Create ~/.claude/statusline.conf with: autocompact=false to disable
+# Autocompact setting - read from ~/.claude/statusline.conf
+# Sync this manually when you change autocompact in Claude Code via /config
 autocompact_enabled=true
+ac_info=""
 if [[ -f ~/.claude/statusline.conf ]]; then
     source ~/.claude/statusline.conf
     if [[ "$autocompact" == "false" ]]; then
@@ -48,7 +57,6 @@ fi
 
 # Calculate context window - show remaining free space
 context_info=""
-ac_info=""
 total_size=$(echo "$input" | jq -r '.context_window.context_window_size // 0')
 current_usage=$(echo "$input" | jq '.context_window.current_usage')
 

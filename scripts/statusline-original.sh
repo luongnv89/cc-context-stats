@@ -1,6 +1,14 @@
 #!/bin/bash
 # Original status line - alternative format with token metrics
 # Usage: Copy to ~/.claude/statusline.sh and make executable
+#
+# Autocompact Configuration:
+# The AC (autocompact) setting must be manually synced with Claude Code.
+# Create/edit ~/.claude/statusline.conf and set:
+#   autocompact=true   (when autocompact is enabled in Claude Code - default)
+#   autocompact=false  (when you disable autocompact via /config in Claude Code)
+#
+# When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
 
 # Colors
 BLUE='\033[0;34m'
@@ -34,6 +42,16 @@ if [[ -d "$project_dir/.git" ]]; then
     fi
 fi
 
+# Autocompact setting - read from ~/.claude/statusline.conf
+autocompact_enabled=true
+ac_info=""
+if [[ -f ~/.claude/statusline.conf ]]; then
+    source ~/.claude/statusline.conf
+    if [[ "$autocompact" == "false" ]]; then
+        autocompact_enabled=false
+    fi
+fi
+
 # Calculate context window - show remaining free space
 context_free=""
 total_size=$(echo "$input" | jq -r '.context_window.context_window_size // 0')
@@ -51,8 +69,15 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
     # Autocompact buffer is ~22.5% of context window (45k for 200k context)
     autocompact_buffer=$((total_size * 225 / 1000))
 
-    # Free = total - used - autocompact buffer
-    free_tokens=$((total_size - used_tokens - autocompact_buffer))
+    # Free tokens calculation depends on autocompact setting
+    if [[ "$autocompact_enabled" == "true" ]]; then
+        free_tokens=$((total_size - used_tokens - autocompact_buffer))
+        ac_info=" ${DIM}[AC]${RESET}"
+    else
+        free_tokens=$((total_size - used_tokens))
+        ac_info=" ${DIM}[AC:off]${RESET}"
+    fi
+
     if [[ "$free_tokens" -lt 0 ]]; then
         free_tokens=0
     fi
@@ -85,5 +110,5 @@ if [[ "$total_input_tokens" -gt 0 || "$total_output_tokens" -gt 0 ]]; then
     fi
 fi
 
-# Output: [dir] branch ●changes • Model [Xk free (X%)] [in:Xk,out:Xk,cache:Xk]
-echo -e "${BLUE}[${dir_name}]${RESET}${git_info} ${DIM}• ${model}${RESET}${context_free}${token_info}"
+# Output: [dir] branch ●changes • Model [Xk free (X%)] [AC] [in:Xk,out:Xk,cache:Xk]
+echo -e "${BLUE}[${dir_name}]${RESET}${git_info} ${DIM}• ${model}${RESET}${context_free}${ac_info}${token_info}"

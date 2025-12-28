@@ -2,6 +2,14 @@
 """
 Python status line script for Claude Code
 Usage: Copy to ~/.claude/statusline.py and make executable
+
+Autocompact Configuration:
+The AC (autocompact) setting must be manually synced with Claude Code.
+Create/edit ~/.claude/statusline.conf and set:
+  autocompact=true   (when autocompact is enabled in Claude Code - default)
+  autocompact=false  (when you disable autocompact via /config in Claude Code)
+
+When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
 """
 
 import json
