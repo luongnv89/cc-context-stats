@@ -66,7 +66,7 @@ repos:
     rev: v0.39.0
     hooks:
       - id: markdownlint
-        args: ['--fix', '--disable', 'MD013', 'MD033', 'MD041', '--']
+        args: ['--fix', '--disable', 'MD013', 'MD024', 'MD033', 'MD040', 'MD041', '--']
 
 ci:
   autofix_prs: true

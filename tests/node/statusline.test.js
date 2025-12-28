@@ -16,15 +16,15 @@ function runScript(inputData) {
         let stdout = '';
         let stderr = '';
 
-        child.stdout.on('data', (data) => {
+        child.stdout.on('data', data => {
             stdout += data.toString();
         });
 
-        child.stderr.on('data', (data) => {
+        child.stderr.on('data', data => {
             stderr += data.toString();
         });
 
-        child.on('close', (code) => {
+        child.on('close', code => {
             resolve({ stdout: stdout.trim(), stderr, code });
         });
 
@@ -171,11 +171,9 @@ describe('statusline.js', () => {
         });
 
         test('all JSON fixtures succeed', async () => {
-            const fixtures = fs.readdirSync(FIXTURES_DIR).filter((f) => f.endsWith('.json'));
+            const fixtures = fs.readdirSync(FIXTURES_DIR).filter(f => f.endsWith('.json'));
             for (const fixture of fixtures) {
-                const input = JSON.parse(
-                    fs.readFileSync(path.join(FIXTURES_DIR, fixture), 'utf8')
-                );
+                const input = JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, fixture), 'utf8'));
                 const result = await runScript(input);
                 expect(result.code).toBe(0);
             }

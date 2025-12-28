@@ -254,7 +254,9 @@ def main():
         session_info = f" {DIM}{session_id}{RESET}"
 
     # Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC] [S:session_id]
-    print(f"{DIM}[{model}]{RESET} {BLUE}{dir_name}{RESET}{git_info}{context_info}{delta_info}{ac_info}{session_info}")
+    print(
+        f"{DIM}[{model}]{RESET} {BLUE}{dir_name}{RESET}{git_info}{context_info}{delta_info}{ac_info}{session_info}"
+    )
 
 
 if __name__ == "__main__":

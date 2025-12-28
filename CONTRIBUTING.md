@@ -61,7 +61,7 @@ pre-commit install
 
 ## Project Structure
 
-```
+```text
 claude-statusline/
 ├── scripts/                    # Main scripts
 │   ├── statusline-full.sh      # Full-featured bash script
@@ -204,11 +204,12 @@ All three implementations (bash, Python, Node.js) should produce identical outpu
 
 The status line output should follow this format:
 
-```
+```text
 [Model] directory | branch [changes] | XXk free (XX%) [AC:XXk]
 ```
 
 Components:
+
 - `[Model]` - AI model name (dim)
 - `directory` - Current directory name (blue)
 - `branch` - Git branch name (magenta)
@@ -219,6 +220,7 @@ Components:
 ### Color Codes
 
 Use ANSI color codes consistently:
+
 - Blue: `\033[0;34m`
 - Magenta: `\033[0;35m`
 - Cyan: `\033[0;36m`
@@ -231,6 +233,7 @@ Use ANSI color codes consistently:
 ## Questions?
 
 If you have questions, feel free to:
+
 - Open an issue on GitHub
 - Check existing issues for similar questions
 

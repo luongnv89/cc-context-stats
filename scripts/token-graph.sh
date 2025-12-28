@@ -18,7 +18,8 @@
 # Note: This script is compatible with bash 3.2+ (macOS default)
 
 # === CONFIGURATION ===
-VERSION="1.0.0"
+# shellcheck disable=SC2034
+VERSION="1.0.0"  # Version for future --version flag
 STATE_DIR=~/.claude
 CONFIG_FILE=~/.claude/statusline.conf
 
@@ -103,7 +104,8 @@ info() {
 
 init_colors() {
     if [ "$COLOR_ENABLED" != "true" ] || [ "${NO_COLOR:-}" = "1" ] || [ ! -t 1 ]; then
-        BLUE=''
+        # shellcheck disable=SC2034
+        BLUE=''  # Kept for consistency with other color definitions
         MAGENTA=''
         CYAN=''
         GREEN=''
@@ -176,8 +178,6 @@ format_duration() {
 # === DATA FUNCTIONS ===
 
 find_latest_state_file() {
-    local pattern="$STATE_DIR/statusline"
-
     if [ -n "$SESSION_ID" ]; then
         # Specific session requested
         local file="$STATE_DIR/statusline.${SESSION_ID}.state"
@@ -338,10 +338,10 @@ render_timeseries_graph() {
     # Get min/max
     local stats
     stats=$(get_stats "$data")
-    local min max avg
+    local min max
     min=$(echo "$stats" | cut -d' ' -f1)
     max=$(echo "$stats" | cut -d' ' -f2)
-    avg=$(echo "$stats" | cut -d' ' -f3)
+    # avg is available but not used in graph rendering
 
     # Avoid division by zero
     [ "$min" -eq "$max" ] && max=$((min + 1))

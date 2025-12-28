@@ -9,6 +9,7 @@ Custom status line scripts for [Claude Code](https://claude.com/claude-code).
 ![Claude Code Status Line](images/claude-statusline.png)
 
 **Components:**
+
 - `[Opus 4.5]` - Current AI model
 - `my-project` - Current directory (blue)
 - `main` - Git branch (magenta)
@@ -29,6 +30,7 @@ cd claude-statusline
 ```
 
 Or manually:
+
 ```bash
 cp scripts/statusline-full.sh ~/.claude/statusline.sh
 chmod +x ~/.claude/statusline.sh
@@ -44,6 +46,7 @@ copy claude-statusline\scripts\statusline.py %USERPROFILE%\.claude\statusline.py
 ```
 
 Or with Node.js:
+
 ```powershell
 copy claude-statusline\scripts\statusline.js %USERPROFILE%\.claude\statusline.js
 ```
@@ -53,6 +56,7 @@ copy claude-statusline\scripts\statusline.js %USERPROFILE%\.claude\statusline.js
 Add to your Claude Code settings (`~/.claude/settings.json` or `%USERPROFILE%\.claude\settings.json`):
 
 **macOS / Linux (bash):**
+
 ```json
 {
   "statusLine": {
@@ -63,6 +67,7 @@ Add to your Claude Code settings (`~/.claude/settings.json` or `%USERPROFILE%\.c
 ```
 
 **Windows (Python):**
+
 ```json
 {
   "statusLine": {
@@ -73,6 +78,7 @@ Add to your Claude Code settings (`~/.claude/settings.json` or `%USERPROFILE%\.c
 ```
 
 **Windows (Node.js):**
+
 ```json
 {
   "statusLine": {
@@ -114,10 +120,10 @@ show_session=false # Hide session ID
 
 ### Token Display Examples
 
-| Setting | Display |
-|---------|---------|
+| Setting                       | Display                          |
+| ----------------------------- | -------------------------------- |
 | `token_detail=true` (default) | `64,000 free (32.0%)` `[+2,500]` |
-| `token_detail=false` | `64.0k free (32.0%)` `[+2.5k]` |
+| `token_detail=false`          | `64.0k free (32.0%)` `[+2.5k]`   |
 
 ### Token Delta
 
@@ -171,7 +177,7 @@ Visualize token consumption over time with beautiful ASCII area charts. The grap
 
 In the claude-statusline project directory, you can use the `/token-graph` slash command:
 
-```
+```bash
 /token-graph                      # Latest session, both graphs
 /token-graph <session_id>         # Specific session
 /token-graph --type cumulative    # Only cumulative graph
@@ -191,7 +197,7 @@ In the claude-statusline project directory, you can use the `/token-graph` slash
 
 ### Example Output
 
-```
+```text
 Token Usage Graphs (Session: abc123)
 
 Cumulative Token Usage
@@ -244,13 +250,13 @@ Summary Statistics
 
 ### Graph Elements
 
-| Symbol | Meaning |
-|--------|---------|
-| `●` | Trend line (data points and interpolated values) |
-| `▒` | Medium fill (near the line) |
-| `░` | Light fill (area below) |
-| `│` | Y-axis |
-| `└─` | X-axis |
+| Symbol | Meaning                                          |
+| ------ | ------------------------------------------------ |
+| `●`    | Trend line (data points and interpolated values) |
+| `▒`    | Medium fill (near the line)                      |
+| `░`    | Light fill (area below)                          |
+| `│`    | Y-axis                                           |
+| `└─`   | X-axis                                           |
 
 ### Data Source
 
@@ -258,36 +264,41 @@ The graphs read token history from `~/.claude/statusline.<session_id>.state` fil
 
 ## Available Scripts
 
-| Script | Platform | Requirements |
-|--------|----------|--------------|
-| `statusline-full.sh` | macOS, Linux | `jq` |
-| `statusline-git.sh` | macOS, Linux | `jq` |
-| `statusline-minimal.sh` | macOS, Linux | `jq` |
-| `statusline.py` | All (Windows, macOS, Linux) | Python 3 |
-| `statusline.js` | All (Windows, macOS, Linux) | Node.js |
-| `token-graph.sh` | macOS, Linux | None (bash only) |
+| Script                  | Platform                    | Requirements     |
+| ----------------------- | --------------------------- | ---------------- |
+| `statusline-full.sh`    | macOS, Linux                | `jq`             |
+| `statusline-git.sh`     | macOS, Linux                | `jq`             |
+| `statusline-minimal.sh` | macOS, Linux                | `jq`             |
+| `statusline.py`         | All (Windows, macOS, Linux) | Python 3         |
+| `statusline.js`         | All (Windows, macOS, Linux) | Node.js          |
+| `token-graph.sh`        | macOS, Linux                | None (bash only) |
 
 ## Requirements
 
 ### macOS
+
 ```bash
 brew install jq
 ```
 
 ### Linux (Debian/Ubuntu)
+
 ```bash
 sudo apt install jq
 ```
 
 ### Linux (Fedora/RHEL)
+
 ```bash
 sudo dnf install jq
 ```
 
 ### Windows
+
 No additional requirements for Python/Node.js scripts.
 
 For bash scripts via WSL:
+
 ```bash
 sudo apt install jq
 ```
@@ -297,17 +308,20 @@ sudo apt install jq
 **Status line not appearing?**
 
 macOS/Linux:
+
 ```bash
 chmod +x ~/.claude/statusline.sh
 echo '{"model":{"display_name":"Test"}}' | ~/.claude/statusline.sh
 ```
 
 Windows (Python):
+
 ```powershell
 echo {"model":{"display_name":"Test"}} | python %USERPROFILE%\.claude\statusline.py
 ```
 
 **Script errors?**
+
 - macOS/Linux: Check `jq` is installed: `which jq`
 - Windows: Check Python/Node.js is in PATH: `python --version` or `node --version`
 
