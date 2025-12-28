@@ -14,6 +14,9 @@
 #   show_delta=true    (show token delta since last refresh like [+2,500] - default)
 #   show_delta=false   (disable delta display - saves file I/O on every refresh)
 #
+#   show_session=true  (show session_id in status line - default)
+#   show_session=false (hide session_id from status line)
+#
 # When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
 
 # Colors
@@ -33,6 +36,7 @@ input=$(cat)
 cwd=$(echo "$input" | jq -r '.workspace.current_dir')
 project_dir=$(echo "$input" | jq -r '.workspace.project_dir')
 model=$(echo "$input" | jq -r '.model.display_name // "Claude"')
+session_id=$(echo "$input" | jq -r '.session_id // empty')
 dir_name=$(basename "$cwd")
 
 # Git information (skip optional locks for performance)
@@ -55,11 +59,14 @@ fi
 autocompact_enabled=true
 token_detail_enabled=true
 show_delta_enabled=true
+show_session_enabled=true
 autocompact=""   # Will be set by sourced config
 token_detail=""  # Will be set by sourced config
 show_delta=""    # Will be set by sourced config
+show_session=""  # Will be set by sourced config
 ac_info=""
 delta_info=""
+session_info=""
 
 # Create config file with defaults if it doesn't exist
 if [[ ! -f ~/.claude/statusline.conf ]]; then
@@ -74,6 +81,9 @@ token_detail=true
 # Show token delta since last refresh (adds file I/O on every refresh)
 # Disable if you don't need it to reduce overhead
 show_delta=true
+
+# Show session_id in status line
+show_session=true
 EOF
 fi
 
@@ -88,6 +98,9 @@ if [[ -f ~/.claude/statusline.conf ]]; then
     fi
     if [[ "$show_delta" == "false" ]]; then
         show_delta_enabled=false
+    fi
+    if [[ "$show_session" == "false" ]]; then
+        show_session_enabled=false
     fi
 fi
 
@@ -150,7 +163,6 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
     # Calculate and display token delta if enabled
     if [[ "$show_delta_enabled" == "true" ]]; then
         # Use session_id for per-session state (avoids conflicts with parallel sessions)
-        session_id=$(echo "$input" | jq -r '.session_id // empty')
         if [[ -n "$session_id" ]]; then
             state_file=~/.claude/statusline.${session_id}.state
         else
@@ -180,5 +192,10 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
     fi
 fi
 
-# Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC]
-echo -e "${DIM}[${model}]${RESET} ${BLUE}${dir_name}${RESET}${git_info}${context_info}${delta_info}${ac_info}"
+# Display session_id if enabled
+if [[ "$show_session_enabled" == "true" && -n "$session_id" ]]; then
+    session_info=" ${DIM}${session_id}${RESET}"
+fi
+
+# Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC] [S:session_id]
+echo -e "${DIM}[${model}]${RESET} ${BLUE}${dir_name}${RESET}${git_info}${context_info}${delta_info}${ac_info}${session_info}"

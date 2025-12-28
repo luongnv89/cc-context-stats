@@ -15,6 +15,9 @@
  *   show_delta=true    (show token delta since last refresh like [+2,500] - default)
  *   show_delta=false   (disable delta display - saves file I/O on every refresh)
  *
+ *   show_session=true  (show session_id in status line - default)
+ *   show_session=false (hide session_id from status line)
+ *
  * When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
  */
 
@@ -73,6 +76,7 @@ function readConfig() {
         autocompact: true, // Default: enabled
         tokenDetail: true, // Default: show exact count
         showDelta: true, // Default: show token delta
+        showSession: true, // Default: show session_id
     };
     const configPath = path.join(os.homedir(), '.claude', 'statusline.conf');
 
@@ -92,6 +96,9 @@ token_detail=true
 # Show token delta since last refresh (adds file I/O on every refresh)
 # Disable if you don't need it to reduce overhead
 show_delta=true
+
+# Show session_id in status line
+show_session=true
 `;
             fs.writeFileSync(configPath, defaultConfig);
         } catch {
@@ -116,6 +123,8 @@ show_delta=true
                 config.tokenDetail = valueTrimmed !== 'false';
             } else if (keyTrimmed === 'show_delta') {
                 config.showDelta = valueTrimmed !== 'false';
+            } else if (keyTrimmed === 'show_session') {
+                config.showSession = valueTrimmed !== 'false';
             }
         }
     } catch {
@@ -152,11 +161,16 @@ process.stdin.on('end', () => {
     const autocompactEnabled = config.autocompact;
     const tokenDetail = config.tokenDetail;
     const showDelta = config.showDelta;
+    const showSession = config.showSession;
+
+    // Extract session_id once for reuse
+    const sessionId = data.session_id;
 
     // Context window calculation
     let contextInfo = '';
     let acInfo = '';
     let deltaInfo = '';
+    let sessionInfo = '';
     const totalSize = data.context_window?.context_window_size || 0;
     const currentUsage = data.context_window?.current_usage;
 
@@ -213,7 +227,6 @@ process.stdin.on('end', () => {
         // Calculate and display token delta if enabled
         if (showDelta) {
             // Use session_id for per-session state (avoids conflicts with parallel sessions)
-            const sessionId = data.session_id;
             const stateFileName = sessionId ? `statusline.${sessionId}.state` : 'statusline.state';
             const stateFile = path.join(os.homedir(), '.claude', stateFileName);
             let hasPrev = false;
@@ -253,8 +266,13 @@ process.stdin.on('end', () => {
         }
     }
 
-    // Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC]
+    // Display session_id if enabled
+    if (showSession && sessionId) {
+        sessionInfo = ` ${DIM}${sessionId}${RESET}`;
+    }
+
+    // Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC] [S:session_id]
     console.log(
-        `${DIM}[${model}]${RESET} ${BLUE}${dirName}${RESET}${gitInfo}${contextInfo}${deltaInfo}${acInfo}`
+        `${DIM}[${model}]${RESET} ${BLUE}${dirName}${RESET}${gitInfo}${contextInfo}${deltaInfo}${acInfo}${sessionInfo}`
     );
 });

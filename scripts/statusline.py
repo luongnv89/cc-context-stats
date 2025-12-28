@@ -15,6 +15,9 @@ Create/edit ~/.claude/statusline.conf and set:
   show_delta=true    (show token delta since last refresh like [+2,500] - default)
   show_delta=false   (disable delta display - saves file I/O on every refresh)
 
+  show_session=true  (show session_id in status line - default)
+  show_session=false (hide session_id from status line)
+
 When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
 """
 
@@ -75,6 +78,7 @@ def read_config():
         "autocompact": True,  # Default: enabled
         "token_detail": True,  # Default: show exact count
         "show_delta": True,  # Default: show token delta
+        "show_session": True,  # Default: show session_id
     }
     config_path = os.path.expanduser("~/.claude/statusline.conf")
 
@@ -93,6 +97,9 @@ token_detail=true
 # Show token delta since last refresh (adds file I/O on every refresh)
 # Disable if you don't need it to reduce overhead
 show_delta=true
+
+# Show session_id in status line
+show_session=true
 """
                 )
         except Exception:
@@ -114,6 +121,8 @@ show_delta=true
                     config["token_detail"] = value != "false"
                 elif key == "show_delta":
                     config["show_delta"] = value != "false"
+                elif key == "show_session":
+                    config["show_session"] = value != "false"
     except Exception:
         pass
     return config
@@ -140,11 +149,16 @@ def main():
     autocompact_enabled = config["autocompact"]
     token_detail = config["token_detail"]
     show_delta = config["show_delta"]
+    show_session = config["show_session"]
+
+    # Extract session_id once for reuse
+    session_id = data.get("session_id")
 
     # Context window calculation
     context_info = ""
     ac_info = ""
     delta_info = ""
+    session_info = ""
     total_size = data.get("context_window", {}).get("context_window_size", 0)
     current_usage = data.get("context_window", {}).get("current_usage")
 
@@ -199,7 +213,6 @@ def main():
             import time
 
             # Use session_id for per-session state (avoids conflicts with parallel sessions)
-            session_id = data.get("session_id")
             if session_id:
                 state_file = os.path.expanduser(f"~/.claude/statusline.{session_id}.state")
             else:
@@ -236,8 +249,12 @@ def main():
             except Exception:
                 pass
 
-    # Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC]
-    print(f"{DIM}[{model}]{RESET} {BLUE}{dir_name}{RESET}{git_info}{context_info}{delta_info}{ac_info}")
+    # Display session_id if enabled
+    if show_session and session_id:
+        session_info = f" {DIM}{session_id}{RESET}"
+
+    # Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC] [S:session_id]
+    print(f"{DIM}[{model}]{RESET} {BLUE}{dir_name}{RESET}{git_info}{context_info}{delta_info}{ac_info}{session_info}")
 
 
 if __name__ == "__main__":

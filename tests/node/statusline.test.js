@@ -181,4 +181,21 @@ describe('statusline.js', () => {
             }
         });
     });
+
+    describe('Session ID display', () => {
+        test('shows session_id by default', async () => {
+            const inputWithSession = {
+                ...sampleInput,
+                session_id: 'test-session-abc123',
+            };
+            const result = await runScript(inputWithSession);
+            expect(result.code).toBe(0);
+            expect(result.stdout).toContain('test-session-abc123');
+        });
+
+        test('handles missing session_id gracefully', async () => {
+            const result = await runScript(sampleInput);
+            expect(result.code).toBe(0);
+        });
+    });
 });

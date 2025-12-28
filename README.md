@@ -16,6 +16,7 @@ Custom status line scripts for [Claude Code](https://claude.com/claude-code).
 - `64,000 free (32.0%)` - Available context tokens (green >50%, yellow >25%, red ≤25%)
 - `[+2,500]` - Token delta since last refresh
 - `[AC:45k]` - Autocompact buffer size
+- `session_id` - Current session ID (double-click to select and copy)
 
 ## Installation
 
@@ -100,6 +101,10 @@ token_detail=false # Show abbreviated tokens: 64.0k free
 # Disable if you don't need it to reduce overhead
 show_delta=true    # (default) Show delta like [+2,500]
 show_delta=false   # Disable delta display
+
+# Show session_id in status line (double-click to select and copy)
+show_session=true  # (default) Show session ID
+show_session=false # Hide session ID
 ```
 
 ### Autocompact Display
@@ -123,6 +128,66 @@ The `[+X,XXX]` indicator shows how many tokens were consumed since the last stat
 - Each session has its own state file (`~/.claude/statusline.<session_id>.state`) to avoid conflicts when running multiple Claude Code sessions in parallel
 - Token history is stored with timestamps for later analysis (format: `timestamp,tokens` per line)
 
+### Session ID Display
+
+The session ID is displayed at the end of the status line (in dimmed text). This is useful for:
+
+- Identifying which session you're working in when running multiple Claude Code instances
+- Correlating logs and state files with specific sessions
+- Debugging session-specific issues
+
+The session ID is displayed without brackets so you can double-click to select and copy it easily. Set `show_session=false` in your config to hide the session ID.
+
+## Token Usage Graphs
+
+Visualize token consumption over time with ASCII graphs using the `/token-graph` slash command (in the claude-statusline project directory) or directly via the script:
+
+```bash
+# Show graphs for latest session
+./scripts/token-graph.sh
+
+# Show graphs for specific session
+./scripts/token-graph.sh <session_id>
+
+# Show only cumulative or delta graph
+./scripts/token-graph.sh --type cumulative
+./scripts/token-graph.sh --type delta
+
+# Disable colors (for piping to file)
+./scripts/token-graph.sh --no-color > output.txt
+```
+
+**Features:**
+- **Cumulative Token Graph**: Total tokens used over time
+- **Token Delta Graph**: Per-interval consumption rate
+- **Auto-detect terminal size**: Adapts to your terminal dimensions
+- **Summary statistics**: Current usage, duration, average delta, max delta
+
+**Example Output:**
+```
+Token Usage Graphs (Session: abc123)
+
+Cumulative Token Usage
+Max: 150,000  Min: 10,000  Points: 18
+
+   150,000 |                                              ●
+           |                                          ●───●
+           |                                      ●───●
+    80,000 |                              ●───●───●
+           |                      ●───●───●
+           |              ●───●───●
+    10,000 |●───●───●───●
+           └──────────────────────────────────────────────────
+            10:00              10:45              11:30
+
+Summary Statistics
+───────────────────────────────────────────────────────
+  Current Tokens:    147,500
+  Session Duration:  1h 30m
+  Data Points:       18
+  Average Delta:     8,750
+```
+
 ## Available Scripts
 
 | Script | Platform | Requirements |
@@ -132,6 +197,7 @@ The `[+X,XXX]` indicator shows how many tokens were consumed since the last stat
 | `statusline-minimal.sh` | macOS, Linux | `jq` |
 | `statusline.py` | All (Windows, macOS, Linux) | Python 3 |
 | `statusline.js` | All (Windows, macOS, Linux) | Node.js |
+| `token-graph.sh` | macOS, Linux | None (bash only) |
 
 ## Requirements
 

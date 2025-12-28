@@ -88,3 +88,22 @@ teardown() {
         [ "$status" -eq 0 ]
     done
 }
+
+@test "shows session_id by default (show_session=true)" {
+    input='{"model":{"display_name":"Claude"},"workspace":{"current_dir":"/tmp","project_dir":"/tmp"},"session_id":"test-session-123"}'
+    result=$(echo "$input" | "$SCRIPT")
+    [[ "$result" == *"test-session-123"* ]]
+}
+
+@test "hides session_id when show_session=false" {
+    echo "show_session=false" > "$TEST_HOME/.claude/statusline.conf"
+    input='{"model":{"display_name":"Claude"},"workspace":{"current_dir":"/tmp","project_dir":"/tmp"},"session_id":"test-session-123"}'
+    result=$(echo "$input" | "$SCRIPT")
+    [[ "$result" != *"test-session-123"* ]]
+}
+
+@test "handles missing session_id gracefully" {
+    input='{"model":{"display_name":"Claude"},"workspace":{"current_dir":"/tmp","project_dir":"/tmp"}}'
+    run bash "$SCRIPT" <<< "$input"
+    [ "$status" -eq 0 ]
+}

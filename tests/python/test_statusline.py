@@ -135,3 +135,22 @@ class TestFixtures:
                 input_data = json.load(f)
             output, code = run_script(input_data)
             assert code == 0, f"Failed on fixture: {fixture_file.name}"
+
+
+class TestSessionDisplay:
+    """Tests for session_id display feature."""
+
+    def test_shows_session_id_by_default(self, sample_input):
+        """Should show session_id by default (show_session=true)."""
+        sample_input["session_id"] = "test-session-12345"
+        output, code = run_script(sample_input)
+        assert code == 0
+        assert "test-session-12345" in output
+
+    def test_handles_missing_session_id(self, sample_input):
+        """Should handle missing session_id gracefully."""
+        # Ensure no session_id in input
+        if "session_id" in sample_input:
+            del sample_input["session_id"]
+        output, code = run_script(sample_input)
+        assert code == 0
