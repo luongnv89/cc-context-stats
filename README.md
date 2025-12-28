@@ -258,6 +258,18 @@ Summary Statistics
 | `│`    | Y-axis                                           |
 | `└─`   | X-axis                                           |
 
+### Bonus Tip: Real-time Monitoring
+
+Use `watch` to see token usage update in real-time:
+
+```bash
+watch -n 2 ./scripts/token-graph.sh <session_id>
+```
+
+This refreshes the graph every 2 seconds, allowing you to monitor token consumption as you work.
+
+![Real-time Token Graph](images/claude-statusline-token-graph.gif)
+
 ### Data Source
 
 The graphs read token history from `~/.claude/statusline.<session_id>.state` files, which are automatically created by the statusline scripts when `show_delta=true` (default). Each line contains `timestamp,tokens` format.
