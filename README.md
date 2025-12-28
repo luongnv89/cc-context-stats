@@ -11,7 +11,7 @@ Custom status line scripts for [Claude Code](https://claude.com/claude-code).
 - `my-project` - Current directory (blue)
 - `main` - Git branch (magenta)
 - `[3]` - Uncommitted changes count (cyan)
-- `64.0k free (32.0%)` - Available context tokens (green >50%, yellow >25%, red ≤25%)
+- `64,000 free (32.0%)` - Available context tokens (green >50%, yellow >25%, red ≤25%)
 - `[AC:45k]` - Autocompact buffer size
 
 ## Installation
@@ -80,25 +80,35 @@ Add to your Claude Code settings (`~/.claude/settings.json` or `%USERPROFILE%\.c
 
 ## Configuration
 
-### Autocompact Setting
-
-The AC indicator must be manually synced with Claude Code.
+Create a configuration file to customize the status line behavior.
 
 **macOS / Linux:** Create `~/.claude/statusline.conf`
 
 **Windows:** Create `%USERPROFILE%\.claude\statusline.conf`
 
-```bash
-# When autocompact is enabled (default)
-autocompact=true
+### Available Settings
 
-# When autocompact is disabled via /config
-autocompact=false
+```bash
+# Autocompact setting - sync with Claude Code's /config
+autocompact=true   # (default) Show reserved buffer for compacting
+autocompact=false  # When autocompact is disabled via /config
+
+# Token display format
+token_detail=true  # (default) Show exact token count: 64,000 free
+token_detail=false # Show abbreviated tokens: 64.0k free
 ```
 
-**Display:**
+### Autocompact Display
+
 - `[AC:45k]` - Autocompact enabled, 45k reserved for compacting
 - `[AC:off]` - Autocompact disabled
+
+### Token Display Examples
+
+| Setting | Display |
+|---------|---------|
+| `token_detail=true` (default) | `64,000 free (32.0%)` |
+| `token_detail=false` | `64.0k free (32.0%)` |
 
 ## Available Scripts
 

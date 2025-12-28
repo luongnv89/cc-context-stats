@@ -3,11 +3,14 @@
  * Node.js status line script for Claude Code
  * Usage: Copy to ~/.claude/statusline.js and make executable
  *
- * Autocompact Configuration:
- * The AC (autocompact) setting must be manually synced with Claude Code.
+ * Configuration:
  * Create/edit ~/.claude/statusline.conf and set:
+ *
  *   autocompact=true   (when autocompact is enabled in Claude Code - default)
  *   autocompact=false  (when you disable autocompact via /config in Claude Code)
+ *
+ *   token_detail=true  (show exact token count like 64,000 - default)
+ *   token_detail=false (show abbreviated tokens like 64.0k)
  *
  * When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
  */
@@ -62,10 +65,14 @@ function getGitInfo(projectDir) {
     }
 }
 
-function readAutocompactSetting() {
+function readConfig() {
+    const config = {
+        autocompact: true, // Default: enabled
+        tokenDetail: true, // Default: show exact count
+    };
     const configPath = path.join(os.homedir(), '.claude', 'statusline.conf');
     if (!fs.existsSync(configPath)) {
-        return true; // Default: enabled
+        return config;
     }
 
     try {
@@ -76,14 +83,18 @@ function readAutocompactSetting() {
                 continue;
             }
             const [key, value] = trimmed.split('=', 2);
-            if (key.trim() === 'autocompact') {
-                return value.trim().toLowerCase() !== 'false';
+            const keyTrimmed = key.trim();
+            const valueTrimmed = value.trim().toLowerCase();
+            if (keyTrimmed === 'autocompact') {
+                config.autocompact = valueTrimmed !== 'false';
+            } else if (keyTrimmed === 'token_detail') {
+                config.tokenDetail = valueTrimmed !== 'false';
             }
         }
     } catch {
         // Ignore errors
     }
-    return true; // Default: enabled
+    return config;
 }
 
 let input = '';
@@ -109,8 +120,10 @@ process.stdin.on('end', () => {
     // Git info
     const gitInfo = getGitInfo(projectDir);
 
-    // Autocompact setting - read from config file
-    const autocompactEnabled = readAutocompactSetting();
+    // Read settings from config file
+    const config = readConfig();
+    const autocompactEnabled = config.autocompact;
+    const tokenDetail = config.tokenDetail;
 
     // Context window calculation
     let contextInfo = '';
@@ -151,8 +164,10 @@ process.stdin.on('end', () => {
         const freePct = (freeTokens * 100.0) / totalSize;
         const freePctInt = Math.floor(freePct);
 
-        // Format tokens in k with one decimal
-        const freeDisplay = `${(freeTokens / 1000).toFixed(1)}k`;
+        // Format tokens based on token_detail setting
+        const freeDisplay = tokenDetail
+            ? freeTokens.toLocaleString('en-US')
+            : `${(freeTokens / 1000).toFixed(1)}k`;
 
         // Color based on free percentage
         let ctxColor;

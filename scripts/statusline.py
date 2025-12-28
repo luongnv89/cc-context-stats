@@ -3,11 +3,14 @@
 Python status line script for Claude Code
 Usage: Copy to ~/.claude/statusline.py and make executable
 
-Autocompact Configuration:
-The AC (autocompact) setting must be manually synced with Claude Code.
+Configuration:
 Create/edit ~/.claude/statusline.conf and set:
+
   autocompact=true   (when autocompact is enabled in Claude Code - default)
   autocompact=false  (when you disable autocompact via /config in Claude Code)
+
+  token_detail=true  (show exact token count like 64,000 - default)
+  token_detail=false (show abbreviated tokens like 64.0k)
 
 When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
 """
@@ -63,11 +66,15 @@ def get_git_info(project_dir):
         return ""
 
 
-def read_autocompact_setting():
-    """Read autocompact setting from config file"""
+def read_config():
+    """Read settings from config file"""
+    config = {
+        "autocompact": True,  # Default: enabled
+        "token_detail": True,  # Default: show exact count
+    }
     config_path = os.path.expanduser("~/.claude/statusline.conf")
     if not os.path.exists(config_path):
-        return True  # Default: enabled
+        return config
 
     try:
         with open(config_path) as f:
@@ -76,11 +83,15 @@ def read_autocompact_setting():
                 if line.startswith("#") or "=" not in line:
                     continue
                 key, value = line.split("=", 1)
-                if key.strip() == "autocompact":
-                    return value.strip().lower() != "false"
+                key = key.strip()
+                value = value.strip().lower()
+                if key == "autocompact":
+                    config["autocompact"] = value != "false"
+                elif key == "token_detail":
+                    config["token_detail"] = value != "false"
     except Exception:
         pass
-    return True  # Default: enabled
+    return config
 
 
 def main():
@@ -99,8 +110,10 @@ def main():
     # Git info
     git_info = get_git_info(project_dir)
 
-    # Autocompact setting - read from config file
-    autocompact_enabled = read_autocompact_setting()
+    # Read settings from config file
+    config = read_config()
+    autocompact_enabled = config["autocompact"]
+    token_detail = config["token_detail"]
 
     # Context window calculation
     context_info = ""
@@ -138,8 +151,11 @@ def main():
         free_pct = (free_tokens * 100.0) / total_size
         free_pct_int = int(free_pct)
 
-        # Format tokens in k with one decimal
-        free_display = f"{free_tokens / 1000:.1f}k"
+        # Format tokens based on token_detail setting
+        if token_detail:
+            free_display = f"{free_tokens:,}"
+        else:
+            free_display = f"{free_tokens / 1000:.1f}k"
 
         # Color based on free percentage
         if free_pct_int > 50:

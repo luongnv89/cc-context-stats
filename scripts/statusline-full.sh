@@ -2,11 +2,14 @@
 # Full-featured status line with context window usage
 # Usage: Copy to ~/.claude/statusline.sh and make executable
 #
-# Autocompact Configuration:
-# The AC (autocompact) setting must be manually synced with Claude Code.
+# Configuration:
 # Create/edit ~/.claude/statusline.conf and set:
+#
 #   autocompact=true   (when autocompact is enabled in Claude Code - default)
 #   autocompact=false  (when you disable autocompact via /config in Claude Code)
+#
+#   token_detail=true  (show exact token count like 64,000 - default)
+#   token_detail=false (show abbreviated tokens like 64.0k)
 #
 # When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
 
@@ -44,16 +47,21 @@ if [[ -d "$project_dir/.git" ]]; then
     fi
 fi
 
-# Autocompact setting - read from ~/.claude/statusline.conf
-# Sync this manually when you change autocompact in Claude Code via /config
+# Read settings from ~/.claude/statusline.conf
+# Sync this manually when you change settings in Claude Code via /config
 autocompact_enabled=true
+token_detail_enabled=true
 autocompact=""  # Will be set by sourced config
+token_detail="" # Will be set by sourced config
 ac_info=""
 if [[ -f ~/.claude/statusline.conf ]]; then
     # shellcheck source=/dev/null
     source ~/.claude/statusline.conf
     if [[ "$autocompact" == "false" ]]; then
         autocompact_enabled=false
+    fi
+    if [[ "$token_detail" == "false" ]]; then
+        token_detail_enabled=false
     fi
 fi
 
@@ -94,8 +102,13 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
     free_pct=$(awk "BEGIN {printf \"%.1f\", ($free_tokens * 100.0 / $total_size)}")
     free_pct_int=${free_pct%.*}
 
-    # Format tokens in k with one decimal
-    free_display=$(awk "BEGIN {printf \"%.1fk\", $free_tokens / 1000}")
+    # Format tokens based on token_detail setting
+    if [[ "$token_detail_enabled" == "true" ]]; then
+        # Use awk for portable comma formatting (works regardless of locale)
+        free_display=$(awk -v n="$free_tokens" 'BEGIN { printf "%\047d", n }')
+    else
+        free_display=$(awk "BEGIN {printf \"%.1fk\", $free_tokens / 1000}")
+    fi
 
     # Color based on free percentage
     if [[ "$free_pct_int" -gt 50 ]]; then
