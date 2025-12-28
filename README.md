@@ -140,7 +140,11 @@ The session ID is displayed without brackets so you can double-click to select a
 
 ## Token Usage Graphs
 
-Visualize token consumption over time with ASCII graphs using the `/token-graph` slash command (in the claude-statusline project directory) or directly via the script:
+Visualize token consumption over time with beautiful ASCII area charts. The graphs show smooth interpolated lines with filled areas below, similar to modern analytics dashboards.
+
+![Token Usage Graph](images/token-graph.png)
+
+### Usage
 
 ```bash
 # Show graphs for latest session
@@ -153,40 +157,104 @@ Visualize token consumption over time with ASCII graphs using the `/token-graph`
 ./scripts/token-graph.sh --type cumulative
 ./scripts/token-graph.sh --type delta
 
+# Show both graphs (default)
+./scripts/token-graph.sh --type both
+
 # Disable colors (for piping to file)
 ./scripts/token-graph.sh --no-color > output.txt
+
+# Show help
+./scripts/token-graph.sh --help
 ```
 
-**Features:**
-- **Cumulative Token Graph**: Total tokens used over time
-- **Token Delta Graph**: Per-interval consumption rate
-- **Auto-detect terminal size**: Adapts to your terminal dimensions
-- **Summary statistics**: Current usage, duration, average delta, max delta
+### Slash Command
 
-**Example Output:**
+In the claude-statusline project directory, you can use the `/token-graph` slash command:
+
+```
+/token-graph                      # Latest session, both graphs
+/token-graph <session_id>         # Specific session
+/token-graph --type cumulative    # Only cumulative graph
+```
+
+### Features
+
+- **Smooth Area Charts**: Continuous lines with gradient-filled areas (●▒░)
+- **Linear Interpolation**: Smooth curves between data points
+- **Two Graph Types**:
+  - **Cumulative**: Total tokens used over time (shows usage growth)
+  - **Delta**: Token consumption per interval (shows usage rate/bursts)
+- **Auto-detect Terminal Size**: Adapts graph dimensions to your terminal
+- **Summary Statistics**: Current tokens, duration, data points, average/max delta, total growth
+- **Color Support**: Colored output with `--no-color` option for piping
+- **Bash 3.2+ Compatible**: Works on macOS default bash
+
+### Example Output
+
 ```
 Token Usage Graphs (Session: abc123)
 
 Cumulative Token Usage
-Max: 150,000  Min: 10,000  Points: 18
+Max: 120,000  Min: 10,000  Points: 22
 
-   150,000 |                                              ●
-           |                                          ●───●
-           |                                      ●───●
-    80,000 |                              ●───●───●
-           |                      ●───●───●
-           |              ●───●───●
-    10,000 |●───●───●───●
-           └──────────────────────────────────────────────────
-            10:00              10:45              11:30
+   120,000 │                                                    ●●●●●●●●●●●●●
+           │                                             ●●●●●●●▒▒▒▒▒▒▒▒▒▒▒▒▒
+           │                                        ●●●●●▒▒▒▒▒▒▒░░░░░░░░░░░░░
+           │                                     ●●●▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░
+           │                                   ●●▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░
+           │                                 ●●▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+    65,000 │                               ●●▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+           │                             ●●▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+           │                           ●●▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+           │                        ●●●▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+           │                   ●●●●●▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+           │           ●●●●●●●●▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+    10,000 │●●●●●●●●●●●▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+           └─────────────────────────────────────────────────────────────────
+           12:46                12:56                13:07
+
+Token Delta Per Interval
+Max: 14,000  Min: 500  Points: 22
+
+    14,000 │                                ●●●
+           │                              ●●▒▒▒●●
+           │                             ●▒▒░░░▒▒●
+           │                            ●▒░░░░░░░▒●
+           │●                         ●●▒░░░░░░░░░▒●●
+           │▒                        ●▒▒░░░░░░░░░░░▒▒●
+     7,250 │░●                      ●▒░░░░░░░░░░░░░░░▒●
+           │░▒                   ●●●▒░░░░░░░░░░░░░░░░░▒●●●
+           │░░●                ●●▒▒▒░░░░░░░░░░░░░░░░░░░▒▒▒●●
+           │░░▒             ●●●▒▒░░░░░░░░░░░░░░░░░░░░░░░░░▒▒●●●
+           │░░░           ●●▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒●●●
+           │░░░●●●●●     ●▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒●●●●●●
+       500 │░░░▒▒▒▒▒●●●●●▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒●●●●●
+           └─────────────────────────────────────────────────────────────────
+           12:46                12:56                13:07
 
 Summary Statistics
-───────────────────────────────────────────────────────
-  Current Tokens:    147,500
-  Session Duration:  1h 30m
-  Data Points:       18
-  Average Delta:     8,750
+----------------------------------------------------------------------------
+  Current Tokens:      120,000
+  Session Duration:    21m
+  Data Points:         22
+  Average Delta:       5,454
+  Max Delta:           14,000
+  Total Growth:        110,000
 ```
+
+### Graph Elements
+
+| Symbol | Meaning |
+|--------|---------|
+| `●` | Trend line (data points and interpolated values) |
+| `▒` | Medium fill (near the line) |
+| `░` | Light fill (area below) |
+| `│` | Y-axis |
+| `└─` | X-axis |
+
+### Data Source
+
+The graphs read token history from `~/.claude/statusline.<session_id>.state` files, which are automatically created by the statusline scripts when `show_delta=true` (default). Each line contains `timestamp,tokens` format.
 
 ## Available Scripts
 
