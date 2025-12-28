@@ -82,11 +82,7 @@ Add to your Claude Code settings (`~/.claude/settings.json` or `%USERPROFILE%\.c
 
 ## Configuration
 
-Create a configuration file to customize the status line behavior.
-
-**macOS / Linux:** Create `~/.claude/statusline.conf`
-
-**Windows:** Create `%USERPROFILE%\.claude\statusline.conf`
+The configuration file `~/.claude/statusline.conf` (or `%USERPROFILE%\.claude\statusline.conf` on Windows) is **automatically created** with default settings on first run if it doesn't exist.
 
 ### Available Settings
 
