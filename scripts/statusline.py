@@ -142,14 +142,33 @@ def main():
 
         context_info = f" | {ctx_color}{free_display} free ({free_pct:.1f}%){RESET}"
 
-    # Cost info (estimation based on API usage)
-    cost_info = ""
-    cost = data.get('cost', {}).get('total_cost_usd', 0)
-    if cost and cost != 0:
-        cost_info = f" | {DIM}~${cost:.4f}{RESET}"
+    # Token metrics (without cost)
+    token_metrics = ""
+    total_input_tokens = data.get('context_window', {}).get('total_input_tokens', 0)
+    total_output_tokens = data.get('context_window', {}).get('total_output_tokens', 0)
 
-    # Output: [Model] directory | branch [changes] | XXk free (XX%) [AC] | ~$X.XXXX
-    print(f"{DIM}[{model}]{RESET} {BLUE}{dir_name}{RESET}{git_info}{context_info}{ac_info}{cost_info}")
+    # Get cache info from current_usage
+    cache_creation_tokens = data.get('context_window', {}).get('current_usage', {}).get('cache_creation_input_tokens', 0)
+    cache_read_tokens = data.get('context_window', {}).get('current_usage', {}).get('cache_read_input_tokens', 0)
+
+    if total_input_tokens > 0 or total_output_tokens > 0:
+        in_k = total_input_tokens // 1000
+        out_k = total_output_tokens // 1000
+
+        # Build token info string with colors
+        # Input: blue, Output: magenta, Cache: cyan
+        token_info = f"{BLUE}{in_k}k in{RESET}/{MAGENTA}{out_k}k out{RESET}"
+
+        # Add cache info if available
+        cache_total = cache_creation_tokens + cache_read_tokens
+        if cache_total > 0:
+            cache_k = cache_total // 1000
+            token_info = f"{token_info}/{CYAN}{cache_k}k cache{RESET}"
+
+        token_metrics = f" | {DIM}{token_info}{RESET}"
+
+    # Output: [Model] directory | branch [changes] | XXk free (XX%) [AC] | Xk in/Xk out/Xk cache
+    print(f"{DIM}[{model}]{RESET} {BLUE}{dir_name}{RESET}{git_info}{context_info}{ac_info}{token_metrics}")
 
 
 if __name__ == '__main__':

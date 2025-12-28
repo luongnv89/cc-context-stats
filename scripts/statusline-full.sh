@@ -98,13 +98,32 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
     context_info=" | ${ctx_color}${free_display} free (${free_pct}%)${RESET}"
 fi
 
-# Cost info (estimation based on API usage)
-cost_info=""
-cost=$(echo "$input" | jq -r '.cost.total_cost_usd // 0')
-if [[ "$cost" != "0" && "$cost" != "null" ]]; then
-    cost_formatted=$(printf "%.4f" "$cost")
-    cost_info=" | ${DIM}~\$${cost_formatted}${RESET}"
+# Token metrics (without cost)
+token_info=""
+total_input_tokens=$(echo "$input" | jq -r '.context_window.total_input_tokens // 0')
+total_output_tokens=$(echo "$input" | jq -r '.context_window.total_output_tokens // 0')
+
+# Get cache info from current_usage
+cache_creation_tokens=$(echo "$input" | jq -r '.context_window.current_usage.cache_creation_input_tokens // 0')
+cache_read_tokens=$(echo "$input" | jq -r '.context_window.current_usage.cache_read_input_tokens // 0')
+
+if [[ "$total_input_tokens" -gt 0 || "$total_output_tokens" -gt 0 ]]; then
+    # Format tokens in k
+    in_k=$(awk "BEGIN {printf \"%.0f\", $total_input_tokens / 1000}")
+    out_k=$(awk "BEGIN {printf \"%.0f\", $total_output_tokens / 1000}")
+
+    # Build token info string
+    token_str="${in_k}k in/${out_k}k out"
+
+    # Add cache info if available
+    cache_total=$((cache_creation_tokens + cache_read_tokens))
+    if [[ "$cache_total" -gt 0 ]]; then
+        cache_k=$(awk "BEGIN {printf \"%.0f\", $cache_total / 1000}")
+        token_str="${token_str}/${cache_k}k cache"
+    fi
+
+    token_info=" | ${DIM}${token_str}${RESET}"
 fi
 
-# Output: [Model] directory | branch [changes] | XXk free (XX%) [AC] | ~$X.XXXX
-echo -e "${DIM}[${model}]${RESET} ${BLUE}${dir_name}${RESET}${git_info}${context_info}${ac_info}${cost_info}"
+# Output: [Model] directory | branch [changes] | XXk free (XX%) [AC] | Xk in/Xk out/Xk cache
+echo -e "${DIM}[${model}]${RESET} ${BLUE}${dir_name}${RESET}${git_info}${context_info}${ac_info}${token_info}"
