@@ -2,8 +2,6 @@
 
 Custom status line scripts for [Claude Code](https://claude.com/claude-code).
 
-📖 **Blog Post:** [Closing the Gap Between MVP and Production with Feature-Dev](https://medium.com/@luongnv89/closing-the-gap-between-mvp-and-production-with-feature-dev-an-official-plugin-from-anthropic-444e2f00a0ad) - Learn about the process of building this project.
-
 ## Screenshot
 
 ![Claude Code Status Line](images/claude-statusline.png)
@@ -155,6 +153,10 @@ echo {"model":{"display_name":"Test"}} | python %USERPROFILE%\.claude\statusline
 **Script errors?**
 - macOS/Linux: Check `jq` is installed: `which jq`
 - Windows: Check Python/Node.js is in PATH: `python --version` or `node --version`
+
+## Blog Post
+
+📖 [Closing the Gap Between MVP and Production with Feature-Dev](https://medium.com/@luongnv89/closing-the-gap-between-mvp-and-production-with-feature-dev-an-official-plugin-from-anthropic-444e2f00a0ad) - Learn about the process of building this project.
 
 ## License
 
