@@ -54,6 +54,19 @@ token_detail_enabled=true
 autocompact=""  # Will be set by sourced config
 token_detail="" # Will be set by sourced config
 ac_info=""
+
+# Create config file with defaults if it doesn't exist
+if [[ ! -f ~/.claude/statusline.conf ]]; then
+    mkdir -p ~/.claude
+    cat > ~/.claude/statusline.conf << 'EOF'
+# Autocompact setting - sync with Claude Code's /config
+autocompact=true
+
+# Token display format
+token_detail=true
+EOF
+fi
+
 if [[ -f ~/.claude/statusline.conf ]]; then
     # shellcheck source=/dev/null
     source ~/.claude/statusline.conf

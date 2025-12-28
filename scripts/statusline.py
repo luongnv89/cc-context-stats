@@ -73,7 +73,22 @@ def read_config():
         "token_detail": True,  # Default: show exact count
     }
     config_path = os.path.expanduser("~/.claude/statusline.conf")
+
+    # Create config file with defaults if it doesn't exist
     if not os.path.exists(config_path):
+        try:
+            os.makedirs(os.path.dirname(config_path), exist_ok=True)
+            with open(config_path, "w") as f:
+                f.write(
+                    """# Autocompact setting - sync with Claude Code's /config
+autocompact=true
+
+# Token display format
+token_detail=true
+"""
+                )
+        except Exception:
+            pass  # Ignore errors creating config
         return config
 
     try:

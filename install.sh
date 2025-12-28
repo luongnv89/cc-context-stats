@@ -95,6 +95,25 @@ install_script() {
     echo -e "${GREEN}✓${RESET} Installed: $DEST"
 }
 
+# Create config file with defaults if it doesn't exist
+create_config() {
+    CONFIG_FILE="$CLAUDE_DIR/statusline.conf"
+
+    if [ -f "$CONFIG_FILE" ]; then
+        echo -e "${GREEN}✓${RESET} Config file exists: $CONFIG_FILE"
+        return
+    fi
+
+    cat > "$CONFIG_FILE" << 'EOF'
+# Autocompact setting - sync with Claude Code's /config
+autocompact=true
+
+# Token display format
+token_detail=true
+EOF
+    echo -e "${GREEN}✓${RESET} Created config file: $CONFIG_FILE"
+}
+
 # Update settings.json
 update_settings() {
     echo
@@ -135,6 +154,7 @@ main() {
     ensure_claude_dir
     select_script
     install_script
+    create_config
     update_settings
 
     echo
@@ -144,6 +164,7 @@ main() {
     echo "Restart Claude Code to see the changes."
     echo
     echo "To customize, edit: $CLAUDE_DIR/$SCRIPT_NAME"
+    echo "To change settings, edit: $CLAUDE_DIR/statusline.conf"
 }
 
 main

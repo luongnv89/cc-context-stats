@@ -71,7 +71,24 @@ function readConfig() {
         tokenDetail: true, // Default: show exact count
     };
     const configPath = path.join(os.homedir(), '.claude', 'statusline.conf');
+
+    // Create config file with defaults if it doesn't exist
     if (!fs.existsSync(configPath)) {
+        try {
+            const configDir = path.dirname(configPath);
+            if (!fs.existsSync(configDir)) {
+                fs.mkdirSync(configDir, { recursive: true });
+            }
+            const defaultConfig = `# Autocompact setting - sync with Claude Code's /config
+autocompact=true
+
+# Token display format
+token_detail=true
+`;
+            fs.writeFileSync(configPath, defaultConfig);
+        } catch {
+            // Ignore errors creating config
+        }
         return config;
     }
 
