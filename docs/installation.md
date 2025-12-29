@@ -1,0 +1,168 @@
+# Installation Guide
+
+## Quick Install
+
+### macOS / Linux
+
+```bash
+git clone https://github.com/luongnv89/claude-statusline.git
+cd claude-statusline
+./install.sh
+```
+
+The installer will:
+
+1. Install the statusline script to `~/.claude/`
+2. Install `token-graph` CLI tool to `~/.local/bin/`
+3. Create default configuration at `~/.claude/statusline.conf`
+4. Update `~/.claude/settings.json`
+
+### Windows
+
+Use the Python or Node.js version (no `jq` required):
+
+```powershell
+git clone https://github.com/luongnv89/claude-statusline.git
+copy claude-statusline\scripts\statusline.py %USERPROFILE%\.claude\statusline.py
+```
+
+Or with Node.js:
+
+```powershell
+copy claude-statusline\scripts\statusline.js %USERPROFILE%\.claude\statusline.js
+```
+
+## Manual Installation
+
+### macOS / Linux
+
+```bash
+cp scripts/statusline-full.sh ~/.claude/statusline.sh
+chmod +x ~/.claude/statusline.sh
+```
+
+### Token Graph CLI (Optional)
+
+```bash
+cp scripts/token-graph.sh ~/.local/bin/token-graph
+chmod +x ~/.local/bin/token-graph
+```
+
+Ensure `~/.local/bin` is in your PATH:
+
+```bash
+# For zsh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+# For bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+## Configure Claude Code
+
+Add to your Claude Code settings:
+
+**File location:**
+- macOS/Linux: `~/.claude/settings.json`
+- Windows: `%USERPROFILE%\.claude\settings.json`
+
+### Bash (macOS/Linux)
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  }
+}
+```
+
+### Python (All Platforms)
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "python ~/.claude/statusline.py"
+  }
+}
+```
+
+Windows:
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "python %USERPROFILE%\\.claude\\statusline.py"
+  }
+}
+```
+
+### Node.js (All Platforms)
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "node ~/.claude/statusline.js"
+  }
+}
+```
+
+Windows:
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "node %USERPROFILE%\\.claude\\statusline.js"
+  }
+}
+```
+
+## Requirements
+
+### macOS
+
+```bash
+brew install jq
+```
+
+### Linux (Debian/Ubuntu)
+
+```bash
+sudo apt install jq
+```
+
+### Linux (Fedora/RHEL)
+
+```bash
+sudo dnf install jq
+```
+
+### Windows
+
+No additional requirements for Python/Node.js scripts.
+
+For bash scripts via WSL:
+
+```bash
+sudo apt install jq
+```
+
+## Verify Installation
+
+Test your statusline script:
+
+```bash
+# macOS/Linux
+echo '{"model":{"display_name":"Test"}}' | ~/.claude/statusline.sh
+
+# Windows (Python)
+echo {"model":{"display_name":"Test"}} | python %USERPROFILE%\.claude\statusline.py
+```
+
+You should see output like: `[Test] directory`
+
+Restart Claude Code to see the status line.

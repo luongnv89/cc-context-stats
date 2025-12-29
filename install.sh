@@ -15,6 +15,7 @@ RESET='\033[0m'
 
 CLAUDE_DIR="$HOME/.claude"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
+LOCAL_BIN="$HOME/.local/bin"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo -e "${BLUE}Claude Code Status Line Installer${RESET}"
@@ -95,6 +96,49 @@ install_script() {
     echo -e "${GREEN}✓${RESET} Installed: $DEST"
 }
 
+# Install token-graph CLI tool
+install_token_graph() {
+    echo
+
+    # Create ~/.local/bin if it doesn't exist
+    if [ ! -d "$LOCAL_BIN" ]; then
+        echo -e "${YELLOW}Creating $LOCAL_BIN directory...${RESET}"
+        mkdir -p "$LOCAL_BIN"
+    fi
+
+    DEST="$LOCAL_BIN/token-graph"
+    SRC="$SCRIPT_DIR/scripts/token-graph.sh"
+
+    if [ -f "$DEST" ]; then
+        echo -e "${YELLOW}Warning: $DEST already exists${RESET}"
+        read -p "Overwrite? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Keeping existing token-graph."
+            return
+        fi
+    fi
+
+    cp "$SRC" "$DEST"
+    chmod +x "$DEST"
+    echo -e "${GREEN}✓${RESET} Installed: $DEST"
+
+    # Check if ~/.local/bin is in PATH
+    if [[ ":$PATH:" != *":$LOCAL_BIN:"* ]]; then
+        echo
+        echo -e "${YELLOW}Note: $LOCAL_BIN is not in your PATH${RESET}"
+        echo "Add it to your shell configuration:"
+        echo
+        if [[ "$SHELL" == *"zsh"* ]]; then
+            echo "  echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.zshrc"
+            echo "  source ~/.zshrc"
+        else
+            echo "  echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc"
+            echo "  source ~/.bashrc"
+        fi
+    fi
+}
+
 # Create config file with defaults if it doesn't exist
 create_config() {
     CONFIG_FILE="$CLAUDE_DIR/statusline.conf"
@@ -161,6 +205,7 @@ main() {
     ensure_claude_dir
     select_script
     install_script
+    install_token_graph
     create_config
     update_settings
 
@@ -172,6 +217,8 @@ main() {
     echo
     echo "To customize, edit: $CLAUDE_DIR/$SCRIPT_NAME"
     echo "To change settings, edit: $CLAUDE_DIR/statusline.conf"
+    echo
+    echo "Run 'token-graph' to visualize token usage for any session."
 }
 
 main
