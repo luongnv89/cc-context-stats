@@ -65,6 +65,7 @@ source ~/.bashrc
 Add to your Claude Code settings:
 
 **File location:**
+
 - macOS/Linux: `~/.claude/settings.json`
 - Windows: `%USERPROFILE%\.claude\settings.json`
 
@@ -91,6 +92,7 @@ Add to your Claude Code settings:
 ```
 
 Windows:
+
 ```json
 {
   "statusLine": {
@@ -112,6 +114,7 @@ Windows:
 ```
 
 Windows:
+
 ```json
 {
   "statusLine": {

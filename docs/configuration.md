@@ -30,27 +30,27 @@ show_session=false # Hide session ID
 [Opus 4.5] my-project | main [3] | 64,000 free (32.0%) [+2,500] [AC:45k] session_id
 ```
 
-| Component | Description | Color |
-|-----------|-------------|-------|
-| `[Opus 4.5]` | Current AI model | Dim |
-| `my-project` | Current directory | Blue |
-| `main` | Git branch | Magenta |
-| `[3]` | Uncommitted changes | Cyan |
-| `64,000 free` | Available tokens | Green/Yellow/Red |
-| `(32.0%)` | Context usage percentage | - |
-| `[+2,500]` | Token delta | - |
-| `[AC:45k]` | Autocompact buffer | Dim |
-| `session_id` | Current session | Dim |
+| Component     | Description              | Color            |
+| ------------- | ------------------------ | ---------------- |
+| `[Opus 4.5]`  | Current AI model         | Dim              |
+| `my-project`  | Current directory        | Blue             |
+| `main`        | Git branch               | Magenta          |
+| `[3]`         | Uncommitted changes      | Cyan             |
+| `64,000 free` | Available tokens         | Green/Yellow/Red |
+| `(32.0%)`     | Context usage percentage | -                |
+| `[+2,500]`    | Token delta              | -                |
+| `[AC:45k]`    | Autocompact buffer       | Dim              |
+| `session_id`  | Current session          | Dim              |
 
 ## Token Colors
 
 Context availability is color-coded:
 
-| Availability | Color |
-|-------------|-------|
-| > 50% | Green |
-| > 25% | Yellow |
-| <= 25% | Red |
+| Availability | Color  |
+| ------------ | ------ |
+| > 50%        | Green  |
+| > 25%        | Yellow |
+| <= 25%       | Red    |
 
 ## Autocompact Display
 
@@ -59,10 +59,10 @@ Context availability is color-coded:
 
 ## Token Display Formats
 
-| Setting | Display |
-|---------|---------|
-| `token_detail=true` | `64,000 free (32.0%)` `[+2,500]` |
-| `token_detail=false` | `64.0k free (32.0%)` `[+2.5k]` |
+| Setting              | Display                          |
+| -------------------- | -------------------------------- |
+| `token_detail=true`  | `64,000 free (32.0%)` `[+2,500]` |
+| `token_detail=false` | `64.0k free (32.0%)` `[+2.5k]`   |
 
 ## Token Delta
 

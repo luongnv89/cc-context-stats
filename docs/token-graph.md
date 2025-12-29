@@ -88,13 +88,13 @@ Summary Statistics
 
 ## Graph Symbols
 
-| Symbol | Meaning |
-|--------|---------|
-| `●` | Trend line |
-| `▒` | Medium fill (near line) |
-| `░` | Light fill (area below) |
-| `│` | Y-axis |
-| `└─` | X-axis |
+| Symbol | Meaning                 |
+| ------ | ----------------------- |
+| `●`    | Trend line              |
+| `▒`    | Medium fill (near line) |
+| `░`    | Light fill (area below) |
+| `│`    | Y-axis                  |
+| `└─`   | X-axis                  |
 
 ## Real-time Monitoring
 

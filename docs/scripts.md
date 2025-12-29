@@ -2,20 +2,21 @@
 
 ## Overview
 
-| Script | Platform | Requirements | Features |
-|--------|----------|--------------|----------|
-| `statusline-full.sh` | macOS, Linux | `jq` | Full-featured with all indicators |
-| `statusline-git.sh` | macOS, Linux | `jq` | Git branch and changes |
-| `statusline-minimal.sh` | macOS, Linux | `jq` | Model + directory only |
-| `statusline.py` | All | Python 3 | Cross-platform, full-featured |
-| `statusline.js` | All | Node.js | Cross-platform, full-featured |
-| `token-graph.sh` | macOS, Linux | None | Token usage visualization |
+| Script                  | Platform     | Requirements | Features                          |
+| ----------------------- | ------------ | ------------ | --------------------------------- |
+| `statusline-full.sh`    | macOS, Linux | `jq`         | Full-featured with all indicators |
+| `statusline-git.sh`     | macOS, Linux | `jq`         | Git branch and changes            |
+| `statusline-minimal.sh` | macOS, Linux | `jq`         | Model + directory only            |
+| `statusline.py`         | All          | Python 3     | Cross-platform, full-featured     |
+| `statusline.js`         | All          | Node.js      | Cross-platform, full-featured     |
+| `token-graph.sh`        | macOS, Linux | None         | Token usage visualization         |
 
 ## Bash Scripts
 
 ### statusline-full.sh (Recommended)
 
 Complete status line with all features:
+
 - Model name
 - Current directory
 - Git branch and changes
@@ -27,6 +28,7 @@ Complete status line with all features:
 ### statusline-git.sh
 
 Lighter version with git info:
+
 - Model name
 - Current directory
 - Git branch and changes
@@ -34,6 +36,7 @@ Lighter version with git info:
 ### statusline-minimal.sh
 
 Minimal footprint:
+
 - Model name
 - Current directory
 
@@ -101,13 +104,13 @@ Scripts receive JSON via stdin from Claude Code:
 
 All scripts use consistent ANSI colors:
 
-| Color | Code | Usage |
-|-------|------|-------|
-| Blue | `\033[0;34m` | Directory |
-| Magenta | `\033[0;35m` | Git branch |
-| Cyan | `\033[0;36m` | Changes count |
-| Green | `\033[0;32m` | High availability (>50%) |
-| Yellow | `\033[0;33m` | Medium availability (>25%) |
-| Red | `\033[0;31m` | Low availability (<=25%) |
-| Dim | `\033[2m` | Model, AC indicator |
-| Reset | `\033[0m` | Reset formatting |
+| Color   | Code         | Usage                      |
+| ------- | ------------ | -------------------------- |
+| Blue    | `\033[0;34m` | Directory                  |
+| Magenta | `\033[0;35m` | Git branch                 |
+| Cyan    | `\033[0;36m` | Changes count              |
+| Green   | `\033[0;32m` | High availability (>50%)   |
+| Yellow  | `\033[0;33m` | Medium availability (>25%) |
+| Red     | `\033[0;31m` | Low availability (<=25%)   |
+| Dim     | `\033[2m`    | Model, AC indicator        |
+| Reset   | `\033[0m`    | Reset formatting           |

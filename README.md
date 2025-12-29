@@ -70,14 +70,14 @@ See [Configuration Guide](docs/configuration.md) for all options.
 
 ## Available Scripts
 
-| Script | Platform | Requirements |
-|--------|----------|--------------|
-| `statusline-full.sh` | macOS, Linux | `jq` |
-| `statusline-git.sh` | macOS, Linux | `jq` |
-| `statusline-minimal.sh` | macOS, Linux | `jq` |
-| `statusline.py` | All | Python 3 |
-| `statusline.js` | All | Node.js |
-| `token-graph.sh` | macOS, Linux | None |
+| Script                  | Platform     | Requirements |
+| ----------------------- | ------------ | ------------ |
+| `statusline-full.sh`    | macOS, Linux | `jq`         |
+| `statusline-git.sh`     | macOS, Linux | `jq`         |
+| `statusline-minimal.sh` | macOS, Linux | `jq`         |
+| `statusline.py`         | All          | Python 3     |
+| `statusline.js`         | All          | Node.js      |
+| `token-graph.sh`        | macOS, Linux | None         |
 
 See [Scripts Reference](docs/scripts.md) for details.
 
