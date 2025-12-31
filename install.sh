@@ -119,9 +119,15 @@ install_token_graph() {
         fi
     fi
 
+    # Get current commit hash for version embedding
+    local commit_hash
+    commit_hash=$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+    # Copy and embed commit hash
     cp "$SRC" "$DEST"
+    sed -i.bak "s/COMMIT_HASH=\"dev\"/COMMIT_HASH=\"$commit_hash\"/" "$DEST" && rm -f "$DEST.bak"
     chmod +x "$DEST"
-    echo -e "${GREEN}✓${RESET} Installed: $DEST"
+    echo -e "${GREEN}✓${RESET} Installed: $DEST (v1.0.0-$commit_hash)"
 
     # Check if ~/.local/bin is in PATH
     if [[ ":$PATH:" != *":$LOCAL_BIN:"* ]]; then

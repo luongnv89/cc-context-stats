@@ -22,7 +22,8 @@
 
 # === CONFIGURATION ===
 # shellcheck disable=SC2034
-VERSION="1.0.0"  # Version for future --version flag
+VERSION="1.0.0"
+COMMIT_HASH="dev"  # Will be replaced during installation
 STATE_DIR=~/.claude
 CONFIG_FILE=~/.claude/statusline.conf
 
@@ -574,11 +575,7 @@ render_summary() {
 }
 
 render_footer() {
-    # Get short git commit hash for version display
-    local commit_hash
-    commit_hash=$(git -C "$(dirname "$0")" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-
-    echo -e "${DIM}Powered by claude-statusline v${VERSION}-${commit_hash} - https://github.com/luongnv89/claude-statusline${RESET}"
+    echo -e "${DIM}Powered by claude-statusline v${VERSION}-${COMMIT_HASH} - https://github.com/luongnv89/claude-statusline${RESET}"
     echo ""
 }
 
