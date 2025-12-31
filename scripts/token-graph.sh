@@ -42,6 +42,7 @@ RESET='\033[0m'
 TIMESTAMPS=""
 TOKENS=""
 DELTAS=""
+DELTA_TIMES=""
 DATA_COUNT=0
 TERM_WIDTH=80
 TERM_HEIGHT=24
@@ -303,17 +304,32 @@ load_token_history() {
 
 calculate_deltas() {
     local prev_tok=""
+    local idx=0
     DELTAS=""
+    DELTA_TIMES=""
 
     for tok in $TOKENS; do
+        idx=$((idx + 1))
         if [ -z "$prev_tok" ]; then
-            # First delta is initial token count
-            DELTAS="$tok"
+            # Skip first data point - no previous value to compare against
+            prev_tok=$tok
+            continue
+        fi
+
+        local delta=$((tok - prev_tok))
+        # Handle negative deltas (session reset) by showing 0
+        [ $delta -lt 0 ] && delta=0
+
+        # Get corresponding timestamp for this delta
+        local ts
+        ts=$(get_element "$TIMESTAMPS" "$idx")
+
+        if [ -z "$DELTAS" ]; then
+            DELTAS="$delta"
+            DELTA_TIMES="$ts"
         else
-            local delta=$((tok - prev_tok))
-            # Handle negative deltas (session reset) by showing 0
-            [ $delta -lt 0 ] && delta=0
             DELTAS="$DELTAS $delta"
+            DELTA_TIMES="$DELTA_TIMES $ts"
         fi
         prev_tok=$tok
     done
@@ -656,11 +672,11 @@ render_once() {
             render_timeseries_graph "Cumulative Token Usage" "$TOKENS" "$TIMESTAMPS" "$GREEN"
             ;;
         delta)
-            render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$TIMESTAMPS" "$CYAN"
+            render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$DELTA_TIMES" "$CYAN"
             ;;
         both)
             render_timeseries_graph "Cumulative Token Usage" "$TOKENS" "$TIMESTAMPS" "$GREEN"
-            render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$TIMESTAMPS" "$CYAN"
+            render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$DELTA_TIMES" "$CYAN"
             ;;
     esac
 
