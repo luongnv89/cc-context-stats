@@ -575,7 +575,7 @@ render_summary() {
 }
 
 render_footer() {
-    echo -e "${DIM}Powered by claude-statusline v${VERSION}-${COMMIT_HASH} - https://github.com/luongnv89/claude-statusline${RESET}"
+    echo -e "${DIM}Powered by ${CYAN}claude-statusline${DIM} v${VERSION}-${COMMIT_HASH} - https://github.com/luongnv89/claude-statusline${RESET}"
     echo ""
 }
 
