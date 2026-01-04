@@ -12,7 +12,13 @@ Custom status line scripts for [Claude Code](https://claude.com/claude-code).
 
 ## Quick Start
 
-### Install
+### One-Line Install (Recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/luongnv89/claude-statusline/main/install.sh | bash
+```
+
+### Install from Source
 
 ```bash
 git clone https://github.com/luongnv89/claude-statusline.git

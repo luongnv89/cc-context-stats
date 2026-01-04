@@ -2,7 +2,31 @@
 
 ## Quick Install
 
-### macOS / Linux
+### One-Line Install (Recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/luongnv89/claude-statusline/main/install.sh | bash
+```
+
+This downloads and runs the installer directly from GitHub. In non-interactive mode, it installs the **full** statusline script by default.
+
+### Interactive Install
+
+To choose a different script variant:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/luongnv89/claude-statusline/main/install.sh)
+```
+
+This runs the installer interactively, allowing you to select from:
+
+1. minimal - Simple: model + directory
+2. git - With git branch info
+3. full - Full featured with context usage (recommended)
+4. python - Python version (full featured)
+5. node - Node.js version (full featured)
+
+### Install from Source
 
 ```bash
 git clone https://github.com/luongnv89/claude-statusline.git
