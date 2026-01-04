@@ -86,12 +86,12 @@ Token history requires:
 
 1. `show_delta=true` in `~/.claude/statusline.conf` (default)
 2. Active Claude Code session generating state files
-3. State files at `~/.claude/statusline.<session_id>.state`
+3. State files at `~/.claude/statusline/statusline.<session_id>.state`
 
 Check for state files:
 
 ```bash
-ls -la ~/.claude/statusline.*.state
+ls -la ~/.claude/statusline/statusline.*.state
 ```
 
 ### Git info not showing
@@ -173,10 +173,10 @@ cat /tmp/test-input.json | node ~/.claude/statusline.js
 
 ```bash
 # View state file content
-cat ~/.claude/statusline.*.state
+cat ~/.claude/statusline/statusline.*.state
 
 # Watch state file updates
-watch -n 1 'tail -5 ~/.claude/statusline.*.state'
+watch -n 1 'tail -5 ~/.claude/statusline/statusline.*.state'
 ```
 
 ## Getting Help

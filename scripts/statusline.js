@@ -226,9 +226,33 @@ process.stdin.on('end', () => {
 
         // Calculate and display token delta if enabled
         if (showDelta) {
-            // Use session_id for per-session state (avoids conflicts with parallel sessions)
+            const stateDir = path.join(os.homedir(), '.claude', 'statusline');
+            if (!fs.existsSync(stateDir)) {
+                fs.mkdirSync(stateDir, { recursive: true });
+            }
+
+            const oldStateDir = path.join(os.homedir(), '.claude');
+            try {
+                const oldFiles = fs
+                    .readdirSync(oldStateDir)
+                    .filter(f => f.match(/^statusline.*\.state$/));
+                for (const fileName of oldFiles) {
+                    const oldFile = path.join(oldStateDir, fileName);
+                    const newFile = path.join(stateDir, fileName);
+                    if (fs.statSync(oldFile).isFile()) {
+                        if (!fs.existsSync(newFile)) {
+                            fs.renameSync(oldFile, newFile);
+                        } else {
+                            fs.unlinkSync(oldFile);
+                        }
+                    }
+                }
+            } catch {
+                /* migration errors are non-fatal */
+            }
+
             const stateFileName = sessionId ? `statusline.${sessionId}.state` : 'statusline.state';
-            const stateFile = path.join(os.homedir(), '.claude', stateFileName);
+            const stateFile = path.join(stateDir, stateFileName);
             let hasPrev = false;
             let prevTokens = 0;
             try {

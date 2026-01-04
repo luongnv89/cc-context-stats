@@ -60,10 +60,10 @@ autocompact_enabled=true
 token_detail_enabled=true
 show_delta_enabled=true
 show_session_enabled=true
-autocompact=""   # Will be set by sourced config
-token_detail=""  # Will be set by sourced config
-show_delta=""    # Will be set by sourced config
-show_session=""  # Will be set by sourced config
+autocompact=""  # Will be set by sourced config
+token_detail="" # Will be set by sourced config
+show_delta=""   # Will be set by sourced config
+show_session="" # Will be set by sourced config
 ac_info=""
 delta_info=""
 session_info=""
@@ -71,7 +71,7 @@ session_info=""
 # Create config file with defaults if it doesn't exist
 if [[ ! -f ~/.claude/statusline.conf ]]; then
     mkdir -p ~/.claude
-    cat > ~/.claude/statusline.conf << 'EOF'
+    cat >~/.claude/statusline.conf <<'EOF'
 # Autocompact setting - sync with Claude Code's /config
 autocompact=true
 
@@ -163,10 +163,27 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
     # Calculate and display token delta if enabled
     if [[ "$show_delta_enabled" == "true" ]]; then
         # Use session_id for per-session state (avoids conflicts with parallel sessions)
+        state_dir=~/.claude/statusline
+        mkdir -p "$state_dir"
+
+        # Migrate old state files from ~/.claude/ to ~/.claude/statusline/ (one-time migration)
+        old_state_dir=~/.claude
+        for old_file in "$old_state_dir"/statusline*.state; do
+            if [[ -f "$old_file" ]]; then
+                new_file="${state_dir}/$(basename "$old_file")"
+                if [[ ! -f "$new_file" ]]; then
+                    mv "$old_file" "$new_file" 2>/dev/null || true
+                else
+                    # New file exists, just remove old one
+                    rm -f "$old_file" 2>/dev/null || true
+                fi
+            fi
+        done
+
         if [[ -n "$session_id" ]]; then
-            state_file=~/.claude/statusline.${session_id}.state
+            state_file=${state_dir}/statusline.${session_id}.state
         else
-            state_file=~/.claude/statusline.state
+            state_file=${state_dir}/statusline.state
         fi
         has_prev=false
         prev_tokens=0
@@ -188,7 +205,7 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
             delta_info=" ${DIM}[+${delta_display}]${RESET}"
         fi
         # Append current usage with timestamp (format: timestamp,tokens)
-        echo "$(date +%s),$used_tokens" >> "$state_file"
+        echo "$(date +%s),$used_tokens" >>"$state_file"
     fi
 fi
 

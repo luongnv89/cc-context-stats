@@ -23,8 +23,8 @@
 # === CONFIGURATION ===
 # shellcheck disable=SC2034
 VERSION="1.0.0"
-COMMIT_HASH="dev"  # Will be replaced during installation
-STATE_DIR=~/.claude
+COMMIT_HASH="dev" # Will be replaced during installation
+STATE_DIR=~/.claude/statusline
 CONFIG_FILE=~/.claude/statusline.conf
 
 # === COLOR DEFINITIONS ===
@@ -59,7 +59,7 @@ WATCH_INTERVAL=2
 # === UTILITY FUNCTIONS ===
 
 show_help() {
-    cat << 'EOF'
+    cat <<'EOF'
 Token Usage Graph Visualizer for Claude Code
 
 USAGE:
@@ -103,7 +103,7 @@ EXAMPLES:
     token-graph.sh --no-color > output.txt
 
 DATA SOURCE:
-    Reads token history from ~/.claude/statusline.<session_id>.state
+    Reads token history from ~/.claude/statusline/statusline.<session_id>.state
     Each line contains: timestamp,tokens
 
 EOF
@@ -125,7 +125,7 @@ info() {
 init_colors() {
     if [ "$COLOR_ENABLED" != "true" ] || [ "${NO_COLOR:-}" = "1" ] || [ ! -t 1 ]; then
         # shellcheck disable=SC2034
-        BLUE=''  # Kept for consistency with other color definitions
+        BLUE='' # Kept for consistency with other color definitions
         MAGENTA=''
         CYAN=''
         GREEN=''
@@ -152,7 +152,7 @@ get_terminal_dimensions() {
 
     # Calculate graph dimensions
     GRAPH_WIDTH=$((TERM_WIDTH - 15))  # Reserve space for Y-axis labels
-    GRAPH_HEIGHT=$((TERM_HEIGHT / 3))  # Each graph takes 1/3 of terminal
+    GRAPH_HEIGHT=$((TERM_HEIGHT / 3)) # Each graph takes 1/3 of terminal
 
     # Enforce minimums and maximums
     [ $GRAPH_WIDTH -lt 30 ] && GRAPH_WIDTH=30
@@ -197,7 +197,25 @@ format_duration() {
 
 # === DATA FUNCTIONS ===
 
+migrate_old_state_files() {
+    local old_dir=~/.claude
+    local new_file
+    mkdir -p "$STATE_DIR"
+    for old_file in "$old_dir"/statusline*.state; do
+        if [ -f "$old_file" ]; then
+            new_file="${STATE_DIR}/$(basename "$old_file")"
+            if [ ! -f "$new_file" ]; then
+                mv "$old_file" "$new_file" 2>/dev/null || true
+            else
+                rm -f "$old_file" 2>/dev/null || true
+            fi
+        fi
+    done
+}
+
 find_latest_state_file() {
+    migrate_old_state_files
+
     if [ -n "$SESSION_ID" ]; then
         # Specific session requested
         local file="$STATE_DIR/statusline.${SESSION_ID}.state"
@@ -237,7 +255,7 @@ validate_state_file() {
     fi
 
     local line_count
-    line_count=$(wc -l < "$file" | tr -d ' ')
+    line_count=$(wc -l <"$file" | tr -d ' ')
 
     if [ "$line_count" -lt 2 ]; then
         error_exit "Need at least 2 data points to generate graphs.\nFound: $line_count entry. Use Claude Code to accumulate more data."
@@ -262,18 +280,18 @@ load_token_history() {
 
         # Validate format (simple numeric check)
         case "$ts" in
-            ''|*[!0-9]*)
-                skipped_lines=$((skipped_lines + 1))
-                [ $skipped_lines -le 3 ] && warn "Skipping invalid line $line_num: $ts,$tok"
-                continue
-                ;;
+        '' | *[!0-9]*)
+            skipped_lines=$((skipped_lines + 1))
+            [ $skipped_lines -le 3 ] && warn "Skipping invalid line $line_num: $ts,$tok"
+            continue
+            ;;
         esac
         case "$tok" in
-            ''|*[!0-9]*)
-                skipped_lines=$((skipped_lines + 1))
-                [ $skipped_lines -le 3 ] && warn "Skipping invalid line $line_num: $ts,$tok"
-                continue
-                ;;
+        '' | *[!0-9]*)
+            skipped_lines=$((skipped_lines + 1))
+            [ $skipped_lines -le 3 ] && warn "Skipping invalid line $line_num: $ts,$tok"
+            continue
+            ;;
         esac
 
         # Append to space-separated strings (bash 3.2 compatible)
@@ -285,7 +303,7 @@ load_token_history() {
             TOKENS="$TOKENS $tok"
         fi
         valid_lines=$((valid_lines + 1))
-    done < "$file"
+    done <"$file"
 
     DATA_COUNT=$valid_lines
 
@@ -508,12 +526,12 @@ render_timeseries_graph() {
         local label=""
 
         # Show labels at top, middle, and bottom
-        if [ $r -eq 0 ] || [ $r -eq $((GRAPH_HEIGHT/2)) ] || [ $r -eq $((GRAPH_HEIGHT-1)) ]; then
+        if [ $r -eq 0 ] || [ $r -eq $((GRAPH_HEIGHT / 2)) ] || [ $r -eq $((GRAPH_HEIGHT - 1)) ]; then
             label=$(format_number $val)
         fi
 
         local row
-        row=$(echo "$grid_output" | sed -n "$((r+1))p")
+        row=$(echo "$grid_output" | sed -n "$((r + 1))p")
         printf "%10s ${DIM}│${RESET}${color}%s${RESET}\n" "$label" "$row"
         r=$((r + 1))
     done
@@ -534,7 +552,7 @@ render_timeseries_graph() {
     local mid_idx=$(((n + 1) / 2))
     mid_time=$(format_timestamp "$(get_element "$times" "$mid_idx")")
 
-    printf "%11s${DIM}%-*s%s%*s${RESET}\n" "" "$((GRAPH_WIDTH/3))" "$first_time" "$mid_time" "$((GRAPH_WIDTH/3))" "$last_time"
+    printf "%11s${DIM}%-*s%s%*s${RESET}\n" "" "$((GRAPH_WIDTH / 3))" "$first_time" "$mid_time" "$((GRAPH_WIDTH / 3))" "$last_time"
 }
 
 render_summary() {
@@ -584,50 +602,50 @@ render_footer() {
 parse_args() {
     while [ $# -gt 0 ]; do
         case "$1" in
-            --help|-h)
-                show_help
-                exit 0
-                ;;
-            --no-color)
-                COLOR_ENABLED=false
-                shift
-                ;;
-            --watch|-w)
-                WATCH_MODE=true
-                # Check if next argument is a number (interval)
-                if [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]]; then
-                    WATCH_INTERVAL="$2"
-                    shift 2
-                else
-                    shift
-                fi
-                ;;
-            --type)
-                if [ $# -lt 2 ]; then
-                    error_exit "--type requires an argument: cumulative, delta, or both"
-                fi
-                case "$2" in
-                    cumulative|delta|both)
-                        GRAPH_TYPE="$2"
-                        ;;
-                    *)
-                        error_exit "Invalid graph type: $2. Use: cumulative, delta, or both"
-                        ;;
-                esac
+        --help | -h)
+            show_help
+            exit 0
+            ;;
+        --no-color)
+            COLOR_ENABLED=false
+            shift
+            ;;
+        --watch | -w)
+            WATCH_MODE=true
+            # Check if next argument is a number (interval)
+            if [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]]; then
+                WATCH_INTERVAL="$2"
                 shift 2
-                ;;
-            --*)
-                error_exit "Unknown option: $1\nUse --help for usage information."
+            else
+                shift
+            fi
+            ;;
+        --type)
+            if [ $# -lt 2 ]; then
+                error_exit "--type requires an argument: cumulative, delta, or both"
+            fi
+            case "$2" in
+            cumulative | delta | both)
+                GRAPH_TYPE="$2"
                 ;;
             *)
-                # Assume it's a session ID
-                if [ -z "$SESSION_ID" ]; then
-                    SESSION_ID="$1"
-                else
-                    error_exit "Unexpected argument: $1"
-                fi
-                shift
+                error_exit "Invalid graph type: $2. Use: cumulative, delta, or both"
                 ;;
+            esac
+            shift 2
+            ;;
+        --*)
+            error_exit "Unknown option: $1\nUse --help for usage information."
+            ;;
+        *)
+            # Assume it's a session ID
+            if [ -z "$SESSION_ID" ]; then
+                SESSION_ID="$1"
+            else
+                error_exit "Unexpected argument: $1"
+            fi
+            shift
+            ;;
         esac
     done
 }
@@ -640,7 +658,7 @@ load_config() {
         while IFS='=' read -r key value || [ -n "$key" ]; do
             # Skip comments and empty lines
             case "$key" in
-                '#'*|'') continue ;;
+            '#'* | '') continue ;;
             esac
 
             # Sanitize key and value
@@ -648,13 +666,13 @@ load_config() {
             value=$(echo "$value" | tr -d '"' | tr -d "'" | tr -d '[:space:]')
 
             case "$key" in
-                token_detail)
-                    if [ "$value" = "false" ]; then
-                        TOKEN_DETAIL_ENABLED=false
-                    fi
-                    ;;
+            token_detail)
+                if [ "$value" = "false" ]; then
+                    TOKEN_DETAIL_ENABLED=false
+                fi
+                ;;
             esac
-        done < "$CONFIG_FILE"
+        done <"$CONFIG_FILE"
     fi
 }
 
@@ -674,16 +692,16 @@ render_once() {
 
     # Render graphs
     case "$GRAPH_TYPE" in
-        cumulative)
-            render_timeseries_graph "Cumulative Token Usage" "$TOKENS" "$TIMESTAMPS" "$GREEN"
-            ;;
-        delta)
-            render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$DELTA_TIMES" "$CYAN"
-            ;;
-        both)
-            render_timeseries_graph "Cumulative Token Usage" "$TOKENS" "$TIMESTAMPS" "$GREEN"
-            render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$DELTA_TIMES" "$CYAN"
-            ;;
+    cumulative)
+        render_timeseries_graph "Cumulative Token Usage" "$TOKENS" "$TIMESTAMPS" "$GREEN"
+        ;;
+    delta)
+        render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$DELTA_TIMES" "$CYAN"
+        ;;
+    both)
+        render_timeseries_graph "Cumulative Token Usage" "$TOKENS" "$TIMESTAMPS" "$GREEN"
+        render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$DELTA_TIMES" "$CYAN"
+        ;;
     esac
 
     # Render summary
@@ -728,7 +746,7 @@ run_watch_mode() {
         # Re-validate and render (file might have new data)
         if [ -f "$state_file" ]; then
             local line_count
-            line_count=$(wc -l < "$state_file" | tr -d ' ')
+            line_count=$(wc -l <"$state_file" | tr -d ' ')
             if [ "$line_count" -ge 2 ]; then
                 render_once "$state_file"
             else

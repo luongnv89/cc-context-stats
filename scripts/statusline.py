@@ -210,13 +210,26 @@ def main():
 
         # Calculate and display token delta if enabled
         if show_delta:
+            import glob
+            import shutil
             import time
 
-            # Use session_id for per-session state (avoids conflicts with parallel sessions)
+            state_dir = os.path.expanduser("~/.claude/statusline")
+            os.makedirs(state_dir, exist_ok=True)
+
+            old_state_dir = os.path.expanduser("~/.claude")
+            for old_file in glob.glob(os.path.join(old_state_dir, "statusline*.state")):
+                if os.path.isfile(old_file):
+                    new_file = os.path.join(state_dir, os.path.basename(old_file))
+                    if not os.path.exists(new_file):
+                        shutil.move(old_file, new_file)
+                    else:
+                        os.remove(old_file)
+
             if session_id:
-                state_file = os.path.expanduser(f"~/.claude/statusline.{session_id}.state")
+                state_file = os.path.join(state_dir, f"statusline.{session_id}.state")
             else:
-                state_file = os.path.expanduser("~/.claude/statusline.state")
+                state_file = os.path.join(state_dir, "statusline.state")
             has_prev = False
             prev_tokens = 0
             try:

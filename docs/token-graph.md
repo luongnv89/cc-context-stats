@@ -153,7 +153,7 @@ However, the built-in `--watch` mode provides smoother updates without flickerin
 
 ## Data Source
 
-Reads from `~/.claude/statusline.<session_id>.state` files, automatically created when `show_delta=true` (default). Format: `timestamp,tokens` per line.
+Reads from `~/.claude/statusline/statusline.<session_id>.state` files, automatically created when `show_delta=true` (default). Format: `timestamp,tokens` per line.
 
 ## Slash Command
 
