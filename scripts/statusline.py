@@ -19,6 +19,9 @@ Create/edit ~/.claude/statusline.conf and set:
   show_session=false (hide session_id from status line)
 
 When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
+
+State file format (CSV):
+  timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,workspace_project_dir
 """
 
 import json
@@ -75,10 +78,11 @@ def get_git_info(project_dir):
 def read_config():
     """Read settings from config file"""
     config = {
-        "autocompact": True,  # Default: enabled
-        "token_detail": True,  # Default: show exact count
-        "show_delta": True,  # Default: show token delta
-        "show_session": True,  # Default: show session_id
+        "autocompact": True,
+        "token_detail": True,
+        "show_delta": True,
+        "show_session": True,
+        "show_io_tokens": True,
     }
     config_path = os.path.expanduser("~/.claude/statusline.conf")
 
@@ -123,6 +127,8 @@ show_session=true
                     config["show_delta"] = value != "false"
                 elif key == "show_session":
                     config["show_session"] = value != "false"
+                elif key == "show_io_tokens":
+                    config["show_io_tokens"] = value != "false"
     except Exception:
         pass
     return config
@@ -150,6 +156,7 @@ def main():
     token_detail = config["token_detail"]
     show_delta = config["show_delta"]
     show_session = config["show_session"]
+    show_io_tokens = config["show_io_tokens"]
 
     # Extract session_id once for reuse
     session_id = data.get("session_id")
@@ -161,6 +168,13 @@ def main():
     session_info = ""
     total_size = data.get("context_window", {}).get("context_window_size", 0)
     current_usage = data.get("context_window", {}).get("current_usage")
+    total_input_tokens = data.get("context_window", {}).get("total_input_tokens", 0)
+    total_output_tokens = data.get("context_window", {}).get("total_output_tokens", 0)
+    cost_usd = data.get("cost", {}).get("total_cost_usd", 0)
+    lines_added = data.get("cost", {}).get("total_lines_added", 0)
+    lines_removed = data.get("cost", {}).get("total_lines_removed", 0)
+    model_id = data.get("model", {}).get("id", "")
+    workspace_project_dir = data.get("workspace", {}).get("project_dir", "")
 
     if total_size > 0 and current_usage:
         # Get tokens from current_usage (includes cache)
@@ -255,10 +269,32 @@ def main():
                 else:
                     delta_display = f"{delta / 1000:.1f}k"
                 delta_info = f" {DIM}[+{delta_display}]{RESET}"
-            # Append current usage with timestamp (format: timestamp,tokens)
+            # Append current usage with comprehensive format
+            # Format: timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,workspace_project_dir
             try:
+                cur_input_tokens = current_usage.get("input_tokens", 0)
+                cur_output_tokens = current_usage.get("output_tokens", 0)
+                state_data = ",".join(
+                    str(x)
+                    for x in [
+                        int(time.time()),
+                        total_input_tokens,
+                        total_output_tokens,
+                        cur_input_tokens,
+                        cur_output_tokens,
+                        cache_creation,
+                        cache_read,
+                        cost_usd,
+                        lines_added,
+                        lines_removed,
+                        session_id or "",
+                        model_id,
+                        workspace_project_dir,
+                        total_size,
+                    ]
+                )
                 with open(state_file, "a") as f:
-                    f.write(f"{int(time.time())},{used_tokens}\n")
+                    f.write(f"{state_data}\n")
             except Exception:
                 pass
 

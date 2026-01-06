@@ -18,6 +18,9 @@
 #   show_session=false (hide session_id from status line)
 #
 # When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
+#
+# State file format (CSV):
+#   timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,workspace_project_dir
 
 # Colors
 BLUE='\033[0;34m'
@@ -60,10 +63,12 @@ autocompact_enabled=true
 token_detail_enabled=true
 show_delta_enabled=true
 show_session_enabled=true
-autocompact=""  # Will be set by sourced config
-token_detail="" # Will be set by sourced config
-show_delta=""   # Will be set by sourced config
-show_session="" # Will be set by sourced config
+show_io_tokens_enabled=true
+autocompact=""    # Will be set by sourced config
+token_detail=""   # Will be set by sourced config
+show_delta=""     # Will be set by sourced config
+show_session=""   # Will be set by sourced config
+show_io_tokens="" # Will be set by sourced config
 ac_info=""
 delta_info=""
 session_info=""
@@ -102,12 +107,22 @@ if [[ -f ~/.claude/statusline.conf ]]; then
     if [[ "$show_session" == "false" ]]; then
         show_session_enabled=false
     fi
+    if [[ "$show_io_tokens" == "false" ]]; then
+        show_io_tokens_enabled=false
+    fi
 fi
 
 # Calculate context window - show remaining free space
 context_info=""
 total_size=$(echo "$input" | jq -r '.context_window.context_window_size // 0')
 current_usage=$(echo "$input" | jq '.context_window.current_usage')
+total_input_tokens=$(echo "$input" | jq -r '.context_window.total_input_tokens // 0')
+total_output_tokens=$(echo "$input" | jq -r '.context_window.total_output_tokens // 0')
+cost_usd=$(echo "$input" | jq -r '.cost.total_cost_usd // 0')
+lines_added=$(echo "$input" | jq -r '.cost.total_lines_added // 0')
+lines_removed=$(echo "$input" | jq -r '.cost.total_lines_removed // 0')
+model_id=$(echo "$input" | jq -r '.model.id // ""')
+workspace_project_dir=$(echo "$input" | jq -r '.workspace.project_dir // ""')
 
 if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
     # Get tokens from current_usage (includes cache)
@@ -204,8 +219,11 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
             fi
             delta_info=" ${DIM}[+${delta_display}]${RESET}"
         fi
-        # Append current usage with timestamp (format: timestamp,tokens)
-        echo "$(date +%s),$used_tokens" >>"$state_file"
+        # Append current usage with comprehensive format
+        # Format: timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,workspace_project_dir
+        cur_input_tokens=$(echo "$current_usage" | jq -r '.input_tokens // 0')
+        cur_output_tokens=$(echo "$current_usage" | jq -r '.output_tokens // 0')
+        echo "$(date +%s),$total_input_tokens,$total_output_tokens,$cur_input_tokens,$cur_output_tokens,$cache_creation,$cache_read,$cost_usd,$lines_added,$lines_removed,$session_id,$model_id,$workspace_project_dir,$total_size" >>"$state_file"
     fi
 fi
 

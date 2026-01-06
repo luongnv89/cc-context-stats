@@ -42,6 +42,8 @@ RESET='\033[0m'
 # Use simple arrays for bash 3.2 compatibility
 TIMESTAMPS=""
 TOKENS=""
+INPUT_TOKENS=""
+OUTPUT_TOKENS=""
 DELTAS=""
 DELTA_TIMES=""
 DATA_COUNT=0
@@ -72,7 +74,9 @@ OPTIONS:
     --type <type>  Graph type to display:
                    - cumulative: Total tokens over time
                    - delta: Token consumption per interval
-                   - both: Show both graphs (default)
+                   - io: Input/output tokens over time
+                   - both: Show cumulative and delta graphs (default)
+                   - all: Show all graphs including I/O
     --watch, -w [interval]
                    Enable real-time monitoring mode.
                    Refreshes the graph every [interval] seconds (default: 2).
@@ -90,6 +94,9 @@ EXAMPLES:
     # Show only cumulative graph
     token-graph.sh --type cumulative
 
+    # Show input/output token graphs
+    token-graph.sh --type io
+
     # Real-time monitoring (refresh every 2 seconds)
     token-graph.sh --watch
 
@@ -104,7 +111,7 @@ EXAMPLES:
 
 DATA SOURCE:
     Reads token history from ~/.claude/statusline/statusline.<session_id>.state
-    Each line contains: timestamp,tokens
+    CSV format: timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,...
 
 EOF
 }
@@ -270,37 +277,69 @@ load_token_history() {
 
     TIMESTAMPS=""
     TOKENS=""
+    INPUT_TOKENS=""
+    OUTPUT_TOKENS=""
+    CONTEXT_SIZES=""
     DATA_COUNT=0
 
-    while IFS=',' read -r ts tok || [ -n "$ts" ]; do
+    while IFS=',' read -r ts total_in total_out cur_in cur_out cache_creation cache_read cost_usd lines_added lines_removed session_id model_id workspace_project_dir context_size rest || [ -n "$ts" ]; do
         line_num=$((line_num + 1))
 
         # Skip empty lines
         [ -z "$ts" ] && continue
 
-        # Validate format (simple numeric check)
+        # Validate timestamp (simple numeric check)
         case "$ts" in
         '' | *[!0-9]*)
             skipped_lines=$((skipped_lines + 1))
-            [ $skipped_lines -le 3 ] && warn "Skipping invalid line $line_num: $ts,$tok"
+            [ $skipped_lines -le 3 ] && warn "Skipping invalid line $line_num"
             continue
             ;;
         esac
-        case "$tok" in
-        '' | *[!0-9]*)
-            skipped_lines=$((skipped_lines + 1))
-            [ $skipped_lines -le 3 ] && warn "Skipping invalid line $line_num: $ts,$tok"
-            continue
-            ;;
+
+        # Handle both old format (timestamp,tokens) and new format (timestamp,total_in,total_out,...)
+        if [ -z "$total_out" ]; then
+            # Old format: timestamp,tokens - use tokens as both input and output combined
+            local tok="$total_in"
+            case "$tok" in
+            '' | *[!0-9]*)
+                skipped_lines=$((skipped_lines + 1))
+                continue
+                ;;
+            esac
+            total_in=$tok
+            total_out=0
+        fi
+
+        # Validate numeric fields
+        case "$total_in" in
+        '' | *[!0-9]*) total_in=0 ;;
+        esac
+        case "$total_out" in
+        '' | *[!0-9]*) total_out=0 ;;
+        esac
+
+        # Calculate combined tokens for backward compatibility
+        local combined=$((total_in + total_out))
+
+        # Validate context size (new format)
+        case "$context_size" in
+        '' | *[!0-9]*) context_size=0 ;;
         esac
 
         # Append to space-separated strings (bash 3.2 compatible)
         if [ -z "$TIMESTAMPS" ]; then
             TIMESTAMPS="$ts"
-            TOKENS="$tok"
+            TOKENS="$combined"
+            INPUT_TOKENS="$total_in"
+            OUTPUT_TOKENS="$total_out"
+            CONTEXT_SIZES="$context_size"
         else
             TIMESTAMPS="$TIMESTAMPS $ts"
-            TOKENS="$TOKENS $tok"
+            TOKENS="$TOKENS $combined"
+            INPUT_TOKENS="$INPUT_TOKENS $total_in"
+            OUTPUT_TOKENS="$OUTPUT_TOKENS $total_out"
+            CONTEXT_SIZES="$CONTEXT_SIZES $context_size"
         fi
         valid_lines=$((valid_lines + 1))
     done <"$file"
@@ -565,6 +604,20 @@ render_summary() {
     first_tokens=$(get_element "$TOKENS" 1)
     total_growth=$((current_tokens - first_tokens))
 
+    # Get I/O token stats
+    local current_input current_output
+    current_input=$(get_element "$INPUT_TOKENS" "$DATA_COUNT")
+    current_output=$(get_element "$OUTPUT_TOKENS" "$DATA_COUNT")
+    current_context=$(get_element "$CONTEXT_SIZES" "$DATA_COUNT")
+
+    # Calculate remaining context window
+    local total_used=$((current_input + current_output))
+    local remaining_context=$((current_context - total_used))
+    local context_percentage=0
+    if [ "$current_context" -gt 0 ]; then
+        context_percentage=$((remaining_context * 100 / current_context))
+    fi
+
     # Get statistics
     local del_stats
     del_stats=$(get_stats "$DELTAS")
@@ -583,7 +636,12 @@ render_summary() {
     done
     printf "${RESET}\n"
 
-    printf "  ${CYAN}%-20s${RESET} %s\n" "Current Tokens:" "$(format_number $current_tokens)"
+    printf "  ${CYAN}%-20s${RESET} %s\n" "Total Tokens:" "$(format_number $current_tokens)"
+    printf "  ${BLUE}%-20s${RESET} %s\n" "Input Tokens (↓):" "$(format_number $current_input)"
+    printf "  ${MAGENTA}%-20s${RESET} %s\n" "Output Tokens (↑):" "$(format_number $current_output)"
+    if [ "$current_context" -gt 0 ]; then
+        printf "  ${GREEN}%-20s${RESET} %s (%s%%)\n" "Remaining Context:" "$(format_number $remaining_context)" "$context_percentage"
+    fi
     printf "  ${CYAN}%-20s${RESET} %s\n" "Session Duration:" "$(format_duration $duration)"
     printf "  ${CYAN}%-20s${RESET} %s\n" "Data Points:" "$DATA_COUNT"
     printf "  ${CYAN}%-20s${RESET} %s\n" "Average Delta:" "$(format_number $del_avg)"
@@ -625,11 +683,11 @@ parse_args() {
                 error_exit "--type requires an argument: cumulative, delta, or both"
             fi
             case "$2" in
-            cumulative | delta | both)
+            cumulative | delta | io | both | all)
                 GRAPH_TYPE="$2"
                 ;;
             *)
-                error_exit "Invalid graph type: $2. Use: cumulative, delta, or both"
+                error_exit "Invalid graph type: $2. Use: cumulative, delta, io, both, or all"
                 ;;
             esac
             shift 2
@@ -698,7 +756,17 @@ render_once() {
     delta)
         render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$DELTA_TIMES" "$CYAN"
         ;;
+    io)
+        render_timeseries_graph "Input Tokens (↓)" "$INPUT_TOKENS" "$TIMESTAMPS" "$BLUE"
+        render_timeseries_graph "Output Tokens (↑)" "$OUTPUT_TOKENS" "$TIMESTAMPS" "$MAGENTA"
+        ;;
     both)
+        render_timeseries_graph "Cumulative Token Usage" "$TOKENS" "$TIMESTAMPS" "$GREEN"
+        render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$DELTA_TIMES" "$CYAN"
+        ;;
+    all)
+        render_timeseries_graph "Input Tokens (↓)" "$INPUT_TOKENS" "$TIMESTAMPS" "$BLUE"
+        render_timeseries_graph "Output Tokens (↑)" "$OUTPUT_TOKENS" "$TIMESTAMPS" "$MAGENTA"
         render_timeseries_graph "Cumulative Token Usage" "$TOKENS" "$TIMESTAMPS" "$GREEN"
         render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$DELTA_TIMES" "$CYAN"
         ;;

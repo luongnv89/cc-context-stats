@@ -19,6 +19,9 @@
  *   show_session=false (hide session_id from status line)
  *
  * When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
+ *
+ * State file format (CSV):
+ *   timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,workspace_project_dir
  */
 
 const { execSync } = require('child_process');
@@ -73,10 +76,11 @@ function getGitInfo(projectDir) {
 
 function readConfig() {
     const config = {
-        autocompact: true, // Default: enabled
-        tokenDetail: true, // Default: show exact count
-        showDelta: true, // Default: show token delta
-        showSession: true, // Default: show session_id
+        autocompact: true,
+        tokenDetail: true,
+        showDelta: true,
+        showSession: true,
+        showIoTokens: true,
     };
     const configPath = path.join(os.homedir(), '.claude', 'statusline.conf');
 
@@ -99,7 +103,7 @@ show_delta=true
 
 # Show session_id in status line
 show_session=true
-`;
+\`;
             fs.writeFileSync(configPath, defaultConfig);
         } catch {
             // Ignore errors creating config
@@ -125,6 +129,8 @@ show_session=true
                 config.showDelta = valueTrimmed !== 'false';
             } else if (keyTrimmed === 'show_session') {
                 config.showSession = valueTrimmed !== 'false';
+            } else if (keyTrimmed === 'show_io_tokens') {
+                config.showIoTokens = valueTrimmed !== 'false';
             }
         }
     } catch {
@@ -162,6 +168,7 @@ process.stdin.on('end', () => {
     const tokenDetail = config.tokenDetail;
     const showDelta = config.showDelta;
     const showSession = config.showSession;
+    const showIoTokens = config.showIoTokens;
 
     // Extract session_id once for reuse
     const sessionId = data.session_id;
@@ -173,6 +180,13 @@ process.stdin.on('end', () => {
     let sessionInfo = '';
     const totalSize = data.context_window?.context_window_size || 0;
     const currentUsage = data.context_window?.current_usage;
+    const totalInputTokens = data.context_window?.total_input_tokens || 0;
+    const totalOutputTokens = data.context_window?.total_output_tokens || 0;
+    const costUsd = data.cost?.total_cost_usd || 0;
+    const linesAdded = data.cost?.total_lines_added || 0;
+    const linesRemoved = data.cost?.total_lines_removed || 0;
+    const modelId = data.model?.id || '';
+    const workspaceProjectDir = data.workspace?.project_dir || '';
 
     if (totalSize > 0 && currentUsage) {
         // Get tokens from current_usage (includes cache)
@@ -280,10 +294,29 @@ process.stdin.on('end', () => {
                     : `${(delta / 1000).toFixed(1)}k`;
                 deltaInfo = ` ${DIM}[+${deltaDisplay}]${RESET}`;
             }
-            // Append current usage with timestamp (format: timestamp,tokens)
+            // Append current usage with comprehensive format
+            // Format: timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,workspace_project_dir
             try {
                 const timestamp = Math.floor(Date.now() / 1000);
-                fs.appendFileSync(stateFile, `${timestamp},${usedTokens}\n`);
+                const curInputTokens = currentUsage.input_tokens || 0;
+                const curOutputTokens = currentUsage.output_tokens || 0;
+                const stateData = [
+                    timestamp,
+                    totalInputTokens,
+                    totalOutputTokens,
+                    curInputTokens,
+                    curOutputTokens,
+                    cacheCreation,
+                    cacheRead,
+                    costUsd,
+                    linesAdded,
+                    linesRemoved,
+                    sessionId || '',
+                    modelId,
+                    workspaceProjectDir,
+                    totalSize,
+                ].join(',');
+                fs.appendFileSync(stateFile, `${stateData}\n`);
             } catch {
                 // Ignore errors
             }
