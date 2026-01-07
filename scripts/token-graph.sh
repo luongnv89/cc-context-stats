@@ -236,7 +236,7 @@ find_latest_state_file() {
 
     # Find most recent state file
     local latest
-    latest=$(ls -t "$STATE_DIR"/statusline.*.state 2>/dev/null | head -1)
+    latest=$(find "$STATE_DIR" -maxdepth 1 -name 'statusline.*.state' -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
 
     if [ -z "$latest" ]; then
         # Try the default state file
@@ -445,7 +445,7 @@ render_timeseries_graph() {
     # Print title
     echo ""
     echo -e "${BOLD}$title${RESET}"
-    echo -e "${DIM}Max: $(format_number $max)  Min: $(format_number $min)  Points: $n${RESET}"
+    echo -e "${DIM}Max: $(format_number "$max")  Min: $(format_number "$min")  Points: $n${RESET}"
     echo ""
 
     # Build grid using awk - smooth line with filled area below
@@ -582,7 +582,7 @@ render_timeseries_graph() {
         printf "─"
         c=$((c + 1))
     done
-    printf "${RESET}\n"
+    printf "%s\n" "${RESET}"
 
     # Time labels
     local first_time last_time mid_time
@@ -628,25 +628,25 @@ render_summary() {
     echo ""
     echo -e "${BOLD}Summary Statistics${RESET}"
     local line_width=$((GRAPH_WIDTH + 11))
-    printf "${DIM}"
+    printf "%s" "${DIM}"
     local i=0
     while [ $i -lt $line_width ]; do
         printf "-"
         i=$((i + 1))
     done
-    printf "${RESET}\n"
+    printf "%s\n" "${RESET}"
 
-    printf "  ${CYAN}%-20s${RESET} %s\n" "Total Tokens:" "$(format_number $current_tokens)"
-    printf "  ${BLUE}%-20s${RESET} %s\n" "Input Tokens (↓):" "$(format_number $current_input)"
-    printf "  ${MAGENTA}%-20s${RESET} %s\n" "Output Tokens (↑):" "$(format_number $current_output)"
+    printf "  ${CYAN}%-20s${RESET} %s\n" "Total Tokens:" "$(format_number "$current_tokens")"
+    printf "  ${BLUE}%-20s${RESET} %s\n" "Input Tokens (↓):" "$(format_number "$current_input")"
+    printf "  ${MAGENTA}%-20s${RESET} %s\n" "Output Tokens (↑):" "$(format_number "$current_output")"
     if [ "$current_context" -gt 0 ]; then
-        printf "  ${GREEN}%-20s${RESET} %s (%s%%)\n" "Remaining Context:" "$(format_number $remaining_context)" "$context_percentage"
+        printf "  ${GREEN}%-20s${RESET} %s (%s%%)\n" "Remaining Context:" "$(format_number "$remaining_context")" "$context_percentage"
     fi
-    printf "  ${CYAN}%-20s${RESET} %s\n" "Session Duration:" "$(format_duration $duration)"
+    printf "  ${CYAN}%-20s${RESET} %s\n" "Session Duration:" "$(format_duration "$duration")"
     printf "  ${CYAN}%-20s${RESET} %s\n" "Data Points:" "$DATA_COUNT"
-    printf "  ${CYAN}%-20s${RESET} %s\n" "Average Delta:" "$(format_number $del_avg)"
-    printf "  ${CYAN}%-20s${RESET} %s\n" "Max Delta:" "$(format_number $del_max)"
-    printf "  ${CYAN}%-20s${RESET} %s\n" "Total Growth:" "$(format_number $total_growth)"
+    printf "  ${CYAN}%-20s${RESET} %s\n" "Average Delta:" "$(format_number "$del_avg")"
+    printf "  ${CYAN}%-20s${RESET} %s\n" "Max Delta:" "$(format_number "$del_max")"
+    printf "  ${CYAN}%-20s${RESET} %s\n" "Total Growth:" "$(format_number "$total_growth")"
     echo ""
 }
 
@@ -793,15 +793,15 @@ run_watch_mode() {
     trap 'printf "${SHOW_CURSOR}\n${DIM}Watch mode stopped.${RESET}\n"; exit 0' INT TERM
 
     # Hide cursor for cleaner display
-    printf "${HIDE_CURSOR}"
+    printf "%s" "${HIDE_CURSOR}"
 
     # Initial clear
-    printf "${CLEAR_SCREEN}${CURSOR_HOME}"
+    printf "%s%s" "${CLEAR_SCREEN}" "${CURSOR_HOME}"
 
     while true; do
         # Move cursor to home position (top-left) instead of clearing
         # This prevents flickering by overwriting in place
-        printf "${CURSOR_HOME}"
+        printf "%s" "${CURSOR_HOME}"
 
         # Re-read terminal dimensions in case of resize
         get_terminal_dimensions
@@ -809,7 +809,7 @@ run_watch_mode() {
         # Show watch mode indicator with live timestamp
         local current_time
         current_time=$(date +%H:%M:%S)
-        printf "${DIM}[LIVE ${current_time}] Refresh: ${WATCH_INTERVAL}s | Ctrl+C to exit${RESET}\n"
+        printf "%s[LIVE %s] Refresh: %ss | Ctrl+C to exit%s\n" "${DIM}" "${current_time}" "${WATCH_INTERVAL}" "${RESET}"
 
         # Re-validate and render (file might have new data)
         if [ -f "$state_file" ]; then
@@ -818,12 +818,12 @@ run_watch_mode() {
             if [ "$line_count" -ge 2 ]; then
                 render_once "$state_file"
             else
-                printf "\n${YELLOW}Waiting for more data points...${RESET}\n"
-                printf "${DIM}Current: $line_count point(s), need at least 2${RESET}\n"
+                printf "\n%sWaiting for more data points...%s\n" "${YELLOW}" "${RESET}"
+                printf "%sCurrent: %s point(s), need at least 2%s\n" "${DIM}" "$line_count" "${RESET}"
             fi
         else
-            printf "\n${RED}State file not found: $state_file${RESET}\n"
-            printf "${DIM}Waiting for file to be created...${RESET}\n"
+            printf "\n%sState file not found: %s%s\n" "${RED}" "$state_file" "${RESET}"
+            printf "%sWaiting for file to be created...%s\n" "${DIM}" "${RESET}"
         fi
 
         # Clear any remaining lines from previous render (in case terminal resized smaller)

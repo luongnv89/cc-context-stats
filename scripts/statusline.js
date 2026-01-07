@@ -103,7 +103,7 @@ show_delta=true
 
 # Show session_id in status line
 show_session=true
-\`;
+`;
             fs.writeFileSync(configPath, defaultConfig);
         } catch {
             // Ignore errors creating config
@@ -168,7 +168,7 @@ process.stdin.on('end', () => {
     const tokenDetail = config.tokenDetail;
     const showDelta = config.showDelta;
     const showSession = config.showSession;
-    const showIoTokens = config.showIoTokens;
+    // Note: showIoTokens setting is read but not yet implemented
 
     // Extract session_id once for reuse
     const sessionId = data.session_id;

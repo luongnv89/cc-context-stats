@@ -156,7 +156,7 @@ def main():
     token_detail = config["token_detail"]
     show_delta = config["show_delta"]
     show_session = config["show_session"]
-    show_io_tokens = config["show_io_tokens"]
+    # Note: show_io_tokens setting is read but not yet implemented
 
     # Extract session_id once for reuse
     session_id = data.get("session_id")

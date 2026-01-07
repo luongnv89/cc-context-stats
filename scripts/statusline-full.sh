@@ -63,12 +63,10 @@ autocompact_enabled=true
 token_detail_enabled=true
 show_delta_enabled=true
 show_session_enabled=true
-show_io_tokens_enabled=true
 autocompact=""    # Will be set by sourced config
 token_detail=""   # Will be set by sourced config
 show_delta=""     # Will be set by sourced config
 show_session=""   # Will be set by sourced config
-show_io_tokens="" # Will be set by sourced config
 ac_info=""
 delta_info=""
 session_info=""
@@ -107,9 +105,7 @@ if [[ -f ~/.claude/statusline.conf ]]; then
     if [[ "$show_session" == "false" ]]; then
         show_session_enabled=false
     fi
-    if [[ "$show_io_tokens" == "false" ]]; then
-        show_io_tokens_enabled=false
-    fi
+    # Note: show_io_tokens setting is read but not yet implemented
 fi
 
 # Calculate context window - show remaining free space
