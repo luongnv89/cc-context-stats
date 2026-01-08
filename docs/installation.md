@@ -29,7 +29,7 @@ This runs the installer interactively, allowing you to select from:
 ### Install from Source
 
 ```bash
-git clone https://github.com/luongnv89/claude-statusline.git
+git clone https://github.com/luongnv89/cc-context-stats.git
 cd claude-statusline
 ./install.sh
 ```
@@ -46,7 +46,7 @@ The installer will:
 Use the Python or Node.js version (no `jq` required):
 
 ```powershell
-git clone https://github.com/luongnv89/claude-statusline.git
+git clone https://github.com/luongnv89/cc-context-stats.git
 copy claude-statusline\scripts\statusline.py %USERPROFILE%\.claude\statusline.py
 ```
 

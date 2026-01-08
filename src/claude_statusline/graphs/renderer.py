@@ -321,6 +321,6 @@ class GraphRenderer:
         print(
             f"{self.colors.dim}Powered by {self.colors.cyan}claude-statusline"
             f"{self.colors.dim} v{version}-{commit_hash} - "
-            f"https://github.com/luongnv89/claude-statusline{self.colors.reset}"
+            f"https://github.com/luongnv89/cc-context-stats{self.colors.reset}"
         )
         print()

@@ -21,7 +21,7 @@ Thank you for your interest in contributing to Claude Code Status Line! This doc
 brew install jq bats-core
 
 # Clone the repository
-git clone https://github.com/luongnv89/claude-statusline.git
+git clone https://github.com/luongnv89/cc-context-stats.git
 cd claude-statusline
 
 # Install Python dependencies
@@ -44,7 +44,7 @@ sudo apt-get update
 sudo apt-get install -y jq bats
 
 # Clone the repository
-git clone https://github.com/luongnv89/claude-statusline.git
+git clone https://github.com/luongnv89/cc-context-stats.git
 cd claude-statusline
 
 # Install Python dependencies

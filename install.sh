@@ -5,7 +5,7 @@
 #
 # Usage:
 #   Local:  ./install.sh
-#   Remote: curl -fsSL https://raw.githubusercontent.com/luongnv89/claude-statusline/main/install.sh | bash
+#   Remote: curl -fsSL https://raw.githubusercontent.com/luongnv89/cc-context-stats/main/install.sh | bash
 #
 
 set -e
@@ -22,8 +22,8 @@ SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 LOCAL_BIN="$HOME/.local/bin"
 
 # GitHub repository info for remote installation
-GITHUB_RAW_URL="https://raw.githubusercontent.com/luongnv89/claude-statusline/main"
-GITHUB_API_URL="https://api.github.com/repos/luongnv89/claude-statusline"
+GITHUB_RAW_URL="https://raw.githubusercontent.com/luongnv89/cc-context-stats/main"
+GITHUB_API_URL="https://api.github.com/repos/luongnv89/cc-context-stats"
 
 # Detect if running from pipe (curl) or locally
 detect_install_mode() {

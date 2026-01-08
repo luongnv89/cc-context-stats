@@ -181,7 +181,7 @@ watch -n 1 'tail -5 ~/.claude/statusline/statusline.*.state'
 
 ## Getting Help
 
-- Check [existing issues](https://github.com/luongnv89/claude-statusline/issues)
+- Check [existing issues](https://github.com/luongnv89/cc-context-stats/issues)
 - Open a new issue with:
   - Operating system
   - Shell type (bash/zsh)

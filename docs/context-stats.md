@@ -68,7 +68,7 @@ Session Summary
   Output Tokens:       43,429
   Session Duration:    2h 29m
 
-Powered by claude-statusline v1.2.0 - https://github.com/luongnv89/claude-statusline
+Powered by claude-statusline v1.2.0 - https://github.com/luongnv89/cc-context-stats
 ```
 
 ## Features

@@ -132,7 +132,7 @@ autocompact=true    # Show autocompact buffer indicator
 For users who prefer shell scripts:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/luongnv89/claude-statusline/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/luongnv89/cc-context-stats/main/install.sh | bash
 ```
 
 ## How It Works

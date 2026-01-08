@@ -24,7 +24,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/luongnv89/claude-statusline.git"
+    "url": "https://github.com/luongnv89/cc-context-stats.git"
   },
   "devDependencies": {
     "eslint": "^8.56.0",
