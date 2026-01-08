@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cc-statusline"
-version = "1.0.1"
+version = "1.0.2"
 description = "Custom status line and token visualization toolkit for Claude Code"
 readme = "README.md"
 license = { text = "MIT" }

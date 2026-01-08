@@ -3,7 +3,7 @@
 A custom status line and token visualization toolkit for Claude Code.
 """
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 from claude_statusline.core.config import Config
 from claude_statusline.core.state import StateFile
