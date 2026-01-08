@@ -706,20 +706,19 @@ render_summary() {
         echo ""
         printf '  %b%-20s%b %s/%s (%s%%)\n' "${status_color}" "Context Remaining:" "${RESET}" "$(format_number "$remaining_context")" "$(format_number "$current_context")" "$context_percentage"
     fi
-    if [ -n "$LAST_MODEL_ID" ]; then
-        printf '  %b%-20s%b %s\n' "${DIM}" "Model:" "${RESET}" "$LAST_MODEL_ID"
-    fi
-    printf '  %b%-20s%b %s\n' "${BLUE}" "Input Tokens:" "${RESET}" "$(format_number "$current_input")"
-    printf '  %b%-20s%b %s\n' "${MAGENTA}" "Output Tokens:" "${RESET}" "$(format_number "$current_output")"
     printf '  %b%-20s%b %s\n' "${CYAN}" "Session Duration:" "${RESET}" "$(format_duration "$duration")"
     # Cost
     if [ -n "$LAST_COST_USD" ] && [ "$LAST_COST_USD" != "0" ]; then
         printf '  %b%-20s%b $%s\n' "${YELLOW}" "Total Cost:" "${RESET}" "$LAST_COST_USD"
     fi
-    # Lines changed
+    if [ -n "$LAST_MODEL_ID" ]; then
+        printf '  %b%-20s%b %s\n' "${DIM}" "Model:" "${RESET}" "$LAST_MODEL_ID"
+    fi
+    printf '  %b%-20s%b %s\n' "${BLUE}" "Input Tokens:" "${RESET}" "$(format_number "$current_input")"
+    printf '  %b%-20s%b %s\n' "${MAGENTA}" "Output Tokens:" "${RESET}" "$(format_number "$current_output")"
+    # Lines changed (single line with colors)
     if [ -n "$LAST_LINES_ADDED" ] && [ "$LAST_LINES_ADDED" != "0" ] || [ -n "$LAST_LINES_REMOVED" ] && [ "$LAST_LINES_REMOVED" != "0" ]; then
-        printf '  %b%-20s%b +%s\n' "${GREEN}" "Lines Added:" "${RESET}" "$(format_number "$LAST_LINES_ADDED")"
-        printf '  %b%-20s%b -%s\n' "${RED}" "Lines Removed:" "${RESET}" "$(format_number "$LAST_LINES_REMOVED")"
+        printf '  %b%-20s%b %b+%s%b / %b-%s%b\n' "${DIM}" "Lines Changed:" "${RESET}" "${GREEN}" "$(format_number "$LAST_LINES_ADDED")" "${RESET}" "${RED}" "$(format_number "$LAST_LINES_REMOVED")" "${RESET}"
     fi
     echo ""
 }
