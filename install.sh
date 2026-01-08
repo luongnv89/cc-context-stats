@@ -201,7 +201,7 @@ install_script() {
     echo -e "${GREEN}✓${RESET} Installed: $DEST"
 }
 
-# Install token-graph CLI tool
+# Install context-stats CLI tool
 install_token_graph() {
     echo
 
@@ -211,7 +211,7 @@ install_token_graph() {
         mkdir -p "$LOCAL_BIN"
     fi
 
-    DEST="$LOCAL_BIN/token-graph"
+    DEST="$LOCAL_BIN/context-stats"
 
     if [ -f "$DEST" ]; then
         echo -e "${YELLOW}Warning: $DEST already exists${RESET}"
@@ -219,7 +219,7 @@ install_token_graph() {
             read -p "Overwrite? (y/n) " -n 1 -r
             echo
             if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                echo "Keeping existing token-graph."
+                echo "Keeping existing context-stats."
                 return
             fi
         else
@@ -231,10 +231,10 @@ install_token_graph() {
     local commit_hash
     if [ "$INSTALL_MODE" = "local" ]; then
         commit_hash=$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-        cp "$SCRIPT_DIR/scripts/token-graph.sh" "$DEST"
+        cp "$SCRIPT_DIR/scripts/context-stats.sh" "$DEST"
     else
         commit_hash=$(get_remote_commit_hash)
-        download_file "scripts/token-graph.sh" "$DEST"
+        download_file "scripts/context-stats.sh" "$DEST"
     fi
 
     # Embed commit hash
@@ -338,7 +338,7 @@ main() {
     echo "To customize, edit: $CLAUDE_DIR/$SCRIPT_NAME"
     echo "To change settings, edit: $CLAUDE_DIR/statusline.conf"
     echo
-    echo "Run 'token-graph' to visualize token usage for any session."
+    echo "Run 'context-stats' to visualize token usage for any session."
 }
 
 main

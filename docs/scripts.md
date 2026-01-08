@@ -9,7 +9,7 @@
 | `statusline-minimal.sh` | macOS, Linux | `jq`         | Model + directory only            |
 | `statusline.py`         | All          | Python 3     | Cross-platform, full-featured     |
 | `statusline.js`         | All          | Node.js      | Cross-platform, full-featured     |
-| `token-graph.sh`        | macOS, Linux | None         | Token usage visualization         |
+| `context-stats.sh`        | macOS, Linux | None         | Token usage visualization         |
 
 ## Bash Scripts
 
@@ -52,9 +52,9 @@ Node.js implementation matching `statusline-full.sh` functionality. Works on all
 
 ## Utility Scripts
 
-### token-graph.sh
+### context-stats.sh
 
-Standalone CLI tool for visualizing token consumption. See [Token Graph](token-graph.md) for details.
+Standalone CLI tool for visualizing token consumption. See [Context Stats](context-stats.md) for details.
 
 ## Output Format
 

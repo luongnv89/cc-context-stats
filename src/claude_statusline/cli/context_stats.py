@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Token Usage Graph Visualizer for Claude Code.
+"""Context Stats Visualizer for Claude Code.
 
 Displays ASCII graphs of token consumption over time.
 
 Usage:
-    token-graph [session_id] [options]
+    context-stats [session_id] [options]
 
 Options:
     --type <cumulative|delta|io|both|all>  Graph type to display (default: both)
@@ -39,10 +39,10 @@ CLEAR_TO_END = "\033[J"
 def show_help() -> None:
     """Show help message."""
     print(
-        """Token Usage Graph Visualizer for Claude Code
+        """Context Stats Visualizer for Claude Code
 
 USAGE:
-    token-graph [session_id] [options]
+    context-stats [session_id] [options]
 
 ARGUMENTS:
     session_id    Optional session ID. If not provided, uses the latest session.
@@ -63,28 +63,28 @@ OPTIONS:
 
 EXAMPLES:
     # Show graphs for latest session
-    token-graph
+    context-stats
 
     # Show graphs for specific session
-    token-graph abc123def
+    context-stats abc123def
 
     # Show only cumulative graph
-    token-graph --type cumulative
+    context-stats --type cumulative
 
     # Show input/output token graphs
-    token-graph --type io
+    context-stats --type io
 
     # Real-time monitoring (refresh every 2 seconds)
-    token-graph --watch
+    context-stats --watch
 
     # Real-time monitoring with custom interval
-    token-graph -w 5
+    context-stats -w 5
 
     # Combine options
-    token-graph abc123 --type cumulative --watch 3
+    context-stats abc123 --type cumulative --watch 3
 
     # Disable colors for piping to file
-    token-graph --no-color > output.txt
+    context-stats --no-color > output.txt
 
 DATA SOURCE:
     Reads token history from ~/.claude/statusline/statusline.<session_id>.state
@@ -95,7 +95,7 @@ DATA SOURCE:
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
-        description="Token Usage Graph Visualizer for Claude Code",
+        description="Context Stats Visualizer for Claude Code",
         add_help=False,
     )
     parser.add_argument("session_id", nargs="?", default=None, help="Session ID")
@@ -262,7 +262,7 @@ def run_watch_mode(
 
 
 def main() -> None:
-    """Main entry point for token-graph CLI."""
+    """Main entry point for context-stats CLI."""
     args = parse_args()
 
     # Load config for token_detail setting

@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "cc-statusline"
-version = "1.0.2"
-description = "Custom status line and token visualization toolkit for Claude Code"
+name = "cc-context-stats"
+version = "1.1.0"
+description = "Never run out of context unexpectedly - monitor your Claude Code tokens in real-time"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
@@ -15,10 +15,11 @@ authors = [
 keywords = [
     "claude",
     "claude-code",
-    "statusline",
-    "terminal",
-    "cli",
     "tokens",
+    "context-window",
+    "monitoring",
+    "visualization",
+    "cli",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -39,7 +40,7 @@ dependencies = []
 
 [project.scripts]
 claude-statusline = "claude_statusline.cli.statusline:main"
-token-graph = "claude_statusline.cli.token_graph:main"
+context-stats = "claude_statusline.cli.context_stats:main"
 
 [project.urls]
 Homepage = "https://github.com/luongnv89/claude-statusline"

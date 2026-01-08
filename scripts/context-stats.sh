@@ -1,9 +1,9 @@
 #!/bin/bash
-# Token Usage Graph Visualizer for Claude Code
+# Context Stats Visualizer for Claude Code
 # Displays ASCII graphs of token consumption over time
 #
 # Usage:
-#   token-graph.sh [session_id] [options]
+#   context-stats.sh [session_id] [options]
 #
 # Options:
 #   --type <cumulative|delta|both>  Graph type to display (default: both)
@@ -12,11 +12,11 @@
 #   --help                          Show this help
 #
 # Examples:
-#   token-graph.sh                        # Latest session, both graphs
-#   token-graph.sh abc123                 # Specific session
-#   token-graph.sh --type delta           # Only delta graph
-#   token-graph.sh --watch                # Real-time mode (2s refresh)
-#   token-graph.sh -w 5                   # Real-time mode (5s refresh)
+#   context-stats.sh                        # Latest session, both graphs
+#   context-stats.sh abc123                 # Specific session
+#   context-stats.sh --type delta           # Only delta graph
+#   context-stats.sh --watch                # Real-time mode (2s refresh)
+#   context-stats.sh -w 5                   # Real-time mode (5s refresh)
 
 # Note: This script is compatible with bash 3.2+ (macOS default)
 
@@ -62,10 +62,10 @@ WATCH_INTERVAL=2
 
 show_help() {
     cat <<'EOF'
-Token Usage Graph Visualizer for Claude Code
+Context Stats Visualizer for Claude Code
 
 USAGE:
-    token-graph.sh [session_id] [options]
+    context-stats.sh [session_id] [options]
 
 ARGUMENTS:
     session_id    Optional session ID. If not provided, uses the latest session.
@@ -86,28 +86,28 @@ OPTIONS:
 
 EXAMPLES:
     # Show graphs for latest session
-    token-graph.sh
+    context-stats.sh
 
     # Show graphs for specific session
-    token-graph.sh abc123def
+    context-stats.sh abc123def
 
     # Show only cumulative graph
-    token-graph.sh --type cumulative
+    context-stats.sh --type cumulative
 
     # Show input/output token graphs
-    token-graph.sh --type io
+    context-stats.sh --type io
 
     # Real-time monitoring (refresh every 2 seconds)
-    token-graph.sh --watch
+    context-stats.sh --watch
 
     # Real-time monitoring with custom interval
-    token-graph.sh -w 5
+    context-stats.sh -w 5
 
     # Combine options
-    token-graph.sh abc123 --type cumulative --watch 3
+    context-stats.sh abc123 --type cumulative --watch 3
 
     # Disable colors for piping to file
-    token-graph.sh --no-color > output.txt
+    context-stats.sh --no-color > output.txt
 
 DATA SOURCE:
     Reads token history from ~/.claude/statusline/statusline.<session_id>.state

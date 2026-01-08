@@ -1,9 +1,9 @@
-"""Claude Code statusline utilities.
+"""Claude Code Context Stats.
 
-A custom status line and token visualization toolkit for Claude Code.
+Never run out of context unexpectedly - monitor your Claude Code tokens in real-time.
 """
 
-__version__ = "1.0.2"
+__version__ = "1.1.0"
 
 from claude_statusline.core.config import Config
 from claude_statusline.core.state import StateFile

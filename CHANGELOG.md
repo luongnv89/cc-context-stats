@@ -7,11 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-01-08
+
+### Changed
+
+- **BREAKING**: Renamed package from `cc-statusline` to `cc-context-stats`
+- **BREAKING**: Renamed `token-graph` CLI command to `context-stats`
+- Pivoted project focus to real-time token monitoring and context tracking
+- Updated tagline: "Never run out of context unexpectedly"
+
+### Migration
+
+If upgrading from `cc-statusline`:
+```bash
+pip uninstall cc-statusline
+pip install cc-context-stats
+```
+
+The `claude-statusline` command still works. Replace `token-graph` with `context-stats`.
+
 ## [1.0.2] - 2025-01-08
 
 ### Fixed
 
-- Fixed remaining context showing negative values in token-graph by using `current_used_tokens` instead of cumulative `total_input_tokens + total_output_tokens`
+- Fixed remaining context showing negative values in context-stats by using `current_used_tokens` instead of cumulative `total_input_tokens + total_output_tokens`
 - Fixed ANSI escape codes not rendering properly in watch mode by using `sys.stdout.write()` instead of `print()` for cursor control sequences
 - Fixed color codes in summary statistics using ColorManager instead of raw ANSI constants
 
@@ -21,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - pip/uv installable Python package (`cc-statusline` on PyPI)
 - `context_window_size` field to state file for tracking remaining context
-- Remaining context display in token-graph summary
+- Remaining context display in context-stats summary
 
 ### Fixed
 

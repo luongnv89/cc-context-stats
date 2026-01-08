@@ -54,12 +54,12 @@ sudo dnf install jq
 
 Alternatively, use the Python or Node.js version which don't require `jq`.
 
-### token-graph command not found
+### context-stats command not found
 
 1. Verify installation:
 
    ```bash
-   ls -la ~/.local/bin/token-graph
+   ls -la ~/.local/bin/context-stats
    ```
 
 2. Check PATH:

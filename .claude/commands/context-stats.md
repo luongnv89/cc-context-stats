@@ -4,7 +4,7 @@ argument-hint: [session_id] [--type cumulative|delta|both] [--no-color]
 allowed-tools: Bash(*)
 ---
 
-# Token Usage Graph
+# Context Stats
 
 Display the token consumption history as ASCII graphs.
 
@@ -12,6 +12,6 @@ Display the token consumption history as ASCII graphs.
 
 Execute the token graph script:
 
-!`bash /Users/montimage/buildspace/luongnv89/claude-statusline/scripts/token-graph.sh $ARGUMENTS`
+!`bash /Users/montimage/buildspace/luongnv89/claude-statusline/scripts/context-stats.sh $ARGUMENTS`
 
 The output above shows the token usage visualization. No further analysis is needed.

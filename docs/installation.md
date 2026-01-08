@@ -37,7 +37,7 @@ cd claude-statusline
 The installer will:
 
 1. Install the statusline script to `~/.claude/`
-2. Install `token-graph` CLI tool to `~/.local/bin/`
+2. Install `context-stats` CLI tool to `~/.local/bin/`
 3. Create default configuration at `~/.claude/statusline.conf`
 4. Update `~/.claude/settings.json`
 
@@ -65,11 +65,11 @@ cp scripts/statusline-full.sh ~/.claude/statusline.sh
 chmod +x ~/.claude/statusline.sh
 ```
 
-### Token Graph CLI (Optional)
+### Context Stats CLI (Optional)
 
 ```bash
-cp scripts/token-graph.sh ~/.local/bin/token-graph
-chmod +x ~/.local/bin/token-graph
+cp scripts/context-stats.sh ~/.local/bin/context-stats
+chmod +x ~/.local/bin/context-stats
 ```
 
 Ensure `~/.local/bin` is in your PATH:

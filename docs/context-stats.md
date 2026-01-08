@@ -1,43 +1,43 @@
-# Token Graph
+# Context Stats
 
 Visualize token consumption over time with ASCII area charts.
 
-![Token Usage Graph](../images/token-graph.png)
+![Context Stats](../images/context-stats.png)
 
 ## Usage
 
-After installation, the `token-graph` command is available globally:
+After installation, the `context-stats` command is available globally:
 
 ```bash
 # Show graphs for latest session
-token-graph
+context-stats
 
 # Show graphs for specific session
-token-graph <session_id>
+context-stats <session_id>
 
 # Show only cumulative or delta graph
-token-graph --type cumulative
-token-graph --type delta
+context-stats --type cumulative
+context-stats --type delta
 
 # Show both graphs (default)
-token-graph --type both
+context-stats --type both
 
 # Real-time monitoring mode (refreshes every 2 seconds)
-token-graph --watch
-token-graph -w
+context-stats --watch
+context-stats -w
 
 # Real-time monitoring with custom interval
-token-graph --watch 5
-token-graph -w 3
+context-stats --watch 5
+context-stats -w 3
 
 # Combine options
-token-graph abc123 --type cumulative --watch 3
+context-stats abc123 --type cumulative --watch 3
 
 # Disable colors (for piping to file)
-token-graph --no-color > output.txt
+context-stats --no-color > output.txt
 
 # Show help
-token-graph --help
+context-stats --help
 ```
 
 ## Graph Types
@@ -64,7 +64,7 @@ Shows token consumption per interval - useful for identifying usage bursts.
 ## Example Output
 
 ```
-Token Usage Graphs (Session: abc123)
+Context Statss (Session: abc123)
 
 Cumulative Token Usage
 Max: 120,000  Min: 10,000  Points: 22
@@ -105,16 +105,16 @@ Use the built-in watch mode for live updates:
 
 ```bash
 # Default: refresh every 2 seconds
-token-graph --watch
+context-stats --watch
 
 # Custom interval: refresh every 5 seconds
-token-graph -w 5
+context-stats -w 5
 
 # Monitor specific session
-token-graph abc123 --watch
+context-stats abc123 --watch
 
 # Combine with graph type
-token-graph --type cumulative --watch 3
+context-stats --type cumulative --watch 3
 ```
 
 Press `Ctrl+C` to exit watch mode.
@@ -132,21 +132,21 @@ Press `Ctrl+C` to exit watch mode.
 ```
 [LIVE 14:32:15] Refresh: 2s | Ctrl+C to exit
 
-Token Usage Graphs (Session: abc123)
+Context Statss (Session: abc123)
 
 Cumulative Token Usage
 Max: 85,000  Min: 10,000  Points: 15
 ...
 ```
 
-![Real-time Token Graph](../images/claude-statusline-token-graph.gif)
+![Real-time Context Stats](../images/claude-statusline-context-stats.gif)
 
 ### Alternative: System Watch Command
 
 You can also use the system `watch` command:
 
 ```bash
-watch -n 2 token-graph <session_id>
+watch -n 2 context-stats <session_id>
 ```
 
 However, the built-in `--watch` mode provides smoother updates without flickering.
@@ -160,7 +160,7 @@ Reads from `~/.claude/statusline/statusline.<session_id>.state` files, automatic
 In the claude-statusline project directory:
 
 ```bash
-/token-graph                      # Latest session
-/token-graph <session_id>         # Specific session
-/token-graph --type cumulative    # Only cumulative
+/context-stats                      # Latest session
+/context-stats <session_id>         # Specific session
+/context-stats --type cumulative    # Only cumulative
 ```
