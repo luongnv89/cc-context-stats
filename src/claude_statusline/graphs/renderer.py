@@ -259,26 +259,50 @@ class GraphRenderer:
 
         # Context window info - use current_used_tokens which represents actual context usage
         remaining_context = 0
-        context_percentage = 0
+        remaining_percentage = 0
+        usage_percentage = 0
         if last.context_window_size > 0:
             # current_used_tokens = current_input_tokens + cache_creation + cache_read
             current_used = last.current_used_tokens
             remaining_context = max(0, last.context_window_size - current_used)
-            context_percentage = remaining_context * 100 // last.context_window_size
+            remaining_percentage = remaining_context * 100 // last.context_window_size
+            usage_percentage = 100 - remaining_percentage
+
+        # Determine status based on context usage
+        if usage_percentage < 40:
+            status_color = self.colors.green
+            status_text = "Smart Zone"
+            status_hint = "Claude is performing optimally"
+        elif usage_percentage < 80:
+            status_color = self.colors.yellow
+            status_text = "Dumb Zone"
+            status_hint = "Context getting full, Claude may miss details"
+        else:
+            status_color = self.colors.red
+            status_text = "Wrap Up Zone"
+            status_hint = "Start a new session soon"
 
         print()
         print(f"{self.colors.bold}Session Summary{self.colors.reset}")
         line_width = self.dimensions.graph_width + 11
         print(f"{self.colors.dim}{'-' * line_width}{self.colors.reset}")
 
-        print(
-            f"  {self.colors.cyan}{'Context Used:':<20}{self.colors.reset} "
-            f"{format_tokens(last.total_tokens, self.token_detail)}"
-        )
+        # Status indicator at the top
         if last.context_window_size > 0:
             print(
-                f"  {self.colors.green}{'Context Remaining:':<20}{self.colors.reset} "
-                f"{format_tokens(remaining_context, self.token_detail)} ({context_percentage}%)"
+                f"  {status_color}{self.colors.bold}{'Status:':<20}{status_text}{self.colors.reset} "
+                f"{self.colors.dim}({status_hint}){self.colors.reset}"
+            )
+
+        print(
+            f"  {self.colors.cyan}{'Context Used:':<20}{self.colors.reset} "
+            f"{format_tokens(last.total_tokens, self.token_detail)} ({usage_percentage}%)"
+        )
+        if last.context_window_size > 0:
+            # Color the remaining context based on status
+            print(
+                f"  {status_color}{'Context Remaining:':<20}{self.colors.reset} "
+                f"{format_tokens(remaining_context, self.token_detail)} ({remaining_percentage}%)"
             )
         print(
             f"  {self.colors.blue}{'Input Tokens:':<20}{self.colors.reset} "
