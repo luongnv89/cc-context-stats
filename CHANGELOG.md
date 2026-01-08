@@ -9,11 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.0] - 2025-01-08
 
+### Added
+
+- **Context Zones** - Status indicator based on context usage:
+  - 🟢 Smart Zone (< 40%): "You are in the smart zone"
+  - 🟡 Dumb Zone (40-80%): "You are in the dumb zone - Dex Horthy says so"
+  - 🔴 Wrap Up Zone (> 80%): "Better to wrap up and start a new session"
+- **Project name display** - Header now shows "Context Stats (project-name • session-id)"
+
 ### Changed
 
 - **Watch mode enabled by default** - `context-stats` now runs in live monitoring mode (2s refresh)
+- **Delta graph by default** - Shows "Context Growth Per Interaction" instead of both graphs
 - Added `--no-watch` flag to show graphs once and exit
 - Simplified installer - no script selection, auto-overwrite existing files
+- Renamed graph labels to focus on context (e.g., "Context Usage Over Time")
+- Cleaned up session summary - removed clutter, highlighted status
 
 ## [1.1.0] - 2025-01-08
 

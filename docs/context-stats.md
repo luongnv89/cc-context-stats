@@ -1,93 +1,83 @@
 # Context Stats
 
-Visualize token consumption over time with ASCII area charts.
+Real-time context monitoring for Claude Code sessions. Know when you're in the Smart Zone, Dumb Zone, or Wrap Up Zone.
 
-![Context Stats](../images/context-stats.png)
+## Context Zones
+
+Context Stats tracks your context usage and warns you as performance degrades:
+
+| Zone                | Context Used | Status   | Message                                         |
+| ------------------- | ------------ | -------- | ----------------------------------------------- |
+| 🟢 **Smart Zone**   | < 40%        | Optimal  | "You are in the smart zone"                     |
+| 🟡 **Dumb Zone**    | 40-80%       | Degraded | "You are in the dumb zone - Dex Horthy says so" |
+| 🔴 **Wrap Up Zone** | > 80%        | Critical | "Better to wrap up and start a new session"     |
 
 ## Usage
 
-After installation, the `context-stats` command is available globally:
+By default, `context-stats` runs in live monitoring mode:
 
 ```bash
-# Show graphs for latest session
+# Live monitoring (default, refreshes every 2s)
 context-stats
 
-# Show graphs for specific session
+# Custom refresh interval
+context-stats -w 5
+
+# Show once and exit
+context-stats --no-watch
+
+# Show specific session
 context-stats <session_id>
-
-# Show only cumulative or delta graph
-context-stats --type cumulative
-context-stats --type delta
-
-# Show both graphs (default)
-context-stats --type both
-
-# Real-time monitoring mode (refreshes every 2 seconds)
-context-stats --watch
-context-stats -w
-
-# Real-time monitoring with custom interval
-context-stats --watch 5
-context-stats -w 3
-
-# Combine options
-context-stats abc123 --type cumulative --watch 3
-
-# Disable colors (for piping to file)
-context-stats --no-color > output.txt
-
-# Show help
-context-stats --help
 ```
 
-## Graph Types
+### Graph Types
 
-### Cumulative
+```bash
+context-stats --type delta       # Context growth per interaction (default)
+context-stats --type cumulative  # Total context usage over time
+context-stats --type both        # Show both graphs
+context-stats --type io          # Input/output token breakdown
+context-stats --type all         # Show all graphs
+```
 
-Shows total tokens used over time - useful for tracking overall usage growth.
+## Output
 
-### Delta
+```
+Context Stats (my-project • abc123def)
 
-Shows token consumption per interval - useful for identifying usage bursts.
+Context Growth Per Interaction
+Max: 4,787  Min: 0  Points: 254
+
+     4,787 │                                        ●
+           │                                    ●   ▒
+           │     ●●         ●                   ▒   ░
+           │     ●                              ░   ░
+     2,052 │     ░ ●    ● ●                     ░   ░ ●
+           │     ░        ▒ ●  ● ●   ●  ●    ● ●░   ░ ▒   ●●
+           │●●●●●●●●●●●●●●●●●●●●●●●●●●● ●●●●●●●●●●●●●●●●●●●●●●
+         0 │●●●●●░▒●●●●▒▒●●▒░●●░▒▒▒▒▒●●●▒●▒●●▒●▒░●●▒●░●●▒●▒▒●▒
+           └─────────────────────────────────────────────────
+           10:40                11:29                12:01
+
+Session Summary
+----------------------------------------------------------------------------
+  >>> DUMB ZONE <<< (You are in the dumb zone - Dex Horthy says so)
+
+  Context Remaining:   43,038 (21%)
+  Input Tokens:        59,015
+  Output Tokens:       43,429
+  Session Duration:    2h 29m
+
+Powered by claude-statusline v1.2.0 - https://github.com/luongnv89/claude-statusline
+```
 
 ## Features
 
-- **Smooth Area Charts**: Continuous lines with gradient-filled areas
-- **Linear Interpolation**: Smooth curves between data points
-- **Real-time Watch Mode**: Built-in `--watch` option for live monitoring
-- **Auto-detect Terminal Size**: Adapts to your terminal
-- **Summary Statistics**: Current tokens, duration, averages
-- **Version Footer**: Shows version and project link at the bottom
-- **Color Support**: With `--no-color` for piping
-- **Bash 3.2+ Compatible**: Works on macOS default bash
-
-## Example Output
-
-```
-Context Statss (Session: abc123)
-
-Cumulative Token Usage
-Max: 120,000  Min: 10,000  Points: 22
-
-   120,000 |                                                    ●●●●●●●●●●●●●
-           |                                             ●●●●●●●▒▒▒▒▒▒▒▒▒▒▒▒▒
-           |                                        ●●●●●▒▒▒▒▒▒▒░░░░░░░░░░░░░
-    65,000 |                               ●●▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-    10,000 |●●●●●●●●●●●▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-           └─────────────────────────────────────────────────────────────────
-           12:46                12:56                13:07
-
-Summary Statistics
----------------------------------------------------------------------------
-  Current Tokens:      120,000
-  Session Duration:    21m
-  Data Points:         22
-  Average Delta:       5,454
-  Max Delta:           14,000
-  Total Growth:        110,000
-
-Powered by claude-statusline v1.0.0-abc123 - https://github.com/luongnv89/claude-statusline
-```
+- **Live Monitoring**: Automatic refresh every 2 seconds (configurable)
+- **Zone Awareness**: Color-coded status based on context usage
+- **Project Display**: Shows project name and session ID
+- **ASCII Graphs**: Smooth area charts with gradient fills
+- **Minimal Output**: Clean summary with just the essential info
 
 ## Graph Symbols
 
@@ -99,68 +89,44 @@ Powered by claude-statusline v1.0.0-abc123 - https://github.com/luongnv89/claude
 | `│`    | Y-axis                  |
 | `└─`   | X-axis                  |
 
-## Real-time Monitoring
+## Watch Mode
 
-Use the built-in watch mode for live updates:
+By default, context-stats runs in watch mode. Press `Ctrl+C` to exit.
 
-```bash
-# Default: refresh every 2 seconds
-context-stats --watch
-
-# Custom interval: refresh every 5 seconds
-context-stats -w 5
-
-# Monitor specific session
-context-stats abc123 --watch
-
-# Combine with graph type
-context-stats --type cumulative --watch 3
-```
-
-Press `Ctrl+C` to exit watch mode.
-
-### Watch Mode Features
+Features:
 
 - **Flicker-free updates**: Uses cursor repositioning for smooth redraws
-- **Live timestamp**: Shows `[LIVE HH:MM:SS]` indicator in header
+- **Live timestamp**: Shows refresh indicator in header
 - **Hidden cursor**: Clean display without cursor blinking
-- **Terminal resize**: Adapts to terminal size changes automatically
-- **Graceful waiting**: Handles missing or incomplete data files
+- **Auto-adapt**: Responds to terminal size changes
 
-### Example Watch Mode Output
-
-```
-[LIVE 14:32:15] Refresh: 2s | Ctrl+C to exit
-
-Context Statss (Session: abc123)
-
-Cumulative Token Usage
-Max: 85,000  Min: 10,000  Points: 15
-...
-```
-
-![Real-time Context Stats](../images/claude-statusline-context-stats.gif)
-
-### Alternative: System Watch Command
-
-You can also use the system `watch` command:
+To disable watch mode and show graphs once:
 
 ```bash
-watch -n 2 context-stats <session_id>
+context-stats --no-watch
 ```
-
-However, the built-in `--watch` mode provides smoother updates without flickering.
 
 ## Data Source
 
-Reads from `~/.claude/statusline/statusline.<session_id>.state` files, automatically created when `show_delta=true` (default). Format: `timestamp,tokens` per line.
+Reads from `~/.claude/statusline/statusline.<session_id>.state` files, automatically created by the status line script.
 
-## Slash Command
+## CLI Reference
 
-In the claude-statusline project directory:
+```
+context-stats [session_id] [options]
 
-```bash
-/context-stats                      # Latest session
-/context-stats <session_id>         # Specific session
-/context-stats --type cumulative    # Only cumulative
+ARGUMENTS:
+    session_id    Optional session ID. If not provided, uses the latest session.
+
+OPTIONS:
+    --type <type>  Graph type to display:
+                   - delta: Context growth per interaction (default)
+                   - cumulative: Total context usage over time
+                   - io: Input/output tokens over time
+                   - both: Show cumulative and delta graphs
+                   - all: Show all graphs including I/O
+    -w [interval]  Set refresh interval in seconds (default: 2)
+    --no-watch     Show graphs once and exit (disable live monitoring)
+    --no-color     Disable color output
+    --help         Show help message
 ```
