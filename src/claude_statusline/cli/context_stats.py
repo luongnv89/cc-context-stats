@@ -173,7 +173,8 @@ def render_once(
     # Current context window usage (what's actually in the context)
     # This is: cache_read + cache_creation + current_input_tokens
     context_used = [e.current_used_tokens for e in entries]
-    # Per-response output tokens
+    # Per-request I/O tokens from current_usage
+    current_input = [e.current_input_tokens for e in entries]
     current_output = [e.current_output_tokens for e in entries]
     deltas = calculate_deltas(context_used)
     delta_times = timestamps[1:]  # Deltas start from second entry
@@ -213,8 +214,8 @@ def render_once(
         )
 
     if graph_type in ("io", "all"):
-        renderer.render_timeseries(context_used, timestamps, "Input Tokens (context usage)", colors.blue)
-        renderer.render_timeseries(current_output, timestamps, "Output Tokens (per response)", colors.magenta)
+        renderer.render_timeseries(current_input, timestamps, "Input Tokens (per request)", colors.blue)
+        renderer.render_timeseries(current_output, timestamps, "Output Tokens (per request)", colors.magenta)
 
     # Summary and footer
     renderer.render_summary(entries, deltas)
