@@ -1,6 +1,7 @@
 # Claude Code Status Line
 
 [![PyPI version](https://badge.fury.io/py/cc-statusline.svg)](https://pypi.org/project/cc-statusline/)
+[![PyPI Downloads](https://static.pepy.tech/badge/cc-statusline)](https://pepy.tech/project/cc-statusline)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A custom status line and token visualization toolkit for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
