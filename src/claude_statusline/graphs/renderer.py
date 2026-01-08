@@ -6,8 +6,8 @@ import shutil
 from dataclasses import dataclass
 
 from claude_statusline.core.colors import ColorManager
+from claude_statusline.formatters.time import format_duration, format_timestamp
 from claude_statusline.formatters.tokens import format_tokens
-from claude_statusline.formatters.time import format_timestamp, format_duration
 from claude_statusline.graphs.statistics import Stats, calculate_stats
 
 
@@ -292,10 +292,7 @@ class GraphRenderer:
             f"  {self.colors.cyan}{'Session Duration:':<20}{self.colors.reset} "
             f"{format_duration(duration)}"
         )
-        print(
-            f"  {self.colors.cyan}{'Data Points:':<20}{self.colors.reset} "
-            f"{len(entries)}"
-        )
+        print(f"  {self.colors.cyan}{'Data Points:':<20}{self.colors.reset} " f"{len(entries)}")
         print(
             f"  {self.colors.cyan}{'Average Delta:':<20}{self.colors.reset} "
             f"{format_tokens(delta_stats.avg_val, self.token_detail)}"

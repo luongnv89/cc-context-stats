@@ -24,9 +24,8 @@ from claude_statusline import __version__
 from claude_statusline.core.colors import ColorManager
 from claude_statusline.core.config import Config
 from claude_statusline.core.state import StateFile
-from claude_statusline.graphs.renderer import GraphRenderer, GraphDimensions
+from claude_statusline.graphs.renderer import GraphDimensions, GraphRenderer
 from claude_statusline.graphs.statistics import calculate_deltas
-
 
 # Cursor control sequences
 CURSOR_HOME = "\033[H"
@@ -157,9 +156,7 @@ def render_once(
     entries = state_file.read_history()
 
     if len(entries) < 2:
-        print(
-            f"\n{colors.yellow}Need at least 2 data points to generate graphs.{colors.reset}"
-        )
+        print(f"\n{colors.yellow}Need at least 2 data points to generate graphs.{colors.reset}")
         print(
             f"{colors.dim}Found: {len(entries)} entry. Use Claude Code to accumulate more data.{colors.reset}"
         )
@@ -219,6 +216,7 @@ def run_watch_mode(
         renderer: GraphRenderer instance
         colors: ColorManager instance
     """
+
     # Signal handler for clean exit
     def handle_signal(_signum: int, _frame: object) -> None:
         sys.stdout.write(SHOW_CURSOR)

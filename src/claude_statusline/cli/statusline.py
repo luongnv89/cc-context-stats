@@ -37,8 +37,8 @@ from claude_statusline.core.colors import (
 from claude_statusline.core.config import Config
 from claude_statusline.core.git import get_git_info
 from claude_statusline.core.state import StateEntry, StateFile
-from claude_statusline.formatters.tokens import format_tokens, calculate_context_usage
 from claude_statusline.formatters.time import get_current_timestamp
+from claude_statusline.formatters.tokens import calculate_context_usage, format_tokens
 
 
 def main() -> None:

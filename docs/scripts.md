@@ -9,7 +9,7 @@
 | `statusline-minimal.sh` | macOS, Linux | `jq`         | Model + directory only            |
 | `statusline.py`         | All          | Python 3     | Cross-platform, full-featured     |
 | `statusline.js`         | All          | Node.js      | Cross-platform, full-featured     |
-| `context-stats.sh`        | macOS, Linux | None         | Token usage visualization         |
+| `context-stats.sh`      | macOS, Linux | None         | Token usage visualization         |
 
 ## Bash Scripts
 

@@ -53,6 +53,7 @@ context-stats --watch
 ```
 
 This opens a live-updating dashboard showing:
+
 - Cumulative token usage over time
 - Token consumption per interaction (delta)
 - Remaining context percentage
@@ -84,13 +85,13 @@ context-stats <session_id>       # View specific session
 
 The status line shows at-a-glance metrics:
 
-| Component | Description |
-|-----------|-------------|
-| Model | Current Claude model |
-| Context | Tokens used / remaining with color coding |
-| Delta | Token change since last update |
-| Git | Branch name and uncommitted changes |
-| Session | Session ID for correlation |
+| Component | Description                               |
+| --------- | ----------------------------------------- |
+| Model     | Current Claude model                      |
+| Context   | Tokens used / remaining with color coding |
+| Delta     | Token change since last update            |
+| Git       | Branch name and uncommitted changes       |
+| Session   | Session ID for correlation                |
 
 ![Status Line Example](images/claude-statusline.png)
 
