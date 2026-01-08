@@ -301,28 +301,16 @@ class GraphRenderer:
             f"  {self.colors.cyan}{'Session Duration:':<20}{self.colors.reset} "
             f"{format_duration(duration)}"
         )
-        # Cost
-        if last.cost_usd > 0:
-            print(
-                f"  {self.colors.yellow}{'Total Cost:':<20}{self.colors.reset} ${last.cost_usd:.4f}"
-            )
         if last.model_id:
             print(f"  {self.colors.dim}{'Model:':<20}{self.colors.reset} {last.model_id}")
         print(
             f"  {self.colors.blue}{'Input Tokens:':<20}{self.colors.reset} "
-            f"{format_tokens(last.total_input_tokens, self.token_detail)}"
+            f"{format_tokens(last.current_input_tokens, self.token_detail)}"
         )
         print(
             f"  {self.colors.magenta}{'Output Tokens:':<20}{self.colors.reset} "
-            f"{format_tokens(last.total_output_tokens, self.token_detail)}"
+            f"{format_tokens(last.current_output_tokens, self.token_detail)}"
         )
-        # Lines changed (single line with colors)
-        if last.lines_added > 0 or last.lines_removed > 0:
-            print(
-                f"  {self.colors.dim}{'Lines Changed:':<20}{self.colors.reset} "
-                f"{self.colors.green}+{last.lines_added:,}{self.colors.reset} / "
-                f"{self.colors.red}-{last.lines_removed:,}{self.colors.reset}"
-            )
 
         # Current context growth (last interaction delta)
         if deltas:
@@ -330,6 +318,19 @@ class GraphRenderer:
             print(
                 f"  {self.colors.cyan}{'Last Growth:':<20}{self.colors.reset} "
                 f"+{format_tokens(current_growth, self.token_detail)}"
+            )
+
+        # Lines changed (at bottom)
+        if last.lines_added > 0 or last.lines_removed > 0:
+            print(
+                f"  {self.colors.dim}{'Lines Changed:':<20}{self.colors.reset} "
+                f"{self.colors.green}+{last.lines_added:,}{self.colors.reset} / "
+                f"{self.colors.red}-{last.lines_removed:,}{self.colors.reset}"
+            )
+        # Cost (at bottom)
+        if last.cost_usd > 0:
+            print(
+                f"  {self.colors.yellow}{'Total Cost:':<20}{self.colors.reset} ${last.cost_usd:.4f}"
             )
         print()
 

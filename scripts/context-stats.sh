@@ -650,10 +650,10 @@ render_summary() {
     first_tokens=$(get_element "$TOKENS" 1)
     total_growth=$((current_tokens - first_tokens))
 
-    # Get I/O token stats (cumulative totals for display)
+    # Get I/O token stats (current request tokens for display)
     local current_input current_output
-    current_input=$(get_element "$INPUT_TOKENS" "$DATA_COUNT")
-    current_output=$(get_element "$OUTPUT_TOKENS" "$DATA_COUNT")
+    current_input=$(get_element "$CURRENT_INPUT_TOKENS" "$DATA_COUNT")
+    current_output=$(get_element "$CURRENT_OUTPUT_TOKENS" "$DATA_COUNT")
     current_context=$(get_element "$CONTEXT_SIZES" "$DATA_COUNT")
 
     # Get actual context window usage (current_input + cache_creation + cache_read)
@@ -707,19 +707,11 @@ render_summary() {
         printf '  %b%-20s%b %s/%s (%s%%)\n' "${status_color}" "Context Remaining:" "${RESET}" "$(format_number "$remaining_context")" "$(format_number "$current_context")" "$context_percentage"
     fi
     printf '  %b%-20s%b %s\n' "${CYAN}" "Session Duration:" "${RESET}" "$(format_duration "$duration")"
-    # Cost
-    if [ -n "$LAST_COST_USD" ] && [ "$LAST_COST_USD" != "0" ]; then
-        printf '  %b%-20s%b $%s\n' "${YELLOW}" "Total Cost:" "${RESET}" "$LAST_COST_USD"
-    fi
     if [ -n "$LAST_MODEL_ID" ]; then
         printf '  %b%-20s%b %s\n' "${DIM}" "Model:" "${RESET}" "$LAST_MODEL_ID"
     fi
     printf '  %b%-20s%b %s\n' "${BLUE}" "Input Tokens:" "${RESET}" "$(format_number "$current_input")"
     printf '  %b%-20s%b %s\n' "${MAGENTA}" "Output Tokens:" "${RESET}" "$(format_number "$current_output")"
-    # Lines changed (single line with colors)
-    if [ -n "$LAST_LINES_ADDED" ] && [ "$LAST_LINES_ADDED" != "0" ] || [ -n "$LAST_LINES_REMOVED" ] && [ "$LAST_LINES_REMOVED" != "0" ]; then
-        printf '  %b%-20s%b %b+%s%b / %b-%s%b\n' "${DIM}" "Lines Changed:" "${RESET}" "${GREEN}" "$(format_number "$LAST_LINES_ADDED")" "${RESET}" "${RED}" "$(format_number "$LAST_LINES_REMOVED")" "${RESET}"
-    fi
     # Current context growth (last interaction delta)
     if [ -n "$DELTAS" ]; then
         local delta_count last_growth
@@ -728,6 +720,14 @@ render_summary() {
         if [ -n "$last_growth" ] && [ "$last_growth" -gt 0 ] 2>/dev/null; then
             printf '  %b%-20s%b +%s\n' "${CYAN}" "Last Growth:" "${RESET}" "$(format_number "$last_growth")"
         fi
+    fi
+    # Lines changed (at bottom)
+    if [ -n "$LAST_LINES_ADDED" ] && [ "$LAST_LINES_ADDED" != "0" ] || [ -n "$LAST_LINES_REMOVED" ] && [ "$LAST_LINES_REMOVED" != "0" ]; then
+        printf '  %b%-20s%b %b+%s%b / %b-%s%b\n' "${DIM}" "Lines Changed:" "${RESET}" "${GREEN}" "$(format_number "$LAST_LINES_ADDED")" "${RESET}" "${RED}" "$(format_number "$LAST_LINES_REMOVED")" "${RESET}"
+    fi
+    # Cost (at bottom)
+    if [ -n "$LAST_COST_USD" ] && [ "$LAST_COST_USD" != "0" ]; then
+        printf '  %b%-20s%b $%s\n' "${YELLOW}" "Total Cost:" "${RESET}" "$LAST_COST_USD"
     fi
     echo ""
 }
