@@ -720,6 +720,15 @@ render_summary() {
     if [ -n "$LAST_LINES_ADDED" ] && [ "$LAST_LINES_ADDED" != "0" ] || [ -n "$LAST_LINES_REMOVED" ] && [ "$LAST_LINES_REMOVED" != "0" ]; then
         printf '  %b%-20s%b %b+%s%b / %b-%s%b\n' "${DIM}" "Lines Changed:" "${RESET}" "${GREEN}" "$(format_number "$LAST_LINES_ADDED")" "${RESET}" "${RED}" "$(format_number "$LAST_LINES_REMOVED")" "${RESET}"
     fi
+    # Current context growth (last interaction delta)
+    if [ -n "$DELTAS" ]; then
+        local delta_count last_growth
+        delta_count=$(echo "$DELTAS" | wc -w | tr -d ' ')
+        last_growth=$(get_element "$DELTAS" "$delta_count")
+        if [ -n "$last_growth" ] && [ "$last_growth" -gt 0 ] 2>/dev/null; then
+            printf '  %b%-20s%b +%s\n' "${CYAN}" "Last Growth:" "${RESET}" "$(format_number "$last_growth")"
+        fi
+    fi
     echo ""
 }
 

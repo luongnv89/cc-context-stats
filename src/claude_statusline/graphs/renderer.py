@@ -323,6 +323,14 @@ class GraphRenderer:
                 f"{self.colors.green}+{last.lines_added:,}{self.colors.reset} / "
                 f"{self.colors.red}-{last.lines_removed:,}{self.colors.reset}"
             )
+
+        # Current context growth (last interaction delta)
+        if deltas:
+            current_growth = deltas[-1]
+            print(
+                f"  {self.colors.cyan}{'Last Growth:':<20}{self.colors.reset} "
+                f"+{format_tokens(current_growth, self.token_detail)}"
+            )
         print()
 
     def render_footer(self, version: str = "1.0.0", commit_hash: str = "dev") -> None:
