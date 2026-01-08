@@ -114,50 +114,10 @@ get_remote_commit_hash() {
     echo "${hash:-unknown}"
 }
 
-# Select script type
+# Set script to install (full featured bash script)
 select_script() {
-    echo
-    echo "Available status line scripts:"
-    echo "  1) minimal  - Simple: model + directory"
-    echo "  2) git      - With git branch info"
-    echo "  3) full     - Full featured with context usage (recommended)"
-    echo "  4) python   - Python version (full featured)"
-    echo "  5) node     - Node.js version (full featured)"
-    echo
-
-    if [ "$INTERACTIVE" = true ]; then
-        read -rp "Select script [1-5, default: 3]: " choice
-    else
-        echo "Non-interactive mode detected. Using default: full (3)"
-        choice=3
-    fi
-
-    case ${choice:-3} in
-    1)
-        SCRIPT_REMOTE="scripts/statusline-minimal.sh"
-        SCRIPT_NAME="statusline.sh"
-        ;;
-    2)
-        SCRIPT_REMOTE="scripts/statusline-git.sh"
-        SCRIPT_NAME="statusline.sh"
-        ;;
-    3)
-        SCRIPT_REMOTE="scripts/statusline-full.sh"
-        SCRIPT_NAME="statusline.sh"
-        ;;
-    4)
-        SCRIPT_REMOTE="scripts/statusline.py"
-        SCRIPT_NAME="statusline.py"
-        ;;
-    5)
-        SCRIPT_REMOTE="scripts/statusline.js"
-        SCRIPT_NAME="statusline.js"
-        ;;
-    *)
-        echo -e "${RED}Invalid choice${RESET}"
-        exit 1
-        ;;
-    esac
+    SCRIPT_REMOTE="scripts/statusline-full.sh"
+    SCRIPT_NAME="statusline.sh"
 
     if [ "$INSTALL_MODE" = "local" ]; then
         SCRIPT_SRC="$SCRIPT_DIR/$SCRIPT_REMOTE"
