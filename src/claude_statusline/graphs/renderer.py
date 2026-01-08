@@ -267,38 +267,38 @@ class GraphRenderer:
             context_percentage = remaining_context * 100 // last.context_window_size
 
         print()
-        print(f"{self.colors.bold}Summary Statistics{self.colors.reset}")
+        print(f"{self.colors.bold}Session Summary{self.colors.reset}")
         line_width = self.dimensions.graph_width + 11
         print(f"{self.colors.dim}{'-' * line_width}{self.colors.reset}")
 
         print(
-            f"  {self.colors.cyan}{'Total Tokens:':<20}{self.colors.reset} "
+            f"  {self.colors.cyan}{'Context Used:':<20}{self.colors.reset} "
             f"{format_tokens(last.total_tokens, self.token_detail)}"
-        )
-        print(
-            f"  {self.colors.blue}{'Input Tokens (↓):':<20}{self.colors.reset} "
-            f"{format_tokens(last.total_input_tokens, self.token_detail)}"
-        )
-        print(
-            f"  {self.colors.magenta}{'Output Tokens (↑):':<20}{self.colors.reset} "
-            f"{format_tokens(last.total_output_tokens, self.token_detail)}"
         )
         if last.context_window_size > 0:
             print(
-                f"  {self.colors.green}{'Remaining Context:':<20}{self.colors.reset} "
+                f"  {self.colors.green}{'Context Remaining:':<20}{self.colors.reset} "
                 f"{format_tokens(remaining_context, self.token_detail)} ({context_percentage}%)"
             )
+        print(
+            f"  {self.colors.blue}{'Input Tokens:':<20}{self.colors.reset} "
+            f"{format_tokens(last.total_input_tokens, self.token_detail)}"
+        )
+        print(
+            f"  {self.colors.magenta}{'Output Tokens:':<20}{self.colors.reset} "
+            f"{format_tokens(last.total_output_tokens, self.token_detail)}"
+        )
         print(
             f"  {self.colors.cyan}{'Session Duration:':<20}{self.colors.reset} "
             f"{format_duration(duration)}"
         )
         print(f"  {self.colors.cyan}{'Data Points:':<20}{self.colors.reset} " f"{len(entries)}")
         print(
-            f"  {self.colors.cyan}{'Average Delta:':<20}{self.colors.reset} "
+            f"  {self.colors.cyan}{'Avg Growth:':<20}{self.colors.reset} "
             f"{format_tokens(delta_stats.avg_val, self.token_detail)}"
         )
         print(
-            f"  {self.colors.cyan}{'Max Delta:':<20}{self.colors.reset} "
+            f"  {self.colors.cyan}{'Max Growth:':<20}{self.colors.reset} "
             f"{format_tokens(delta_stats.max_val, self.token_detail)}"
         )
         print(

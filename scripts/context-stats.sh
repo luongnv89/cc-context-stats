@@ -626,7 +626,7 @@ render_summary() {
     del_avg=$(echo "$del_stats" | cut -d' ' -f3)
 
     echo ""
-    echo -e "${BOLD}Summary Statistics${RESET}"
+    echo -e "${BOLD}Session Summary${RESET}"
     local line_width=$((GRAPH_WIDTH + 11))
     printf "%s" "${DIM}"
     local i=0
@@ -636,16 +636,16 @@ render_summary() {
     done
     printf "%s\n" "${RESET}"
 
-    printf "  ${CYAN}%-20s${RESET} %s\n" "Total Tokens:" "$(format_number "$current_tokens")"
-    printf "  ${BLUE}%-20s${RESET} %s\n" "Input Tokens (↓):" "$(format_number "$current_input")"
-    printf "  ${MAGENTA}%-20s${RESET} %s\n" "Output Tokens (↑):" "$(format_number "$current_output")"
+    printf "  ${CYAN}%-20s${RESET} %s\n" "Context Used:" "$(format_number "$current_tokens")"
     if [ "$current_context" -gt 0 ]; then
-        printf "  ${GREEN}%-20s${RESET} %s (%s%%)\n" "Remaining Context:" "$(format_number "$remaining_context")" "$context_percentage"
+        printf "  ${GREEN}%-20s${RESET} %s (%s%%)\n" "Context Remaining:" "$(format_number "$remaining_context")" "$context_percentage"
     fi
+    printf "  ${BLUE}%-20s${RESET} %s\n" "Input Tokens:" "$(format_number "$current_input")"
+    printf "  ${MAGENTA}%-20s${RESET} %s\n" "Output Tokens:" "$(format_number "$current_output")"
     printf "  ${CYAN}%-20s${RESET} %s\n" "Session Duration:" "$(format_duration "$duration")"
     printf "  ${CYAN}%-20s${RESET} %s\n" "Data Points:" "$DATA_COUNT"
-    printf "  ${CYAN}%-20s${RESET} %s\n" "Average Delta:" "$(format_number "$del_avg")"
-    printf "  ${CYAN}%-20s${RESET} %s\n" "Max Delta:" "$(format_number "$del_max")"
+    printf "  ${CYAN}%-20s${RESET} %s\n" "Avg Growth:" "$(format_number "$del_avg")"
+    printf "  ${CYAN}%-20s${RESET} %s\n" "Max Growth:" "$(format_number "$del_max")"
     printf "  ${CYAN}%-20s${RESET} %s\n" "Total Growth:" "$(format_number "$total_growth")"
     echo ""
 }
@@ -746,29 +746,29 @@ render_once() {
     local session_name
     session_name=$(basename "$state_file" .state | sed 's/statusline\.//')
     echo ""
-    echo -e "${BOLD}${MAGENTA}Token Usage Graphs${RESET} ${DIM}(Session: $session_name)${RESET}"
+    echo -e "${BOLD}${MAGENTA}Context Stats${RESET} ${DIM}(Session: $session_name)${RESET}"
 
     # Render graphs
     case "$GRAPH_TYPE" in
     cumulative)
-        render_timeseries_graph "Cumulative Token Usage" "$TOKENS" "$TIMESTAMPS" "$GREEN"
+        render_timeseries_graph "Context Usage Over Time" "$TOKENS" "$TIMESTAMPS" "$GREEN"
         ;;
     delta)
-        render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$DELTA_TIMES" "$CYAN"
+        render_timeseries_graph "Context Growth Per Interaction" "$DELTAS" "$DELTA_TIMES" "$CYAN"
         ;;
     io)
         render_timeseries_graph "Input Tokens (↓)" "$INPUT_TOKENS" "$TIMESTAMPS" "$BLUE"
         render_timeseries_graph "Output Tokens (↑)" "$OUTPUT_TOKENS" "$TIMESTAMPS" "$MAGENTA"
         ;;
     both)
-        render_timeseries_graph "Cumulative Token Usage" "$TOKENS" "$TIMESTAMPS" "$GREEN"
-        render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$DELTA_TIMES" "$CYAN"
+        render_timeseries_graph "Context Usage Over Time" "$TOKENS" "$TIMESTAMPS" "$GREEN"
+        render_timeseries_graph "Context Growth Per Interaction" "$DELTAS" "$DELTA_TIMES" "$CYAN"
         ;;
     all)
         render_timeseries_graph "Input Tokens (↓)" "$INPUT_TOKENS" "$TIMESTAMPS" "$BLUE"
         render_timeseries_graph "Output Tokens (↑)" "$OUTPUT_TOKENS" "$TIMESTAMPS" "$MAGENTA"
-        render_timeseries_graph "Cumulative Token Usage" "$TOKENS" "$TIMESTAMPS" "$GREEN"
-        render_timeseries_graph "Token Delta Per Interval" "$DELTAS" "$DELTA_TIMES" "$CYAN"
+        render_timeseries_graph "Context Usage Over Time" "$TOKENS" "$TIMESTAMPS" "$GREEN"
+        render_timeseries_graph "Context Growth Per Interaction" "$DELTAS" "$DELTA_TIMES" "$CYAN"
         ;;
     esac
 

@@ -182,16 +182,16 @@ def render_once(
     if not watch_mode:
         print()
     print(
-        f"{colors.bold}{colors.magenta}Token Usage Graphs{colors.reset} "
+        f"{colors.bold}{colors.magenta}Context Stats{colors.reset} "
         f"{colors.dim}(Session: {session_name}){colors.reset}"
     )
 
     # Render requested graphs
     if graph_type in ("cumulative", "both", "all"):
-        renderer.render_timeseries(tokens, timestamps, "Cumulative Token Usage", colors.green)
+        renderer.render_timeseries(tokens, timestamps, "Context Usage Over Time", colors.green)
 
     if graph_type in ("delta", "both", "all"):
-        renderer.render_timeseries(deltas, delta_times, "Token Delta Per Interval", colors.cyan)
+        renderer.render_timeseries(deltas, delta_times, "Context Growth Per Interaction", colors.cyan)
 
     if graph_type in ("io", "all"):
         renderer.render_timeseries(input_tokens, timestamps, "Input Tokens (↓)", colors.blue)
