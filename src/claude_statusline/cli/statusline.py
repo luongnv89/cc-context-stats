@@ -132,7 +132,7 @@ def main() -> None:
                 delta_display = format_tokens(delta, config.token_detail)
                 delta_info = f" {DIM}[+{delta_display}]{RESET}"
 
-            # Append current usage
+            # Build current entry
             cur_input_tokens = current_usage.get("input_tokens", 0)
             cur_output_tokens = current_usage.get("output_tokens", 0)
 
@@ -152,7 +152,10 @@ def main() -> None:
                 workspace_project_dir=workspace_project_dir,
                 context_window_size=total_size,
             )
-            state_file.append_entry(entry)
+
+            # Only append if context usage changed (avoid duplicates from multiple refreshes)
+            if not has_prev or used_tokens != prev_tokens:
+                state_file.append_entry(entry)
 
     # Display session_id if enabled
     if config.show_session and session_id:

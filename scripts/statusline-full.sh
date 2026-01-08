@@ -200,9 +200,15 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
         prev_tokens=0
         if [[ -f "$state_file" ]]; then
             has_prev=true
-            # Read last line to get previous token count
-            prev_tokens=$(tail -1 "$state_file" 2>/dev/null | cut -d',' -f2)
-            prev_tokens=${prev_tokens:-0}
+            # Read last line and calculate previous context usage
+            # CSV: ts[0],in[1],out[2],cur_in[3],cur_out[4],cache_create[5],cache_read[6]
+            last_line=$(tail -1 "$state_file" 2>/dev/null)
+            if [[ -n "$last_line" ]]; then
+                prev_cur_in=$(echo "$last_line" | cut -d',' -f4)
+                prev_cache_create=$(echo "$last_line" | cut -d',' -f6)
+                prev_cache_read=$(echo "$last_line" | cut -d',' -f7)
+                prev_tokens=$(( ${prev_cur_in:-0} + ${prev_cache_create:-0} + ${prev_cache_read:-0} ))
+            fi
         fi
         # Calculate delta
         delta=$((used_tokens - prev_tokens))
@@ -215,11 +221,14 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
             fi
             delta_info=" ${DIM}[+${delta_display}]${RESET}"
         fi
-        # Append current usage with comprehensive format
-        # Format: timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,workspace_project_dir
+        # Only append if context usage changed (avoid duplicates from multiple refreshes)
         cur_input_tokens=$(echo "$current_usage" | jq -r '.input_tokens // 0')
         cur_output_tokens=$(echo "$current_usage" | jq -r '.output_tokens // 0')
-        echo "$(date +%s),$total_input_tokens,$total_output_tokens,$cur_input_tokens,$cur_output_tokens,$cache_creation,$cache_read,$cost_usd,$lines_added,$lines_removed,$session_id,$model_id,$workspace_project_dir,$total_size" >>"$state_file"
+        if [[ "$has_prev" != "true" || "$used_tokens" != "$prev_tokens" ]]; then
+            # Append current usage with comprehensive format
+            # Format: ts,in,out,cur_in,cur_out,cache_create,cache_read,cost,+lines,-lines,session,model,dir,size
+            echo "$(date +%s),$total_input_tokens,$total_output_tokens,$cur_input_tokens,$cur_output_tokens,$cache_creation,$cache_read,$cost_usd,$lines_added,$lines_removed,$session_id,$model_id,$workspace_project_dir,$total_size" >>"$state_file"
+        fi
     fi
 fi
 

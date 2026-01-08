@@ -305,32 +305,35 @@ process.stdin.on('end', () => {
                     : `${(delta / 1000).toFixed(1)}k`;
                 deltaInfo = ` ${DIM}[+${deltaDisplay}]${RESET}`;
             }
-            // Append current usage with comprehensive format
-            // Format: ts,total_in,total_out,cur_in,cur_out,cache_create,cache_read,
-            //         cost_usd,lines_added,lines_removed,session_id,model_id,project_dir
-            try {
-                const timestamp = Math.floor(Date.now() / 1000);
-                const curInputTokens = currentUsage.input_tokens || 0;
-                const curOutputTokens = currentUsage.output_tokens || 0;
-                const stateData = [
-                    timestamp,
-                    totalInputTokens,
-                    totalOutputTokens,
-                    curInputTokens,
-                    curOutputTokens,
-                    cacheCreation,
-                    cacheRead,
-                    costUsd,
-                    linesAdded,
-                    linesRemoved,
-                    sessionId || '',
-                    modelId,
-                    workspaceProjectDir,
-                    totalSize,
-                ].join(',');
-                fs.appendFileSync(stateFile, `${stateData}\n`);
-            } catch {
-                // Ignore errors
+            // Only append if context usage changed (avoid duplicates from multiple refreshes)
+            if (!hasPrev || usedTokens !== prevTokens) {
+                // Append current usage with comprehensive format
+                // Format: ts,total_in,total_out,cur_in,cur_out,cache_create,cache_read,
+                //         cost_usd,lines_added,lines_removed,session_id,model_id,project_dir
+                try {
+                    const timestamp = Math.floor(Date.now() / 1000);
+                    const curInputTokens = currentUsage.input_tokens || 0;
+                    const curOutputTokens = currentUsage.output_tokens || 0;
+                    const stateData = [
+                        timestamp,
+                        totalInputTokens,
+                        totalOutputTokens,
+                        curInputTokens,
+                        curOutputTokens,
+                        cacheCreation,
+                        cacheRead,
+                        costUsd,
+                        linesAdded,
+                        linesRemoved,
+                        sessionId || '',
+                        modelId,
+                        workspaceProjectDir,
+                        totalSize,
+                    ].join(',');
+                    fs.appendFileSync(stateFile, `${stateData}\n`);
+                } catch {
+                    // Ignore errors
+                }
             }
         }
     }
