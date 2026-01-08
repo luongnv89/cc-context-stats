@@ -21,7 +21,10 @@
  * When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
  *
  * State file format (CSV):
- *   timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,workspace_project_dir
+ *   timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,
+ *   current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,
+ *   total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,
+ *   workspace_project_dir
  */
 
 const { execSync } = require('child_process');
@@ -278,8 +281,9 @@ process.stdin.on('end', () => {
                     const lastLine = lines[lines.length - 1];
                     if (lastLine.includes(',')) {
                         const parts = lastLine.split(',');
-                        // Calculate previous context usage from: cur_input + cache_creation + cache_read
-                        // CSV format: timestamp[0],total_in[1],total_out[2],cur_in[3],cur_out[4],cache_creation[5],cache_read[6],...
+                        // Calculate previous context usage:
+                        // cur_input + cache_creation + cache_read
+                        // CSV indices: cur_in[3], cache_create[5], cache_read[6]
                         const prevCurInput = parseInt(parts[3], 10) || 0;
                         const prevCacheCreation = parseInt(parts[5], 10) || 0;
                         const prevCacheRead = parseInt(parts[6], 10) || 0;
@@ -302,7 +306,8 @@ process.stdin.on('end', () => {
                 deltaInfo = ` ${DIM}[+${deltaDisplay}]${RESET}`;
             }
             // Append current usage with comprehensive format
-            // Format: timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,workspace_project_dir
+            // Format: ts,total_in,total_out,cur_in,cur_out,cache_create,cache_read,
+            //         cost_usd,lines_added,lines_removed,session_id,model_id,project_dir
             try {
                 const timestamp = Math.floor(Date.now() / 1000);
                 const curInputTokens = currentUsage.input_tokens || 0;

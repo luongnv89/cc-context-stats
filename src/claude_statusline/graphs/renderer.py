@@ -204,12 +204,12 @@ class GraphRenderer:
             # Ensure we don't go out of bounds
             for x in range(x1, min(x2 + 1, width)):
                 if x2 == x1:
-                    y = float(y1)
+                    y_interp = float(y1)
                 else:
                     # Linear interpolation
                     t = (x - x1) / (x2 - x1)
-                    y = y1 + t * (y2 - y1)
-                line_y[x] = y
+                    y_interp = y1 + t * (y2 - y1)
+                line_y[x] = y_interp
 
         # Draw filled area and line
         for c in range(width):
@@ -304,14 +304,10 @@ class GraphRenderer:
         # Cost
         if last.cost_usd > 0:
             print(
-                f"  {self.colors.yellow}{'Total Cost:':<20}{self.colors.reset} "
-                f"${last.cost_usd:.4f}"
+                f"  {self.colors.yellow}{'Total Cost:':<20}{self.colors.reset} ${last.cost_usd:.4f}"
             )
         if last.model_id:
-            print(
-                f"  {self.colors.dim}{'Model:':<20}{self.colors.reset} "
-                f"{last.model_id}"
-            )
+            print(f"  {self.colors.dim}{'Model:':<20}{self.colors.reset} {last.model_id}")
         print(
             f"  {self.colors.blue}{'Input Tokens:':<20}{self.colors.reset} "
             f"{format_tokens(last.total_input_tokens, self.token_detail)}"

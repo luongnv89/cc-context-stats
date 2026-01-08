@@ -169,7 +169,6 @@ def render_once(
 
     # Extract data for graphs
     timestamps = [e.timestamp for e in entries]
-    tokens = [e.total_tokens for e in entries]
     # Current context window usage (what's actually in the context)
     # This is: cache_read + cache_creation + current_input_tokens
     context_used = [e.current_used_tokens for e in entries]
@@ -206,7 +205,9 @@ def render_once(
 
     # Render requested graphs
     if graph_type in ("cumulative", "both", "all"):
-        renderer.render_timeseries(context_used, timestamps, "Context Usage Over Time", colors.green)
+        renderer.render_timeseries(
+            context_used, timestamps, "Context Usage Over Time", colors.green
+        )
 
     if graph_type in ("delta", "both", "all"):
         renderer.render_timeseries(
@@ -214,8 +215,12 @@ def render_once(
         )
 
     if graph_type in ("io", "all"):
-        renderer.render_timeseries(current_input, timestamps, "Input Tokens (per request)", colors.blue)
-        renderer.render_timeseries(current_output, timestamps, "Output Tokens (per request)", colors.magenta)
+        renderer.render_timeseries(
+            current_input, timestamps, "Input Tokens (per request)", colors.blue
+        )
+        renderer.render_timeseries(
+            current_output, timestamps, "Output Tokens (per request)", colors.magenta
+        )
 
     # Summary and footer
     renderer.render_summary(entries, deltas)
@@ -317,7 +322,9 @@ def show_waiting_message(
     print()
     print(f"  {colors.cyan}⏳ {message}{colors.reset}")
     print()
-    print(f"  {colors.dim}The session has just started and no data has been recorded yet.{colors.reset}")
+    print(
+        f"  {colors.dim}The session has just started and no data has been recorded yet.{colors.reset}"
+    )
     print(f"  {colors.dim}Data will appear after the first Claude interaction.{colors.reset}")
     print()
 
