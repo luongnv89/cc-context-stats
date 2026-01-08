@@ -708,13 +708,7 @@ render_summary() {
         printf '  %b%b>>> %s <<<%b %b(%s)%b\n' "${status_color}" "${BOLD}" "$status_text" "${RESET}" "${DIM}" "$status_hint" "${RESET}"
         echo ""
     fi
-    printf '  %b%-20s%b %s\n' "${CYAN}" "Session Duration:" "${RESET}" "$(format_duration "$duration")"
-    if [ -n "$LAST_MODEL_ID" ]; then
-        printf '  %b%-20s%b %s\n' "${DIM}" "Model:" "${RESET}" "$LAST_MODEL_ID"
-    fi
-    printf '  %b%-20s%b %s\n' "${BLUE}" "Input Tokens:" "${RESET}" "$(format_number "$current_input")"
-    printf '  %b%-20s%b %s\n' "${MAGENTA}" "Output Tokens:" "${RESET}" "$(format_number "$current_output")"
-    # Current context growth (last interaction delta)
+    # Session details (ordered: Last Growth, I/O, Lines, Cost, Model, Duration)
     if [ -n "$DELTAS" ]; then
         local delta_count last_growth
         delta_count=$(echo "$DELTAS" | wc -w | tr -d ' ')
@@ -723,14 +717,18 @@ render_summary() {
             printf '  %b%-20s%b +%s\n' "${CYAN}" "Last Growth:" "${RESET}" "$(format_number "$last_growth")"
         fi
     fi
-    # Lines changed (at bottom)
+    printf '  %b%-20s%b %s\n' "${BLUE}" "Input Tokens:" "${RESET}" "$(format_number "$current_input")"
+    printf '  %b%-20s%b %s\n' "${MAGENTA}" "Output Tokens:" "${RESET}" "$(format_number "$current_output")"
     if [ -n "$LAST_LINES_ADDED" ] && [ "$LAST_LINES_ADDED" != "0" ] || [ -n "$LAST_LINES_REMOVED" ] && [ "$LAST_LINES_REMOVED" != "0" ]; then
         printf '  %b%-20s%b %b+%s%b / %b-%s%b\n' "${DIM}" "Lines Changed:" "${RESET}" "${GREEN}" "$(format_number "$LAST_LINES_ADDED")" "${RESET}" "${RED}" "$(format_number "$LAST_LINES_REMOVED")" "${RESET}"
     fi
-    # Cost (at bottom)
     if [ -n "$LAST_COST_USD" ] && [ "$LAST_COST_USD" != "0" ]; then
         printf '  %b%-20s%b $%s\n' "${YELLOW}" "Total Cost:" "${RESET}" "$LAST_COST_USD"
     fi
+    if [ -n "$LAST_MODEL_ID" ]; then
+        printf '  %b%-20s%b %s\n' "${DIM}" "Model:" "${RESET}" "$LAST_MODEL_ID"
+    fi
+    printf '  %b%-20s%b %s\n' "${CYAN}" "Session Duration:" "${RESET}" "$(format_duration "$duration")"
     echo ""
 }
 
