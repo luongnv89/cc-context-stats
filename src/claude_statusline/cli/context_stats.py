@@ -205,7 +205,9 @@ def render_once(
         renderer.render_timeseries(tokens, timestamps, "Context Usage Over Time", colors.green)
 
     if graph_type in ("delta", "both", "all"):
-        renderer.render_timeseries(deltas, delta_times, "Context Growth Per Interaction", colors.cyan)
+        renderer.render_timeseries(
+            deltas, delta_times, "Context Growth Per Interaction", colors.cyan
+        )
 
     if graph_type in ("io", "all"):
         renderer.render_timeseries(input_tokens, timestamps, "Input Tokens (↓)", colors.blue)
