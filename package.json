@@ -1,6 +1,6 @@
 {
   "name": "claude-statusline",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "description": "Custom status line scripts for Claude Code",
   "main": "scripts/statusline.js",
   "private": true,
