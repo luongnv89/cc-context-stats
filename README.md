@@ -6,7 +6,7 @@
 
 **Never run out of context unexpectedly** - monitor your session context in real-time.
 
-![Context Stats](images/token-graph.jpeg)
+![Context Stats](images/context-status.png)
 
 ## Why Context Stats?
 
