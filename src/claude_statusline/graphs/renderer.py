@@ -268,15 +268,15 @@ class GraphRenderer:
         if usage_percentage < 40:
             status_color = self.colors.green
             status_text = "Smart Zone"
-            status_hint = "Claude is performing optimally"
+            status_hint = "You are in the smart zone"
         elif usage_percentage < 80:
             status_color = self.colors.yellow
             status_text = "Dumb Zone"
-            status_hint = "Context getting full, Claude may miss details"
+            status_hint = "You are in the dumb zone - Dex Horthy says so"
         else:
             status_color = self.colors.red
             status_text = "Wrap Up Zone"
-            status_hint = "Start a new session soon"
+            status_hint = "Better to wrap up and start a new session"
 
         print()
         print(f"{self.colors.bold}Session Summary{self.colors.reset}")
