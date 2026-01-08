@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cc-context-stats"
-version = "1.2.1"
+version = "1.2.2"
 description = "Never run out of context unexpectedly - monitor your session context in real-time"
 readme = "README.md"
 license = { text = "MIT" }
