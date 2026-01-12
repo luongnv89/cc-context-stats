@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "cc-context-stats"
 version = "1.3.0"
-description = "Never run out of context unexpectedly - monitor your session context in real-time"
+description = "Monitor your Claude Code session context in real-time - track token usage and never run out of context"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
@@ -15,11 +15,13 @@ authors = [
 keywords = [
     "claude",
     "claude-code",
+    "context",
     "tokens",
-    "context-window",
     "monitoring",
-    "visualization",
+    "statusline",
+    "terminal",
     "cli",
+    "dashboard",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
