@@ -1,9 +1,8 @@
 {
-  "name": "claude-statusline",
+  "name": "cc-context-stats",
   "version": "1.3.0",
-  "description": "Custom status line scripts for Claude Code",
+  "description": "Monitor your Claude Code session context in real-time - track token usage and never run out of context",
   "main": "scripts/statusline.js",
-  "private": true,
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
@@ -16,9 +15,13 @@
   "keywords": [
     "claude",
     "claude-code",
+    "context",
+    "tokens",
+    "monitoring",
     "statusline",
     "terminal",
-    "cli"
+    "cli",
+    "dashboard"
   ],
   "author": "luongnv89",
   "license": "MIT",
