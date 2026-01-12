@@ -1,7 +1,9 @@
 # Claude Code Context Stats
 
 [![PyPI version](https://badge.fury.io/py/cc-context-stats.svg)](https://pypi.org/project/cc-context-stats/)
-[![Downloads](https://img.shields.io/pypi/dm/cc-context-stats)](https://pypi.org/project/cc-context-stats/)
+[![npm version](https://badge.fury.io/js/cc-context-stats.svg)](https://www.npmjs.com/package/cc-context-stats)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/cc-context-stats)](https://pypi.org/project/cc-context-stats/)
+[![npm Downloads](https://img.shields.io/npm/dm/cc-context-stats)](https://www.npmjs.com/package/cc-context-stats)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Never run out of context unexpectedly** - monitor your session context in real-time.
@@ -26,6 +28,20 @@ When working with Claude Code on complex tasks, you can easily burn through your
 | 🔴 **Wrap Up Zone** | > 80%        | Critical | Better to wrap up and start a new session     |
 
 ## Installation
+
+### NPM
+
+```bash
+npm install -g cc-context-stats
+```
+
+Or with yarn:
+
+```bash
+yarn global add cc-context-stats
+```
+
+### Python
 
 ```bash
 pip install cc-context-stats
