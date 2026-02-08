@@ -1,6 +1,7 @@
 """Tests for statusline.py script."""
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -14,11 +15,14 @@ def run_script(input_data: dict) -> tuple[str, int]:
     Returns:
         Tuple of (stdout, return_code)
     """
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
     result = subprocess.run(
         [sys.executable, str(SCRIPT_PATH)],
         input=json.dumps(input_data),
         capture_output=True,
         text=True,
+        env=env,
     )
     return result.stdout.strip(), result.returncode
 
@@ -32,7 +36,7 @@ class TestStatuslineScript:
 
     def test_script_is_python(self):
         """Script should have Python shebang."""
-        content = SCRIPT_PATH.read_text()
+        content = SCRIPT_PATH.read_text(encoding="utf-8")
         assert content.startswith("#!/usr/bin/env python3")
 
     def test_outputs_model_name(self, sample_input):
@@ -68,22 +72,28 @@ class TestStatuslineScript:
 
     def test_handles_invalid_json(self):
         """Should handle invalid JSON gracefully."""
+        env = os.environ.copy()
+        env["PYTHONUTF8"] = "1"
         result = subprocess.run(
             [sys.executable, str(SCRIPT_PATH)],
             input="invalid json",
             capture_output=True,
             text=True,
+            env=env,
         )
         assert result.returncode == 0
         assert "Claude" in result.stdout
 
     def test_handles_empty_input(self):
         """Should handle empty input gracefully."""
+        env = os.environ.copy()
+        env["PYTHONUTF8"] = "1"
         result = subprocess.run(
             [sys.executable, str(SCRIPT_PATH)],
             input="",
             capture_output=True,
             text=True,
+            env=env,
         )
         assert result.returncode == 0
 
