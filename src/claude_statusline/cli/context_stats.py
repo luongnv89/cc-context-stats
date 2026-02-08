@@ -27,6 +27,8 @@ from claude_statusline.core.config import Config
 from claude_statusline.core.state import StateFile
 from claude_statusline.graphs.renderer import GraphDimensions, GraphRenderer
 from claude_statusline.graphs.statistics import calculate_deltas
+from claude_statusline.ui.icons import get_activity_icon, get_activity_tier, get_tier_label
+from claude_statusline.ui.waiting import get_waiting_text, is_active
 
 # Cursor control sequences
 CURSOR_HOME = "\033[H"
@@ -145,6 +147,8 @@ def render_once(
     renderer: GraphRenderer,
     colors: ColorManager,
     watch_mode: bool = False,
+    config: Config | None = None,
+    cycle_index: int = 0,
 ) -> bool:
     """Render graphs once.
 
@@ -154,6 +158,8 @@ def render_once(
         renderer: GraphRenderer instance
         colors: ColorManager instance
         watch_mode: Whether running in watch mode
+        config: Config instance for icon/motion settings
+        cycle_index: Watch mode refresh counter for rotating text
 
     Returns:
         True if rendering was successful, False if not enough data
@@ -203,6 +209,21 @@ def render_once(
             f"{colors.dim}(Session: {session_name}){colors.reset}"
         )
 
+    # Activity indicator (icon + waiting text)
+    icon_mode = config.icon_mode if config else "standard"
+    reduced_motion = config.reduced_motion if config else False
+    if icon_mode != "off":
+        tier = get_activity_tier(entries, last_entry.context_window_size)
+        icon = get_activity_icon(tier, icon_mode)
+        label = get_tier_label(tier)
+        active = is_active(entries)
+
+        if active:
+            text = get_waiting_text(cycle_index, reduced_motion)
+            print(f"  {icon} {colors.dim}{text} [{label}]{colors.reset}")
+        else:
+            print(f"  {icon} {colors.dim}{label}{colors.reset}")
+
     # Render requested graphs
     if graph_type in ("cumulative", "both", "all"):
         renderer.render_timeseries(
@@ -223,7 +244,7 @@ def render_once(
         )
 
     # Summary and footer
-    renderer.render_summary(entries, deltas)
+    renderer.render_summary(entries, deltas, icon_mode=icon_mode)
     renderer.render_footer(__version__)
 
     return True
@@ -235,6 +256,7 @@ def run_watch_mode(
     interval: int,
     renderer: GraphRenderer,
     colors: ColorManager,
+    config: Config | None = None,
 ) -> None:
     """Run in watch mode with continuous refresh.
 
@@ -244,6 +266,7 @@ def run_watch_mode(
         interval: Refresh interval in seconds
         renderer: GraphRenderer instance
         colors: ColorManager instance
+        config: Config instance for icon/motion settings
     """
 
     # Signal handler for clean exit
@@ -260,10 +283,12 @@ def run_watch_mode(
     sys.stdout.write(f"{HIDE_CURSOR}{CLEAR_SCREEN}{CURSOR_HOME}")
     sys.stdout.flush()
 
+    cycle_counter = 0
+
     try:
         while True:
-            # Move cursor to home
-            sys.stdout.write(CURSOR_HOME)
+            # Move cursor to home and clear previous output to avoid stale characters
+            sys.stdout.write(f"{CURSOR_HOME}{CLEAR_TO_END}")
             sys.stdout.flush()
 
             # Update dimensions in case of terminal resize
@@ -279,19 +304,25 @@ def run_watch_mode(
             file_path = state_file.find_latest_state_file()
             if not file_path or not file_path.exists():
                 # Show waiting message for new session
+                reduced_motion = config.reduced_motion if config else False
+                text = get_waiting_text(cycle_counter, reduced_motion)
                 show_waiting_message(
                     colors,
                     state_file.session_id,
-                    "Waiting for session data...",
+                    text,
                 )
             else:
                 # Render graphs
-                render_once(state_file, graph_type, renderer, colors, watch_mode=True)
+                render_once(
+                    state_file, graph_type, renderer, colors,
+                    watch_mode=True, config=config, cycle_index=cycle_counter,
+                )
 
             # Clear any remaining content
             sys.stdout.write(CLEAR_TO_END)
             sys.stdout.flush()
 
+            cycle_counter += 1
             time.sleep(interval)
     finally:
         sys.stdout.write(SHOW_CURSOR)
@@ -368,11 +399,11 @@ def main() -> None:
 
     # Run
     if args.no_watch:
-        success = render_once(state_file, args.type, renderer, colors)
+        success = render_once(state_file, args.type, renderer, colors, config=config)
         if not success:
             sys.exit(1)
     else:
-        run_watch_mode(state_file, args.type, args.watch, renderer, colors)
+        run_watch_mode(state_file, args.type, args.watch, renderer, colors, config=config)
 
 
 if __name__ == "__main__":

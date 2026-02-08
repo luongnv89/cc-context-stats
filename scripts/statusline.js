@@ -84,6 +84,8 @@ function readConfig() {
         showDelta: true,
         showSession: true,
         showIoTokens: true,
+        iconMode: 'standard',
+        reducedMotion: false,
     };
     const configPath = path.join(os.homedir(), '.claude', 'statusline.conf');
 
@@ -134,12 +136,35 @@ show_session=true
                 config.showSession = valueTrimmed !== 'false';
             } else if (keyTrimmed === 'show_io_tokens') {
                 config.showIoTokens = valueTrimmed !== 'false';
+            } else if (keyTrimmed === 'icon_mode') {
+                if (['standard', 'pacman', 'off'].includes(valueTrimmed)) {
+                    config.iconMode = valueTrimmed;
+                }
+            } else if (keyTrimmed === 'reduced_motion') {
+                config.reducedMotion = valueTrimmed !== 'false';
             }
         }
     } catch {
         // Ignore errors
     }
     return config;
+}
+
+function getActivityIcon(delta, totalSize, iconMode) {
+    if (iconMode === 'off') return '';
+
+    const icons = iconMode === 'pacman'
+        ? { idle: '·', low: 'ᗧ···', medium: 'ᗧ○·●', high: 'ᗧ●●●', spike: '👻ᗧ●●●' }
+        : { idle: '○', low: '◐', medium: '◉', high: '⚡', spike: '💥' };
+
+    if (delta <= 0) return icons.idle;
+    if (totalSize <= 0) return icons.low;
+
+    const pct = (delta / totalSize) * 100;
+    if (pct > 15) return icons.spike;
+    if (pct > 5) return icons.high;
+    if (pct > 2) return icons.medium;
+    return icons.low;
 }
 
 let input = '';
@@ -181,6 +206,7 @@ process.stdin.on('end', () => {
     let acInfo = '';
     let deltaInfo = '';
     let sessionInfo = '';
+    let lastDelta = 0;
     const totalSize = data.context_window?.context_window_size || 0;
     const currentUsage = data.context_window?.current_usage;
     const totalInputTokens = data.context_window?.total_input_tokens || 0;
@@ -298,6 +324,7 @@ process.stdin.on('end', () => {
             }
             // Calculate delta (difference in context window usage)
             const delta = usedTokens - prevTokens;
+            lastDelta = delta;
             // Only show positive delta (and skip first run when no previous state)
             if (hasPrev && delta > 0) {
                 const deltaDisplay = tokenDetail
@@ -343,8 +370,17 @@ process.stdin.on('end', () => {
         sessionInfo = ` ${DIM}${sessionId}${RESET}`;
     }
 
-    // Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC] [S:session_id]
+    // Activity icon based on delta and context window
+    let iconInfo = '';
+    if (config.iconMode !== 'off' && totalSize > 0) {
+        const icon = getActivityIcon(Math.max(0, lastDelta), totalSize, config.iconMode);
+        if (icon) {
+            iconInfo = ` ${icon}`;
+        }
+    }
+
+    // Output: [Model] directory | branch [changes] | icon XXk free (XX%) [+delta] [AC] [S:session_id]
     console.log(
-        `${DIM}[${model}]${RESET} ${BLUE}${dirName}${RESET}${gitInfo}${contextInfo}${deltaInfo}${acInfo}${sessionInfo}`
+        `${DIM}[${model}]${RESET} ${BLUE}${dirName}${RESET}${gitInfo}${contextInfo}${iconInfo}${deltaInfo}${acInfo}${sessionInfo}`
     );
 });

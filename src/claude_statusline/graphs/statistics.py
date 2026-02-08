@@ -37,6 +37,40 @@ def calculate_stats(data: list[int]) -> Stats:
     return Stats(min_val=min_val, max_val=max_val, avg_val=avg_val, total=total, count=count)
 
 
+def detect_spike(deltas: list[int], context_window_size: int, window: int = 5) -> bool:
+    """Check if the latest delta is a spike.
+
+    A spike is defined as:
+    - Latest delta > 15% of context window size, OR
+    - Latest delta > 3x the rolling average of the last `window` deltas
+
+    Args:
+        deltas: List of token deltas
+        context_window_size: Total context window size in tokens
+        window: Number of recent deltas for rolling average (default: 5)
+
+    Returns:
+        True if the latest delta qualifies as a spike
+    """
+    if not deltas:
+        return False
+
+    latest = deltas[-1]
+
+    # Check absolute threshold: > 15% of context window
+    if context_window_size > 0 and latest > context_window_size * 0.15:
+        return True
+
+    # Check relative threshold: > 3x rolling average of previous deltas
+    previous = deltas[-(window + 1):-1] if len(deltas) > window else deltas[:-1]
+    if previous:
+        avg = sum(previous) / len(previous)
+        if avg > 0 and latest > avg * 3:
+            return True
+
+    return False
+
+
 def calculate_deltas(values: list[int]) -> list[int]:
     """Calculate deltas between consecutive values.
 

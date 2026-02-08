@@ -57,6 +57,9 @@ COLOR_ENABLED=true
 TOKEN_DETAIL_ENABLED=true
 WATCH_MODE=true
 WATCH_INTERVAL=2
+ICON_MODE="standard"
+REDUCED_MOTION=false
+CYCLE_COUNTER=0
 
 # === UTILITY FUNCTIONS ===
 
@@ -216,6 +219,222 @@ format_duration() {
     else
         echo "${seconds}s"
     fi
+}
+
+# === ACTIVITY ICONS & WAITING TEXT ===
+
+# Waiting messages for rotating display
+WAITING_MESSAGES="Thinking... Cooking... Crunching_tokens... Compiling_plan... Running_steps... Processing... Working_on_it... Analyzing..."
+WAITING_MSG_COUNT=8
+
+get_waiting_text() {
+    local cycle=$1
+    if [ "$REDUCED_MOTION" = "true" ]; then
+        echo "Working..."
+        return
+    fi
+    # Rotate every 2 cycles
+    local msg_idx=$(( (cycle / 2) % WAITING_MSG_COUNT + 1 ))
+    local msg
+    msg=$(echo "$WAITING_MESSAGES" | awk -v n="$msg_idx" '{ print $n }')
+    # Replace underscores with spaces
+    echo "$msg" | tr '_' ' '
+}
+
+# Check if session is active (last entry within timeout seconds)
+is_session_active() {
+    local last_ts=$1
+    local timeout=${2:-30}
+    local now
+    now=$(date +%s)
+    local diff=$((now - last_ts))
+    [ "$diff" -le "$timeout" ]
+}
+
+# Detect spike: latest delta > 15% of context window OR > 3x rolling avg of previous deltas
+detect_spike() {
+    local deltas_str=$1
+    local context_window=$2
+    local window=${3:-5}
+
+    local count
+    count=$(echo "$deltas_str" | wc -w | tr -d ' ')
+    [ "$count" -eq 0 ] && return 1
+
+    local latest
+    latest=$(echo "$deltas_str" | awk '{ print $NF }')
+
+    # Absolute threshold: > 15% of context window
+    if [ "$context_window" -gt 0 ]; then
+        local threshold=$((context_window * 15 / 100))
+        [ "$latest" -gt "$threshold" ] && return 0
+    fi
+
+    # Relative threshold: > 3x rolling avg of previous deltas
+    if [ "$count" -ge 2 ]; then
+        # Get previous deltas (exclude last)
+        local prev_count=$((count - 1))
+        local start=$((prev_count > window ? count - window - 1 : 0))
+        local prev_sum=0
+        local prev_n=0
+        local idx=0
+        for d in $deltas_str; do
+            if [ "$idx" -ge "$start" ] && [ "$idx" -lt "$prev_count" ]; then
+                prev_sum=$((prev_sum + d))
+                prev_n=$((prev_n + 1))
+            fi
+            idx=$((idx + 1))
+        done
+        if [ "$prev_n" -gt 0 ]; then
+            local avg=$((prev_sum / prev_n))
+            if [ "$avg" -gt 0 ] && [ "$latest" -gt $((avg * 3)) ]; then
+                return 0
+            fi
+        fi
+    fi
+
+    return 1
+}
+
+# Determine activity tier: idle, low, medium, high, spike
+get_activity_tier() {
+    local last_ts=$1
+    local context_window=$2
+    local deltas_str=$3
+
+    # Check if idle (>30s since last entry)
+    if ! is_session_active "$last_ts"; then
+        echo "idle"
+        return
+    fi
+
+    local count
+    count=$(echo "$deltas_str" | wc -w | tr -d ' ')
+    if [ "$count" -eq 0 ]; then
+        echo "idle"
+        return
+    fi
+
+    local latest
+    latest=$(echo "$deltas_str" | awk '{ print $NF }')
+
+    if [ "$latest" -le 0 ]; then
+        echo "idle"
+        return
+    fi
+
+    # Check spike first
+    if detect_spike "$deltas_str" "$context_window"; then
+        echo "spike"
+        return
+    fi
+
+    if [ "$context_window" -le 0 ]; then
+        echo "low"
+        return
+    fi
+
+    # Delta as percentage of context window (x100 for integer math)
+    local delta_pct_x100=$((latest * 10000 / context_window))
+
+    if [ "$delta_pct_x100" -gt 500 ]; then
+        echo "high"
+    elif [ "$delta_pct_x100" -gt 200 ]; then
+        echo "medium"
+    else
+        echo "low"
+    fi
+}
+
+# Get icon for activity tier
+get_activity_icon() {
+    local tier=$1
+    local mode=$2
+
+    if [ "$mode" = "off" ]; then
+        echo ""
+        return
+    fi
+
+    if [ "$mode" = "pacman" ]; then
+        case "$tier" in
+            idle)   echo "·" ;;
+            low)    echo "ᗧ···" ;;
+            medium) echo "ᗧ○·●" ;;
+            high)   echo "ᗧ●●●" ;;
+            spike)  echo "👻ᗧ●●●" ;;
+            *)      echo "·" ;;
+        esac
+    else
+        # Standard mode
+        case "$tier" in
+            idle)   echo "○" ;;
+            low)    echo "◐" ;;
+            medium) echo "◉" ;;
+            high)   echo "⚡" ;;
+            spike)  echo "💥" ;;
+            *)      echo "○" ;;
+        esac
+    fi
+}
+
+# Get text label for tier
+get_tier_label() {
+    local tier=$1
+    case "$tier" in
+        idle)   echo "Idle" ;;
+        low)    echo "Low activity" ;;
+        medium) echo "Active" ;;
+        high)   echo "High activity" ;;
+        spike)  echo "Spike!" ;;
+        *)      echo "Idle" ;;
+    esac
+}
+
+# Render Pacman meter bar
+render_pacman_meter() {
+    local usage_pct=$1
+    local tier=$2
+    local width=${3:-30}
+
+    # Clamp
+    [ "$usage_pct" -lt 0 ] && usage_pct=0
+    [ "$usage_pct" -gt 100 ] && usage_pct=100
+    [ "$width" -lt 10 ] && width=10
+
+    # Pacman position
+    local pacman_pos=$((usage_pct * (width - 1) / 100))
+    [ "$pacman_pos" -lt 0 ] && pacman_pos=0
+    [ "$pacman_pos" -ge "$width" ] && pacman_pos=$((width - 1))
+
+    # Choose pacman character
+    local pacman
+    if [ "$usage_pct" -gt 80 ]; then
+        pacman="ᗤ"
+    else
+        pacman="ᗧ"
+    fi
+
+    # Ghost on spike
+    local ghost=" "
+    [ "$tier" = "spike" ] && ghost="👻"
+
+    # Build bar
+    local eaten=""
+    local remaining=""
+    local i=0
+    while [ "$i" -lt "$pacman_pos" ]; do
+        eaten="${eaten}░"
+        i=$((i + 1))
+    done
+    i=0
+    local rem_count=$((width - pacman_pos - 1))
+    while [ "$i" -lt "$rem_count" ]; do
+        remaining="${remaining}█"
+        i=$((i + 1))
+    done
+
+    echo "${eaten}${pacman}${remaining}${ghost} ${usage_pct}% used"
 }
 
 # === DATA FUNCTIONS ===
@@ -704,6 +923,16 @@ render_summary() {
         fi
         # Context remaining (before status)
         printf '  %b%-20s%b %s/%s (%s%%)\n' "${status_color}" "Context Remaining:" "${RESET}" "$(format_number "$remaining_context")" "$(format_number "$current_context")" "$context_percentage"
+        # Pacman meter (when in pacman mode)
+        if [ "$ICON_MODE" = "pacman" ] && [ "$current_context" -gt 0 ]; then
+            local pm_tier
+            pm_tier=$(get_activity_tier "$last_ts" "$current_context" "$DELTAS")
+            local meter_width=$((GRAPH_WIDTH - 10))
+            [ "$meter_width" -gt 40 ] && meter_width=40
+            local meter
+            meter=$(render_pacman_meter "$usage_percentage" "$pm_tier" "$meter_width")
+            printf '  %b%s%b\n' "${status_color}" "$meter" "${RESET}"
+        fi
         # Status indicator
         printf '  %b%b>>> %s <<<%b %b(%s)%b\n' "${status_color}" "${BOLD}" "$status_text" "${RESET}" "${DIM}" "$status_hint" "${RESET}"
         echo ""
@@ -814,6 +1043,16 @@ load_config() {
                     TOKEN_DETAIL_ENABLED=false
                 fi
                 ;;
+            icon_mode)
+                case "$value" in
+                    standard|pacman|off) ICON_MODE="$value" ;;
+                esac
+                ;;
+            reduced_motion)
+                if [ "$value" = "true" ]; then
+                    REDUCED_MOTION=true
+                fi
+                ;;
             esac
         done <"$CONFIG_FILE"
     fi
@@ -839,6 +1078,30 @@ render_once() {
         echo -e "${BOLD}${MAGENTA}Context Stats${RESET} ${DIM}(${CYAN}$project_name${DIM} • $session_name)${RESET}"
     else
         echo -e "${BOLD}${MAGENTA}Context Stats${RESET} ${DIM}(Session: $session_name)${RESET}"
+    fi
+
+    # Activity indicator (icon + waiting text)
+    if [ "$ICON_MODE" != "off" ]; then
+        local last_ts
+        last_ts=$(get_element "$TIMESTAMPS" "$DATA_COUNT")
+        local last_context
+        last_context=$(get_element "$CONTEXT_SIZES" "$DATA_COUNT")
+        [ -z "$last_context" ] && last_context=0
+
+        local tier
+        tier=$(get_activity_tier "$last_ts" "$last_context" "$DELTAS")
+        local icon
+        icon=$(get_activity_icon "$tier" "$ICON_MODE")
+        local label
+        label=$(get_tier_label "$tier")
+
+        if is_session_active "$last_ts"; then
+            local wait_text
+            wait_text=$(get_waiting_text "$CYCLE_COUNTER")
+            echo -e "  ${icon} ${DIM}${wait_text} [${label}]${RESET}"
+        else
+            echo -e "  ${icon} ${DIM}${label}${RESET}"
+        fi
     fi
 
     # Render graphs (use CURRENT_USED_TOKENS for actual context window usage)
@@ -893,9 +1156,8 @@ run_watch_mode() {
     printf "%s%s" "${CLEAR_SCREEN}" "${CURSOR_HOME}"
 
     while true; do
-        # Move cursor to home position (top-left) instead of clearing
-        # This prevents flickering by overwriting in place
-        printf "%s" "${CURSOR_HOME}"
+        # Move cursor to home and clear prior output to avoid stale characters
+        printf "%s%s" "${CURSOR_HOME}" "${CLEAR_TO_END}"
 
         # Re-read terminal dimensions in case of resize
         get_terminal_dimensions
@@ -907,7 +1169,9 @@ run_watch_mode() {
 
         # Handle case where state_file is empty (no sessions found at all)
         if [ -z "$state_file" ]; then
-            show_waiting_message "" "Waiting for session data..."
+            local wait_msg
+            wait_msg=$(get_waiting_text "$CYCLE_COUNTER")
+            show_waiting_message "" "$wait_msg"
         # Re-validate and render (file might have new data)
         elif [ -f "$state_file" ]; then
             local line_count
@@ -926,6 +1190,7 @@ run_watch_mode() {
         # Clear any remaining lines from previous render (in case terminal resized smaller)
         printf "%s" "${CLEAR_TO_END}"
 
+        CYCLE_COUNTER=$((CYCLE_COUNTER + 1))
         sleep "$WATCH_INTERVAL"
     done
 }

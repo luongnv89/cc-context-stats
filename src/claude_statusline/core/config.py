@@ -16,6 +16,8 @@ class Config:
     show_delta: bool = True
     show_session: bool = True
     show_io_tokens: bool = True
+    icon_mode: str = "standard"
+    reduced_motion: bool = False
 
     _config_path: Path = field(default_factory=lambda: Path.home() / ".claude" / "statusline.conf")
 
@@ -57,6 +59,12 @@ show_delta=true
 
 # Show session_id in status line
 show_session=true
+
+# Activity icon mode: standard, pacman, or off
+icon_mode=standard
+
+# Disable rotating text and icon animations
+reduced_motion=false
 """
             )
         except OSError:
@@ -84,6 +92,11 @@ show_session=true
                     self.show_session = value != "false"
                 elif key == "show_io_tokens":
                     self.show_io_tokens = value != "false"
+                elif key == "icon_mode":
+                    if value in ("standard", "pacman", "off"):
+                        self.icon_mode = value
+                elif key == "reduced_motion":
+                    self.reduced_motion = value != "false"
         except OSError:
             pass  # Use defaults on read error
 
@@ -95,4 +108,6 @@ show_session=true
             "show_delta": self.show_delta,
             "show_session": self.show_session,
             "show_io_tokens": self.show_io_tokens,
+            "icon_mode": self.icon_mode,
+            "reduced_motion": self.reduced_motion,
         }
