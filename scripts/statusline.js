@@ -151,19 +151,32 @@ show_session=true
 }
 
 function getActivityIcon(delta, totalSize, iconMode) {
-    if (iconMode === 'off') return '';
+    if (iconMode === 'off') {
+        return '';
+    }
 
-    const icons = iconMode === 'pacman'
-        ? { idle: '·', low: 'ᗧ···', medium: 'ᗧ○·●', high: 'ᗧ●●●', spike: '👻ᗧ●●●' }
-        : { idle: '○', low: '◐', medium: '◉', high: '⚡', spike: '💥' };
+    const icons =
+        iconMode === 'pacman'
+            ? { idle: '·', low: 'ᗧ···', medium: 'ᗧ○·●', high: 'ᗧ●●●', spike: '👻ᗧ●●●' }
+            : { idle: '○', low: '◐', medium: '◉', high: '⚡', spike: '💥' };
 
-    if (delta <= 0) return icons.idle;
-    if (totalSize <= 0) return icons.low;
+    if (delta <= 0) {
+        return icons.idle;
+    }
+    if (totalSize <= 0) {
+        return icons.low;
+    }
 
     const pct = (delta / totalSize) * 100;
-    if (pct > 15) return icons.spike;
-    if (pct > 5) return icons.high;
-    if (pct > 2) return icons.medium;
+    if (pct > 15) {
+        return icons.spike;
+    }
+    if (pct > 5) {
+        return icons.high;
+    }
+    if (pct > 2) {
+        return icons.medium;
+    }
     return icons.low;
 }
 
@@ -379,7 +392,7 @@ process.stdin.on('end', () => {
         }
     }
 
-    // Output: [Model] directory | branch [changes] | icon XXk free (XX%) [+delta] [AC] [S:session_id]
+    // Output: [Model] dir | branch [n] | icon free (%) [+delta] [AC] session
     console.log(
         `${DIM}[${model}]${RESET} ${BLUE}${dirName}${RESET}${gitInfo}${contextInfo}${iconInfo}${deltaInfo}${acInfo}${sessionInfo}`
     );

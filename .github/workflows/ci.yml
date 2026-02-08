@@ -110,10 +110,12 @@ jobs:
           cache-dependency-path: 'requirements-dev.txt'
 
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -e .
 
       - name: Run pytest with coverage
-        run: pytest tests/python/ -v --cov=scripts --cov-report=xml --cov-report=term
+        run: pytest tests/python/ -v --cov=scripts --cov=src --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
