@@ -26,6 +26,8 @@ State file format (CSV):
 
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 
@@ -38,6 +40,44 @@ YELLOW = "\033[0;33m"
 RED = "\033[0;31m"
 DIM = "\033[2m"
 RESET = "\033[0m"
+
+# Pattern to strip ANSI escape sequences
+_ANSI_RE = re.compile(r"\033\[[0-9;]*m")
+
+
+def visible_width(s):
+    """Return the visible width of a string after stripping ANSI escape sequences."""
+    return len(_ANSI_RE.sub("", s))
+
+
+def get_terminal_width():
+    """Return the terminal width in columns, defaulting to 80."""
+    return shutil.get_terminal_size().columns
+
+
+def fit_to_width(parts, max_width):
+    """Assemble parts into a single line that fits within max_width.
+
+    Parts are added in priority order (first = highest priority).
+    The first part (base) is always included. Subsequent parts are
+    included only if adding them does not exceed max_width.
+    Empty parts are skipped.
+    """
+    if not parts:
+        return ""
+
+    result = parts[0]
+    current_width = visible_width(result)
+
+    for part in parts[1:]:
+        if not part:
+            continue
+        part_width = visible_width(part)
+        if current_width + part_width <= max_width:
+            result += part
+            current_width += part_width
+
+    return result
 
 
 def get_git_info(project_dir):
@@ -342,9 +382,10 @@ def main():
             icon_info = f" {icon}"
 
     # Output: [Model] directory | branch [changes] | XXk free (XX%) icon [+delta] [AC] [S:session_id]
-    print(
-        f"{DIM}[{model}]{RESET} {BLUE}{dir_name}{RESET}{git_info}{context_info}{icon_info}{delta_info}{ac_info}{session_info}"
-    )
+    base = f"{DIM}[{model}]{RESET} {BLUE}{dir_name}{RESET}"
+    max_width = get_terminal_width()
+    parts = [base, git_info, context_info, icon_info, delta_info, ac_info, session_info]
+    print(fit_to_width(parts, max_width))
 
 
 if __name__ == "__main__":

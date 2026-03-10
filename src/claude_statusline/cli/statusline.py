@@ -37,6 +37,7 @@ from claude_statusline.core.colors import (
 from claude_statusline.core.config import Config
 from claude_statusline.core.git import get_git_info
 from claude_statusline.core.state import StateEntry, StateFile
+from claude_statusline.formatters.layout import fit_to_width, get_terminal_width
 from claude_statusline.formatters.time import get_current_timestamp
 from claude_statusline.formatters.tokens import calculate_context_usage, format_tokens
 
@@ -162,10 +163,10 @@ def main() -> None:
         session_info = f" {DIM}{session_id}{RESET}"
 
     # Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC] [session_id]
-    print(
-        f"{DIM}[{model}]{RESET} {BLUE}{dir_name}{RESET}"
-        f"{git_info}{context_info}{delta_info}{ac_info}{session_info}"
-    )
+    base = f"{DIM}[{model}]{RESET} {BLUE}{dir_name}{RESET}"
+    max_width = get_terminal_width()
+    parts = [base, git_info, context_info, delta_info, ac_info, session_info]
+    print(fit_to_width(parts, max_width))
 
 
 if __name__ == "__main__":

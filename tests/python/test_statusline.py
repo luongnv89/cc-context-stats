@@ -2,21 +2,35 @@
 
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 SCRIPT_PATH = Path(__file__).parent.parent.parent / "scripts" / "statusline.py"
 
+_ANSI_RE = re.compile(r"\033\[[0-9;]*m")
 
-def run_script(input_data: dict) -> tuple[str, int]:
+
+def strip_ansi(s: str) -> str:
+    """Strip ANSI escape sequences from a string."""
+    return _ANSI_RE.sub("", s)
+
+
+def run_script(input_data: dict, env_overrides: dict | None = None) -> tuple[str, int]:
     """Run the statusline.py script with the given input.
+
+    Args:
+        input_data: JSON-serializable dict to pass as stdin.
+        env_overrides: Optional dict of environment variable overrides.
 
     Returns:
         Tuple of (stdout, return_code)
     """
     env = os.environ.copy()
     env["PYTHONUTF8"] = "1"
+    if env_overrides:
+        env.update(env_overrides)
     result = subprocess.run(
         [sys.executable, str(SCRIPT_PATH)],
         input=json.dumps(input_data),
@@ -151,7 +165,7 @@ class TestSessionDisplay:
     def test_shows_session_id_by_default(self, sample_input):
         """Should show session_id by default (show_session=true)."""
         sample_input["session_id"] = "test-session-12345"
-        output, code = run_script(sample_input)
+        output, code = run_script(sample_input, {"COLUMNS": "200"})
         assert code == 0
         assert "test-session-12345" in output
 
@@ -162,3 +176,38 @@ class TestSessionDisplay:
             del sample_input["session_id"]
         output, code = run_script(sample_input)
         assert code == 0
+
+
+class TestWidthTruncation:
+    """Tests for width truncation to fit terminal width."""
+
+    def test_output_fits_80_columns(self, sample_input):
+        """Output should fit within 80 columns."""
+        sample_input["session_id"] = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+        output, code = run_script(sample_input, {"COLUMNS": "80"})
+        assert code == 0
+        visible = strip_ansi(output)
+        assert len(visible) <= 80
+
+    def test_output_fits_narrow_terminal(self, sample_input):
+        """Output should fit within 40 columns and still show model+dir."""
+        output, code = run_script(sample_input, {"COLUMNS": "40"})
+        assert code == 0
+        visible = strip_ansi(output)
+        assert len(visible) <= 40
+        assert "Claude 3.5 Sonnet" in visible
+        assert "myproject" in visible
+
+    def test_wide_terminal_shows_all(self, sample_input):
+        """Wide terminal should show session_id."""
+        sample_input["session_id"] = "test-wide-session-uuid"
+        output, code = run_script(sample_input, {"COLUMNS": "200"})
+        assert code == 0
+        assert "test-wide-session-uuid" in output
+
+    def test_full_input_truncated(self, valid_full_input):
+        """Full input with all features should fit within 80 columns."""
+        output, code = run_script(valid_full_input, {"COLUMNS": "80"})
+        assert code == 0
+        visible = strip_ansi(output)
+        assert len(visible) <= 80

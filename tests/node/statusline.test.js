@@ -6,13 +6,22 @@ const SCRIPT_PATH = path.join(__dirname, '..', '..', 'scripts', 'statusline.js')
 const FIXTURES_DIR = path.join(__dirname, '..', 'fixtures', 'json');
 
 /**
+ * Strip ANSI escape sequences from a string
+ */
+function stripAnsi(s) {
+    return s.replace(/\x1b\[[0-9;]*m/g, '');
+}
+
+/**
  * Run the statusline.js script with the given input data
  * @param {Object|string} inputData - JSON input or string
+ * @param {Object} [envOverrides] - Optional environment variable overrides
  * @returns {Promise<{stdout: string, stderr: string, code: number}>}
  */
-function runScript(inputData) {
+function runScript(inputData, envOverrides) {
     return new Promise((resolve, reject) => {
-        const child = spawn('node', [SCRIPT_PATH]);
+        const env = { ...process.env, ...envOverrides };
+        const child = spawn('node', [SCRIPT_PATH], { env });
         let stdout = '';
         let stderr = '';
 
@@ -186,7 +195,7 @@ describe('statusline.js', () => {
                 ...sampleInput,
                 session_id: 'test-session-abc123',
             };
-            const result = await runScript(inputWithSession);
+            const result = await runScript(inputWithSession, { COLUMNS: '200' });
             expect(result.code).toBe(0);
             expect(result.stdout).toContain('test-session-abc123');
         });
@@ -194,6 +203,38 @@ describe('statusline.js', () => {
         test('handles missing session_id gracefully', async () => {
             const result = await runScript(sampleInput);
             expect(result.code).toBe(0);
+        });
+    });
+
+    describe('Width truncation', () => {
+        test('output fits 80 columns', async () => {
+            const inputWithSession = {
+                ...sampleInput,
+                session_id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+            };
+            const result = await runScript(inputWithSession, { COLUMNS: '80' });
+            expect(result.code).toBe(0);
+            const visible = stripAnsi(result.stdout);
+            expect(visible.length).toBeLessThanOrEqual(80);
+        });
+
+        test('narrow terminal drops parts', async () => {
+            const result = await runScript(sampleInput, { COLUMNS: '40' });
+            expect(result.code).toBe(0);
+            const visible = stripAnsi(result.stdout);
+            expect(visible.length).toBeLessThanOrEqual(40);
+            expect(visible).toContain('Claude 3.5 Sonnet');
+            expect(visible).toContain('myproject');
+        });
+
+        test('wide terminal shows all', async () => {
+            const inputWithSession = {
+                ...sampleInput,
+                session_id: 'test-wide-session-uuid',
+            };
+            const result = await runScript(inputWithSession, { COLUMNS: '200' });
+            expect(result.code).toBe(0);
+            expect(result.stdout).toContain('test-wide-session-uuid');
         });
     });
 });

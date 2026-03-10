@@ -42,6 +42,48 @@ const RED = '\x1b[0;31m';
 const DIM = '\x1b[2m';
 const RESET = '\x1b[0m';
 
+/**
+ * Return the visible width of a string after stripping ANSI escape sequences.
+ */
+function visibleWidth(s) {
+    return s.replace(/\x1b\[[0-9;]*m/g, '').length;
+}
+
+/**
+ * Return the terminal width in columns, defaulting to 80.
+ */
+function getTerminalWidth() {
+    return process.stdout.columns || parseInt(process.env.COLUMNS, 10) || 80;
+}
+
+/**
+ * Assemble parts into a single line that fits within maxWidth.
+ * Parts are added in priority order (first = highest priority).
+ * The first part (base) is always included.
+ */
+function fitToWidth(parts, maxWidth) {
+    if (!parts.length) {
+        return '';
+    }
+
+    let result = parts[0];
+    let currentWidth = visibleWidth(result);
+
+    for (let i = 1; i < parts.length; i++) {
+        const part = parts[i];
+        if (!part) {
+            continue;
+        }
+        const partWidth = visibleWidth(part);
+        if (currentWidth + partWidth <= maxWidth) {
+            result += part;
+            currentWidth += partWidth;
+        }
+    }
+
+    return result;
+}
+
 function getGitInfo(projectDir) {
     const gitDir = path.join(projectDir, '.git');
     if (!fs.existsSync(gitDir) || !fs.statSync(gitDir).isDirectory()) {
@@ -393,7 +435,8 @@ process.stdin.on('end', () => {
     }
 
     // Output: [Model] dir | branch [n] | icon free (%) [+delta] [AC] session
-    console.log(
-        `${DIM}[${model}]${RESET} ${BLUE}${dirName}${RESET}${gitInfo}${contextInfo}${iconInfo}${deltaInfo}${acInfo}${sessionInfo}`
-    );
+    const base = `${DIM}[${model}]${RESET} ${BLUE}${dirName}${RESET}`;
+    const maxWidth = getTerminalWidth();
+    const parts = [base, gitInfo, contextInfo, iconInfo, deltaInfo, acInfo, sessionInfo];
+    console.log(fitToWidth(parts, maxWidth));
 });
