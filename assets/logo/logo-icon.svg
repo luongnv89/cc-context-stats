@@ -1,26 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- App icon — square with padding and rounded corners -->
-  <rect width="512" height="512" rx="96" fill="#000000"/>
+  <defs>
+    <linearGradient id="icon-wave-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22C55E"/>
+      <stop offset="50%" stop-color="#E9AB34"/>
+      <stop offset="100%" stop-color="#EF4444"/>
+    </linearGradient>
+  </defs>
 
-  <!-- Gauge track (background) -->
-  <path d="M 96 352 A 176 176 0 1 1 416 352" stroke="#111111" stroke-width="38" fill="none" stroke-linecap="round"/>
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#1A1A1A"/>
 
-  <!-- Green zone (0-40%) -->
-  <path d="M 96 352 A 176 176 0 0 1 145.6 194.8" stroke="#22C55E" stroke-width="38" fill="none" stroke-linecap="round"/>
+  <!-- Context wave (scaled up) -->
+  <path d="M 96 376 C 144 376, 160 328, 192 312 C 224 296, 240 280, 272 248 C 304 216, 320 168, 352 136 C 384 104, 400 120, 432 104"
+        stroke="url(#icon-wave-grad)" stroke-width="24" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 
-  <!-- Yellow zone (40-80%) -->
-  <path d="M 145.6 194.8 A 176 176 0 0 1 366.4 194.8" stroke="#F59E0B" stroke-width="38" fill="none" stroke-linecap="round"/>
+  <!-- Echo line -->
+  <path d="M 96 408 C 144 408, 160 360, 192 344 C 224 328, 240 312, 272 280 C 304 248, 320 200, 352 168 C 384 136, 400 152, 432 136"
+        stroke="url(#icon-wave-grad)" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.25"/>
 
-  <!-- Red zone (80-100%) -->
-  <path d="M 366.4 194.8 A 176 176 0 0 1 416 352" stroke="#EF4444" stroke-width="38" fill="none" stroke-linecap="round"/>
+  <!-- Cursor dot -->
+  <circle cx="352" cy="136" r="28" fill="#E9AB34"/>
+  <circle cx="352" cy="136" r="48" fill="#E9AB34" opacity="0.12"/>
 
-  <!-- Needle at ~55% -->
-  <line x1="256" y1="256" x2="168" y2="168" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
-
-  <!-- Pivot dot -->
-  <circle cx="256" cy="256" r="24" fill="#22C55E"/>
-
-  <!-- Label dots at zone boundaries -->
-  <circle cx="96" cy="352" r="8" fill="#6B7280"/>
-  <circle cx="416" cy="352" r="8" fill="#6B7280"/>
+  <!-- Baseline -->
+  <line x1="96" y1="424" x2="432" y2="424" stroke="#8B7D6B" stroke-width="6" stroke-linecap="round" opacity="0.35"/>
 </svg>

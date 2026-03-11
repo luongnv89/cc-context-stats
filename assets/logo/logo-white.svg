@@ -1,23 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" width="320" height="64">
-  <!-- White version for dark backgrounds — no bg rect -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 72" width="360" height="72">
+  <!-- White version for dark backgrounds — no background rectangle -->
 
-  <!-- Gauge track arc (dim white) -->
-  <path d="M 12 50 A 22 22 0 1 1 52 50" stroke="rgba(255,255,255,0.15)" stroke-width="5" fill="none" stroke-linecap="round"/>
-  <!-- Green zone -->
-  <path d="M 12 50 A 22 22 0 0 1 18.2 30.4" stroke="#22C55E" stroke-width="5" fill="none" stroke-linecap="round"/>
-  <!-- Yellow zone -->
-  <path d="M 18.2 30.4 A 22 22 0 0 1 45.8 30.4" stroke="#F59E0B" stroke-width="5" fill="none" stroke-linecap="round"/>
-  <!-- Red zone -->
-  <path d="M 45.8 30.4 A 22 22 0 0 1 52 50" stroke="#EF4444" stroke-width="5" fill="none" stroke-linecap="round"/>
-  <!-- Needle -->
-  <line x1="32" y1="38" x2="21" y2="27" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
-  <!-- Pivot -->
-  <circle cx="32" cy="38" r="3" fill="#22C55E"/>
+  <!-- Mark: Context wave -->
+  <g transform="translate(8, 4)">
+    <path d="M 10 48 C 16 48, 18 42, 22 40 C 26 38, 28 36, 32 32 C 36 28, 38 22, 42 18 C 46 14, 50 16, 54 14"
+          stroke="#FFFFFF" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 10 52 C 16 52, 18 46, 22 44 C 26 42, 28 40, 32 36 C 36 32, 38 26, 42 22 C 46 18, 50 20, 54 18"
+          stroke="#FFFFFF" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.25"/>
+    <circle cx="42" cy="18" r="3.5" fill="#FFFFFF"/>
+    <circle cx="42" cy="18" r="6" fill="#FFFFFF" opacity="0.12"/>
+    <line x1="10" y1="54" x2="54" y2="54" stroke="#FFFFFF" stroke-width="1" stroke-linecap="round" opacity="0.3"/>
+  </g>
 
   <!-- Divider -->
-  <line x1="68" y1="12" x2="68" y2="52" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <line x1="76" y1="16" x2="76" y2="56" stroke="#FFFFFF" stroke-width="1" opacity="0.2"/>
 
-  <!-- Wordmark white -->
-  <text x="82" y="30" font-family="'SF Mono', 'Fira Mono', 'Courier New', monospace" font-size="18" font-weight="700" fill="#FFFFFF" letter-spacing="-0.5">cc-context</text>
-  <text x="82" y="50" font-family="'SF Mono', 'Fira Mono', 'Courier New', monospace" font-size="14" font-weight="500" fill="#22C55E" letter-spacing="2">stats</text>
+  <!-- Wordmark -->
+  <text x="90" y="35" font-family="'SF Mono', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace" font-size="22" font-weight="700" fill="#FFFFFF" letter-spacing="-0.3">cc-context</text>
+  <text x="90" y="55" font-family="'SF Mono', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace" font-size="15" font-weight="500" fill="#FFFFFF" letter-spacing="3" opacity="0.7">stats</text>
+
+  <!-- Right accent bar -->
+  <rect x="348" y="20" width="2" height="32" rx="1" fill="#FFFFFF" opacity="0.4"/>
 </svg>
