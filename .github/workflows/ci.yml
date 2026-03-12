@@ -184,6 +184,42 @@ jobs:
           fail_ci_if_error: false
 
   # ============================================
+  # CROSS-IMPLEMENTATION PARITY TESTS
+  # ============================================
+  parity-test:
+    name: Parity Tests (${{ matrix.os }})
+    needs: [python-test, node-test]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Bats
+        run: |
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sudo apt-get update && sudo apt-get install -y bats
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            brew install bats-core
+          fi
+
+      - name: Run parity tests
+        run: bats tests/bash/test_parity.bats
+
+  # ============================================
   # INTEGRATION TESTS
   # ============================================
   integration-test:
@@ -238,7 +274,7 @@ jobs:
   # ============================================
   ci-success:
     name: CI Success
-    needs: [bash-lint, bash-test, python-lint, python-test, node-lint, node-test, integration-test]
+    needs: [bash-lint, bash-test, python-lint, python-test, node-lint, node-test, integration-test, parity-test]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -250,7 +286,8 @@ jobs:
              [[ "${{ needs.python-test.result }}" != "success" ]] || \
              [[ "${{ needs.node-lint.result }}" != "success" ]] || \
              [[ "${{ needs.node-test.result }}" != "success" ]] || \
-             [[ "${{ needs.integration-test.result }}" != "success" ]]; then
+             [[ "${{ needs.integration-test.result }}" != "success" ]] || \
+             [[ "${{ needs.parity-test.result }}" != "success" ]]; then
             echo "One or more jobs failed"
             exit 1
           fi
