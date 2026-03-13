@@ -10,6 +10,7 @@ Options:
     --type <cumulative|delta|io|both|all>  Graph type to display (default: both)
     --watch, -w [interval]                  Real-time monitoring mode (default: 2s)
     --no-color                              Disable color output
+    --version, -V                           Show version and exit
     --help                                  Show this help
 """
 
@@ -59,6 +60,7 @@ OPTIONS:
     -w [interval]  Set refresh interval in seconds (default: 2)
     --no-watch     Show graphs once and exit (disable live monitoring)
     --no-color     Disable color output
+    --version, -V  Show version and exit
     --help         Show this help message
 
 NOTE:
@@ -131,8 +133,18 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Show help message",
     )
+    parser.add_argument(
+        "--version",
+        "-V",
+        action="store_true",
+        help="Show version and exit",
+    )
 
     args = parser.parse_args()
+
+    if args.version:
+        print(f"cc-context-stats {__version__}")
+        sys.exit(0)
 
     if args.help:
         show_help()
