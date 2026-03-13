@@ -15,7 +15,7 @@
 
 **Never run out of context unexpectedly** - monitor your session context in real-time.
 
-![Context Stats](images/context-status-dumbzone.png)
+![Context Stats](images/v1.6.1.png)
 
 ## Why Context Stats?
 
