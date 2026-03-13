@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -132,11 +134,30 @@ class StateEntry:
         return self.current_input_tokens + self.cache_creation + self.cache_read
 
 
+def _validate_session_id(session_id: str) -> None:
+    """Validate that a session ID does not contain dangerous path characters.
+
+    Args:
+        session_id: Session ID to validate
+
+    Raises:
+        ValueError: If session_id contains '/', '\\', '..', or null bytes
+    """
+    for bad in ("/", "\\", "..", "\0"):
+        if bad in session_id:
+            raise ValueError(
+                f"Invalid session_id: contains '{bad}'. "
+                "Session IDs must not contain '/', '\\', '..', or null bytes."
+            )
+
+
 class StateFile:
     """Manage state files for token tracking."""
 
     STATE_DIR = Path.home() / ".claude" / "statusline"
     OLD_STATE_DIR = Path.home() / ".claude"
+    ROTATION_THRESHOLD = 10_000
+    ROTATION_KEEP = 5_000
 
     def __init__(self, session_id: str | None = None) -> None:
         """Initialize state file manager.
@@ -144,6 +165,8 @@ class StateFile:
         Args:
             session_id: Optional session ID. If not provided, uses latest session.
         """
+        if session_id is not None:
+            _validate_session_id(session_id)
         self.session_id = session_id
         self._ensure_state_dir()
         self._migrate_old_files()
@@ -250,6 +273,39 @@ class StateFile:
                 f.write(f"{entry.to_csv_line()}\n")
         except OSError as e:
             sys.stderr.write(f"[statusline] warning: failed to write state {self.file_path}: {e}\n")
+            return
+        self._maybe_rotate()
+
+    def _maybe_rotate(self) -> None:
+        """Rotate state file if it exceeds the line threshold.
+
+        If the file has more than ROTATION_THRESHOLD lines, truncate to
+        the most recent ROTATION_KEEP lines via atomic temp-file + rename.
+        """
+        file_path = self.file_path
+        try:
+            if not file_path.exists():
+                return
+            lines = file_path.read_text().splitlines(keepends=True)
+            if len(lines) <= self.ROTATION_THRESHOLD:
+                return
+            keep = lines[-self.ROTATION_KEEP :]
+            fd = tempfile.NamedTemporaryFile(
+                dir=str(self.STATE_DIR), delete=False, mode="w", suffix=".tmp"
+            )
+            try:
+                fd.writelines(keep)
+                fd.close()
+                os.replace(fd.name, str(file_path))
+            except BaseException:
+                fd.close()
+                try:
+                    os.unlink(fd.name)
+                except OSError:
+                    pass
+                raise
+        except OSError as e:
+            sys.stderr.write(f"[statusline] warning: failed to rotate state file {file_path}: {e}\n")
 
     def list_sessions(self) -> list[str]:
         """List all available session IDs.

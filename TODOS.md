@@ -34,29 +34,33 @@ Items identified from the HOLD SCOPE mega review (2026-03-12).
 
 ## P2 — Medium Priority
 
-### 5. State file cap + rotate
+### ~~5. State file cap + rotate~~ ✅ Done
 **What:** After `StateFile.append_entry()`, check line count. If >10,000 lines, truncate to the most recent 5,000. Apply in both Python and Node.js writers.
 **Why:** State files are append-only with no rotation. `read_history()` loads entire files into memory. Heavy users could accumulate 50k+ lines across long sessions.
 **Effort:** S
 **Depends on:** None
+**Status:** Added `_maybe_rotate()` to Python `StateFile` and `maybeRotateStateFile()` to Node.js `statusline.js`. Both use atomic temp-file + rename. Threshold: 10,000 lines, retain: 5,000 lines. Unit tests in `tests/python/test_state_rotation_validation.py` and `tests/node/rotation.test.js`.
 
-### 6. Sanitize session_id input
+### ~~6. Sanitize session_id input~~ ✅ Done
 **What:** Reject session IDs containing `/`, `\`, or `..` at the CLI entry point (`parse_args`) and in `StateFile.__init__()`. Print a clear error message and exit.
 **Why:** Defense-in-depth against path traversal via `context-stats ../../etc/passwd`. Claude Code generates safe UUIDs, but the CLI accepts arbitrary user input.
 **Effort:** XS
 **Depends on:** None
+**Status:** Added `_validate_session_id()` helper in `state.py`, called in `StateFile.__init__()` and `parse_args()` in `context_stats.py`. Rejects `/`, `\`, `..`, and null bytes. Unit tests and CLI subprocess tests in `tests/python/test_state_rotation_validation.py`.
 
-### 7. Node.js git command timeout
+### ~~7. Node.js git command timeout~~ ✅ Done
 **What:** Add `timeout: 5000` to both `execSync` calls in `statusline.js` `getGitInfo()`.
 **Why:** Python's `get_git_info()` has `timeout=5`. Node.js has none — git hangs (network FS, large repo) would block the statusline process indefinitely.
 **Effort:** XS
 **Depends on:** None
+**Status:** Added `timeout: 5000` to both `execSync` calls (`git rev-parse` and `git status`) in `getGitInfo()` in `scripts/statusline.js`.
 
-### 8. Repo-level CLAUDE.md
+### ~~8. Repo-level CLAUDE.md~~ ✅ Done
 **What:** Create `CLAUDE.md` at repo root documenting: project purpose, dual-implementation rationale, CSV format contract, test running instructions (`pytest`, `npm test`, `bats`), key architectural decisions, and the 5-script statusline landscape.
 **Why:** Helps AI assistants and new contributors understand the project quickly. Currently the only CLAUDE.md is the user's personal global one.
 **Effort:** S
 **Depends on:** TODO 2 (CSV format doc) for cross-reference
+**Status:** Created `CLAUDE.md` at repo root with all required sections. Cross-references `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT.md`, and `docs/CSV_FORMAT.md`.
 
 ## P3 — Low Priority
 

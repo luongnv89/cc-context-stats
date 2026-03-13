@@ -24,7 +24,7 @@ from pathlib import Path
 from claude_statusline import __version__
 from claude_statusline.core.colors import ColorManager
 from claude_statusline.core.config import Config
-from claude_statusline.core.state import StateFile
+from claude_statusline.core.state import StateFile, _validate_session_id
 from claude_statusline.graphs.renderer import GraphDimensions, GraphRenderer
 from claude_statusline.graphs.statistics import calculate_deltas
 from claude_statusline.ui.icons import get_activity_tier, get_tier_label
@@ -137,6 +137,13 @@ def parse_args() -> argparse.Namespace:
     if args.help:
         show_help()
         sys.exit(0)
+
+    if args.session_id is not None:
+        try:
+            _validate_session_id(args.session_id)
+        except ValueError as e:
+            sys.stderr.write(f"Error: {e}\n")
+            sys.exit(1)
 
     return args
 

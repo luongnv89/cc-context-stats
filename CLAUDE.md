@@ -1,0 +1,54 @@
+# CLAUDE.md
+
+## Project Purpose
+
+cc-context-stats provides real-time context window monitoring for Claude Code sessions. It tracks token consumption over time and displays live ASCII graphs so users can see how much context remains.
+
+## Dual-Implementation Rationale
+
+The statusline is implemented in three languages (Bash, Python, Node.js) so users can choose whichever runtime they have available. Claude Code invokes the statusline script via stdin JSON pipe — any implementation that reads JSON from stdin and writes formatted text to stdout works. The Python and Node.js implementations also persist state to CSV files read by the `context-stats` CLI.
+
+## CSV Format Contract
+
+State files are append-only CSV at `~/.claude/statusline/statusline.<session_id>.state` with 14 comma-separated fields. See [docs/CSV_FORMAT.md](docs/CSV_FORMAT.md) for the full field specification. Key constraint: `workspace_project_dir` has commas replaced with underscores before writing.
+
+## Statusline Script Landscape
+
+| Script | Language | State writes | Notes |
+|---|---|---|---|
+| `scripts/statusline-full.sh` | Bash | No | Full display, requires `jq` |
+| `scripts/statusline-git.sh` | Bash | No | Git-focused variant |
+| `scripts/statusline-minimal.sh` | Bash | No | Minimal variant |
+| `scripts/statusline.py` | Python 3 | Yes | Pip-installable via package |
+| `scripts/statusline.js` | Node.js | Yes | Standalone script |
+
+## Test Commands
+
+```bash
+# Python tests
+source venv/bin/activate
+pytest tests/python/ -v
+
+# Node.js tests
+npm test
+
+# Bash integration tests
+bats tests/bash/*.bats
+
+# All tests
+pytest && npm test && bats tests/bash/*.bats
+```
+
+## Key Architectural Decisions
+
+- **Append-only CSV state files** with rotation at 10,000 lines (keeps most recent 5,000)
+- **No network requests** — all data stays local in `~/.claude/statusline/`
+- **Session ID validation** — rejects `/`, `\`, `..`, and null bytes for path-traversal defense
+- **5-second git command timeout** in both Python and Node.js implementations
+- **Config via `~/.claude/statusline.conf`** — simple key=value pairs
+
+## Cross-References
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system architecture and data flow
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) — setup, testing, and contribution guide
+- [docs/CSV_FORMAT.md](docs/CSV_FORMAT.md) — state file field specification

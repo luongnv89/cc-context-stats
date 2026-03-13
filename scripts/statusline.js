@@ -28,9 +28,49 @@
  */
 
 const { execSync } = require('child_process');
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+
+const ROTATION_THRESHOLD = 10000;
+const ROTATION_KEEP = 5000;
+
+/**
+ * Rotate a state file if it exceeds ROTATION_THRESHOLD lines.
+ * Keeps the most recent ROTATION_KEEP lines via atomic temp-file + rename.
+ */
+function maybeRotateStateFile(stateFile) {
+    try {
+        if (!fs.existsSync(stateFile)) {
+            return;
+        }
+        const content = fs.readFileSync(stateFile, 'utf8');
+        const lines = content.split('\n');
+        // Remove trailing empty element from split if file ends with newline
+        if (lines.length > 0 && lines[lines.length - 1] === '') {
+            lines.pop();
+        }
+        if (lines.length <= ROTATION_THRESHOLD) {
+            return;
+        }
+        const keep = lines.slice(-ROTATION_KEEP);
+        const tmpFile = stateFile + '.' + crypto.randomBytes(6).toString('hex') + '.tmp';
+        try {
+            fs.writeFileSync(tmpFile, keep.join('\n') + '\n');
+            fs.renameSync(tmpFile, stateFile);
+        } catch (e) {
+            try {
+                fs.unlinkSync(tmpFile);
+            } catch {
+                /* cleanup best-effort */
+            }
+            throw e;
+        }
+    } catch (e) {
+        process.stderr.write(`[statusline] warning: failed to rotate state file: ${e.message}\n`);
+    }
+}
 
 // ANSI Colors
 const BLUE = '\x1b[0;34m';
@@ -97,6 +137,7 @@ function getGitInfo(projectDir) {
             cwd: projectDir,
             encoding: 'utf8',
             stdio: ['pipe', 'pipe', 'pipe'],
+            timeout: 5000,
         }).trim();
 
         if (!branch) {
@@ -108,6 +149,7 @@ function getGitInfo(projectDir) {
             cwd: projectDir,
             encoding: 'utf8',
             stdio: ['pipe', 'pipe', 'pipe'],
+            timeout: 5000,
         });
         const changes = status.split('\n').filter(l => l.trim()).length;
 
@@ -378,6 +420,7 @@ process.stdin.on('end', () => {
                         totalSize,
                     ].join(',');
                     fs.appendFileSync(stateFile, `${stateData}\n`);
+                    maybeRotateStateFile(stateFile);
                 } catch (e) {
                     process.stderr.write(`[statusline] warning: failed to write state file: ${e.message}\n`);
                 }
@@ -396,3 +439,8 @@ process.stdin.on('end', () => {
     const parts = [base, gitInfo, contextInfo, deltaInfo, acInfo, sessionInfo];
     console.log(fitToWidth(parts, maxWidth));
 });
+
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { maybeRotateStateFile, ROTATION_THRESHOLD, ROTATION_KEEP };
+}
