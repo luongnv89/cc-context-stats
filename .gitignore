@@ -50,3 +50,7 @@ show_raw_claude_code_api.js
 
 # Ruff
 .ruff_cache/
+
+# dev tools
+openspec
+.claude
