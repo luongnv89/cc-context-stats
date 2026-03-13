@@ -24,7 +24,7 @@
  *   timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,
  *   current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,
  *   total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,
- *   workspace_project_dir
+ *   workspace_project_dir,context_window_size
  */
 
 const { execSync } = require('child_process');

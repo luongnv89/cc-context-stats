@@ -21,7 +21,10 @@ Create/edit ~/.claude/statusline.conf and set:
 When AC is enabled, 22.5% of context window is reserved for autocompact buffer.
 
 State file format (CSV):
-  timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,workspace_project_dir
+  timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,
+  current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,
+  total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,
+  workspace_project_dir,context_window_size
 """
 
 import json
@@ -30,6 +33,42 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
+
+ROTATION_THRESHOLD = 10_000
+ROTATION_KEEP = 5_000
+
+
+def maybe_rotate_state_file(state_file):
+    """Rotate a state file if it exceeds ROTATION_THRESHOLD lines.
+
+    Keeps the most recent ROTATION_KEEP lines via atomic temp-file + rename.
+    """
+    try:
+        if not os.path.exists(state_file):
+            return
+        with open(state_file) as f:
+            lines = f.readlines()
+        if len(lines) <= ROTATION_THRESHOLD:
+            return
+        keep = lines[-ROTATION_KEEP:]
+        fd, tmp_path = tempfile.mkstemp(
+            dir=os.path.dirname(state_file), suffix=".tmp"
+        )
+        try:
+            with os.fdopen(fd, "w") as tmp_f:
+                tmp_f.writelines(keep)
+            os.replace(tmp_path, state_file)
+        except BaseException:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+            raise
+    except OSError as e:
+        sys.stderr.write(
+            f"[statusline] warning: failed to rotate state file: {e}\n"
+        )
 
 # ANSI Colors
 BLUE = "\033[0;34m"
@@ -106,6 +145,7 @@ def get_git_info(project_dir):
             cwd=project_dir,
             capture_output=True,
             text=True,
+            timeout=5,
         )
         branch = result.stdout.strip()
 
@@ -118,13 +158,14 @@ def get_git_info(project_dir):
             cwd=project_dir,
             capture_output=True,
             text=True,
+            timeout=5,
         )
         changes = len([line for line in result.stdout.split("\n") if line.strip()])
 
         if changes > 0:
             return f" | {MAGENTA}{branch}{RESET} {CYAN}[{changes}]{RESET}"
         return f" | {MAGENTA}{branch}{RESET}"
-    except Exception:
+    except (subprocess.TimeoutExpired, OSError):
         return ""
 
 
@@ -302,19 +343,27 @@ def main():
             try:
                 if os.path.exists(state_file):
                     has_prev = True
-                    # Read last line to get previous token count
+                    # Read last line to get previous context usage
                     with open(state_file) as f:
                         lines = f.readlines()
                         if lines:
                             last_line = lines[-1].strip()
                             if "," in last_line:
-                                prev_tokens = int(last_line.split(",")[1])
+                                parts = last_line.split(",")
+                                # Calculate previous context usage:
+                                # cur_input + cache_creation + cache_read
+                                # CSV indices: cur_in[3], cache_create[5], cache_read[6]
+                                prev_cur_input = int(parts[3]) if len(parts) > 3 else 0
+                                prev_cache_creation = int(parts[5]) if len(parts) > 5 else 0
+                                prev_cache_read = int(parts[6]) if len(parts) > 6 else 0
+                                prev_tokens = prev_cur_input + prev_cache_creation + prev_cache_read
                             else:
+                                # Old format - single value
                                 prev_tokens = int(last_line or 0)
-            except Exception as e:
+            except (OSError, ValueError) as e:
                 sys.stderr.write(f"[statusline] warning: failed to read state file: {e}\n")
                 prev_tokens = 0
-            # Calculate delta
+            # Calculate delta (difference in context window usage)
             delta = used_tokens - prev_tokens
             # Only show positive delta (and skip first run when no previous state)
             if has_prev and delta > 0:
@@ -323,34 +372,39 @@ def main():
                 else:
                     delta_display = f"{delta / 1000:.1f}k"
                 delta_info = f" {DIM}[+{delta_display}]{RESET}"
-            # Append current usage with comprehensive format
-            # Format: timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,workspace_project_dir
-            try:
-                cur_input_tokens = current_usage.get("input_tokens", 0)
-                cur_output_tokens = current_usage.get("output_tokens", 0)
-                state_data = ",".join(
-                    str(x)
-                    for x in [
-                        int(time.time()),
-                        total_input_tokens,
-                        total_output_tokens,
-                        cur_input_tokens,
-                        cur_output_tokens,
-                        cache_creation,
-                        cache_read,
-                        cost_usd,
-                        lines_added,
-                        lines_removed,
-                        session_id or "",
-                        model_id,
-                        workspace_project_dir.replace(",", "_"),
-                        total_size,
-                    ]
-                )
-                with open(state_file, "a") as f:
-                    f.write(f"{state_data}\n")
-            except Exception as e:
-                sys.stderr.write(f"[statusline] warning: failed to write state file: {e}\n")
+            # Only append if context usage changed (avoid duplicates from multiple refreshes)
+            if not has_prev or used_tokens != prev_tokens:
+                # Append current usage with comprehensive format
+                # Format: ts,total_in,total_out,cur_in,cur_out,cache_create,cache_read,
+                #         cost_usd,lines_added,lines_removed,session_id,model_id,project_dir,
+                #         context_window_size
+                try:
+                    cur_input_tokens = current_usage.get("input_tokens", 0)
+                    cur_output_tokens = current_usage.get("output_tokens", 0)
+                    state_data = ",".join(
+                        str(x)
+                        for x in [
+                            int(time.time()),
+                            total_input_tokens,
+                            total_output_tokens,
+                            cur_input_tokens,
+                            cur_output_tokens,
+                            cache_creation,
+                            cache_read,
+                            cost_usd,
+                            lines_added,
+                            lines_removed,
+                            session_id or "",
+                            model_id,
+                            workspace_project_dir.replace(",", "_"),
+                            total_size,
+                        ]
+                    )
+                    with open(state_file, "a") as f:
+                        f.write(f"{state_data}\n")
+                    maybe_rotate_state_file(state_file)
+                except OSError as e:
+                    sys.stderr.write(f"[statusline] warning: failed to write state file: {e}\n")
 
     # Display session_id if enabled
     if show_session and session_id:
