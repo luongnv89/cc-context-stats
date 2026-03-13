@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-03-13
+
+### Fixed
+
+- **Footer version drift** - Corrected stale version `1.2.3` in bash script and `1.0.0` default in Python renderer to match actual release version
+- **Footer project name** - Renamed `claude-statusline` to `cc-context-stats` in the footer display across bash and Python implementations
+- **Install version embedding** - Install scripts now read version from `package.json` and embed it into the installed script, preventing future version drift
+
 ## [1.6.0] - 2026-03-13
 
 ### Added

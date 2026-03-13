@@ -351,7 +351,7 @@ class GraphRenderer:
         )
         self._emit()
 
-    def render_footer(self, version: str = "1.0.0", commit_hash: str = "dev") -> None:
+    def render_footer(self, version: str = "1.6.1", commit_hash: str = "dev") -> None:
         """Render the footer with version info.
 
         Args:
@@ -359,7 +359,7 @@ class GraphRenderer:
             commit_hash: Git commit hash
         """
         self._emit(
-            f"{self.colors.dim}Powered by {self.colors.cyan}claude-statusline"
+            f"{self.colors.dim}Powered by {self.colors.cyan}cc-context-stats"
             f"{self.colors.dim} v{version}-{commit_hash} - "
             f"https://github.com/luongnv89/cc-context-stats{self.colors.reset}"
         )

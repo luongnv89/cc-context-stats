@@ -22,7 +22,7 @@
 
 # === CONFIGURATION ===
 # shellcheck disable=SC2034
-VERSION="1.2.3"
+VERSION="1.6.1"
 COMMIT_HASH="dev" # Will be replaced during installation
 STATE_DIR=~/.claude/statusline
 CONFIG_FILE=~/.claude/statusline.conf
@@ -873,7 +873,7 @@ render_summary() {
 }
 
 render_footer() {
-    echo -e "${DIM}Powered by ${CYAN}claude-statusline${DIM} v${VERSION}-${COMMIT_HASH} - https://github.com/luongnv89/cc-context-stats${RESET}"
+    echo -e "${DIM}Powered by ${CYAN}cc-context-stats${DIM} v${VERSION}-${COMMIT_HASH} - https://github.com/luongnv89/cc-context-stats${RESET}"
     echo ""
 }
 

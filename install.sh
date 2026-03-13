@@ -181,7 +181,14 @@ install_context_stats() {
         download_file "scripts/context-stats.sh" "$DEST"
     fi
 
-    # Embed commit hash
+    # Embed version and commit hash
+    local pkg_version
+    if [ "$INSTALL_MODE" = "local" ]; then
+        pkg_version=$(grep -o '"version": *"[^"]*"' "$SCRIPT_DIR/package.json" | head -1 | grep -o '"[^"]*"$' | tr -d '"')
+    else
+        pkg_version=$(curl -fsSL "${GITHUB_RAW_URL}/package.json" 2>/dev/null | grep -o '"version": *"[^"]*"' | head -1 | grep -o '"[^"]*"$' | tr -d '"')
+    fi
+    [ -n "$pkg_version" ] && sed -i.bak "s/VERSION=\"[^\"]*\"/VERSION=\"$pkg_version\"/" "$DEST" && rm -f "$DEST.bak"
     sed -i.bak "s/COMMIT_HASH=\"dev\"/COMMIT_HASH=\"$commit_hash\"/" "$DEST" && rm -f "$DEST.bak"
     chmod +x "$DEST"
     echo -e "${GREEN}✓${RESET} Installed: $DEST"
