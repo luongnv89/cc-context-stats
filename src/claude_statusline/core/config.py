@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -63,8 +64,8 @@ show_session=true
 reduced_motion=false
 """
             )
-        except OSError:
-            pass  # Ignore errors creating config
+        except OSError as e:
+            sys.stderr.write(f"[statusline] warning: failed to create config {self._config_path}: {e}\n")
 
     def _read_config(self) -> None:
         """Read settings from config file."""
@@ -90,8 +91,8 @@ reduced_motion=false
                     self.show_io_tokens = value != "false"
                 elif key == "reduced_motion":
                     self.reduced_motion = value != "false"
-        except OSError:
-            pass  # Use defaults on read error
+        except (OSError, UnicodeDecodeError) as e:
+            sys.stderr.write(f"[statusline] warning: failed to read config {self._config_path}: {e}\n")
 
     def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary."""

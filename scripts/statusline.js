@@ -152,8 +152,8 @@ show_delta=true
 show_session=true
 `;
             fs.writeFileSync(configPath, defaultConfig);
-        } catch {
-            // Ignore errors creating config
+        } catch (e) {
+            process.stderr.write(`[statusline] warning: failed to create config: ${e.message}\n`);
         }
         return config;
     }
@@ -182,8 +182,8 @@ show_session=true
                 config.reducedMotion = valueTrimmed !== 'false';
             }
         }
-    } catch {
-        // Ignore errors
+    } catch (e) {
+        process.stderr.write(`[statusline] warning: failed to read config: ${e.message}\n`);
     }
     return config;
 }
@@ -339,7 +339,8 @@ process.stdin.on('end', () => {
                         prevTokens = parseInt(lastLine, 10) || 0;
                     }
                 }
-            } catch {
+            } catch (e) {
+                process.stderr.write(`[statusline] warning: failed to read state file: ${e.message}\n`);
                 prevTokens = 0;
             }
             // Calculate delta (difference in context window usage)
@@ -377,8 +378,8 @@ process.stdin.on('end', () => {
                         totalSize,
                     ].join(',');
                     fs.appendFileSync(stateFile, `${stateData}\n`);
-                } catch {
-                    // Ignore errors
+                } catch (e) {
+                    process.stderr.write(`[statusline] warning: failed to write state file: ${e.message}\n`);
                 }
             }
         }

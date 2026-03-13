@@ -159,8 +159,8 @@ show_delta=true
 show_session=true
 """
                 )
-        except Exception:
-            pass  # Ignore errors creating config
+        except Exception as e:
+            sys.stderr.write(f"[statusline] warning: failed to create config: {e}\n")
         return config
 
     try:
@@ -182,8 +182,8 @@ show_session=true
                     config["show_session"] = value != "false"
                 elif key == "show_io_tokens":
                     config["show_io_tokens"] = value != "false"
-    except Exception:
-        pass
+    except (OSError, UnicodeDecodeError) as e:
+        sys.stderr.write(f"[statusline] warning: failed to read config: {e}\n")
     return config
 
 
@@ -311,7 +311,8 @@ def main():
                                 prev_tokens = int(last_line.split(",")[1])
                             else:
                                 prev_tokens = int(last_line or 0)
-            except Exception:
+            except Exception as e:
+                sys.stderr.write(f"[statusline] warning: failed to read state file: {e}\n")
                 prev_tokens = 0
             # Calculate delta
             delta = used_tokens - prev_tokens
@@ -348,8 +349,8 @@ def main():
                 )
                 with open(state_file, "a") as f:
                     f.write(f"{state_data}\n")
-            except Exception:
-                pass
+            except Exception as e:
+                sys.stderr.write(f"[statusline] warning: failed to write state file: {e}\n")
 
     # Display session_id if enabled
     if show_session and session_id:

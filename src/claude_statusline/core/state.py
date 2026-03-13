@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -211,8 +212,8 @@ class StateFile:
                     entry = StateEntry.from_csv_line(line)
                     if entry:
                         entries.append(entry)
-        except OSError:
-            pass
+        except OSError as e:
+            sys.stderr.write(f"[statusline] warning: failed to read state history {file_path}: {e}\n")
 
         return entries
 
@@ -233,8 +234,8 @@ class StateFile:
             for line in reversed(lines):
                 if line.strip():
                     return StateEntry.from_csv_line(line)
-        except OSError:
-            pass
+        except OSError as e:
+            sys.stderr.write(f"[statusline] warning: failed to read last entry {file_path}: {e}\n")
 
         return None
 
@@ -247,8 +248,8 @@ class StateFile:
         try:
             with open(self.file_path, "a") as f:
                 f.write(f"{entry.to_csv_line()}\n")
-        except OSError:
-            pass
+        except OSError as e:
+            sys.stderr.write(f"[statusline] warning: failed to write state {self.file_path}: {e}\n")
 
     def list_sessions(self) -> list[str]:
         """List all available session IDs.
