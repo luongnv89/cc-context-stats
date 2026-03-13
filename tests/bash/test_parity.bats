@@ -212,6 +212,61 @@ process.stdout.write(JSON.stringify(data));
     done
 }
 
+@test "CSV parity: comma in workspace_project_dir is sanitized to underscore" {
+    fixture="$FIXTURES/comma_in_path.json"
+    [ -f "$fixture" ] || skip "comma_in_path.json fixture missing"
+
+    # Enable show_delta so state files are written
+    echo "show_delta=true" > "$TEST_HOME/.claude/statusline.conf"
+
+    py_session="parity-comma-py"
+    node_session="parity-comma-node"
+
+    py_input=$(inject_session_py "$fixture" "$py_session")
+    node_input=$(inject_session_node "$fixture" "$node_session")
+
+    echo "$py_input" | python3 "$PYTHON_SCRIPT" > /dev/null 2>&1
+    echo "$node_input" | node "$NODE_SCRIPT" > /dev/null 2>&1
+
+    # Restore show_delta=false for subsequent tests
+    echo "show_delta=false" > "$TEST_HOME/.claude/statusline.conf"
+
+    py_state_file="$TEST_HOME/.claude/statusline/statusline.${py_session}.state"
+    node_state_file="$TEST_HOME/.claude/statusline/statusline.${node_session}.state"
+
+    [ -f "$py_state_file" ] || { echo "Python wrote no state file"; return 1; }
+    [ -f "$node_state_file" ] || { echo "Node wrote no state file"; return 1; }
+
+    # Extract workspace_project_dir (field 13, 1-indexed in cut)
+    py_dir=$(tail -1 "$py_state_file" | cut -d',' -f13)
+    node_dir=$(tail -1 "$node_state_file" | cut -d',' -f13)
+
+    # Both must have commas replaced with underscores
+    expected="/home/user/my_project_dir"
+
+    if [ "$py_dir" != "$expected" ]; then
+        echo "Python did not sanitize commas: got '$py_dir', expected '$expected'"
+        return 1
+    fi
+    if [ "$node_dir" != "$expected" ]; then
+        echo "Node.js did not sanitize commas: got '$node_dir', expected '$expected'"
+        return 1
+    fi
+
+    # Both must produce exactly 14 fields (commas didn't corrupt the CSV)
+    py_fields=$(tail -1 "$py_state_file" | awk -F',' '{print NF}')
+    node_fields=$(tail -1 "$node_state_file" | awk -F',' '{print NF}')
+
+    if [ "$py_fields" -ne 14 ]; then
+        echo "Python state has $py_fields fields (expected 14)"
+        return 1
+    fi
+    if [ "$node_fields" -ne 14 ]; then
+        echo "Node.js state has $node_fields fields (expected 14)"
+        return 1
+    fi
+}
+
 @test "CSV parity: timestamp differs by at most 2 seconds between Python and Node.js" {
     for fixture in "$FIXTURES"/*.json; do
         fixture_name=$(basename "$fixture" .json)

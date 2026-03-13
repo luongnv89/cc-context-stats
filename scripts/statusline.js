@@ -373,7 +373,7 @@ process.stdin.on('end', () => {
                         linesRemoved,
                         sessionId || '',
                         modelId,
-                        workspaceProjectDir,
+                        workspaceProjectDir.replace(/,/g, '_'),
                         totalSize,
                     ].join(',');
                     fs.appendFileSync(stateFile, `${stateData}\n`);

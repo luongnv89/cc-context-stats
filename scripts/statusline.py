@@ -342,7 +342,7 @@ def main():
                         lines_removed,
                         session_id or "",
                         model_id,
-                        workspace_project_dir,
+                        workspace_project_dir.replace(",", "_"),
                         total_size,
                     ]
                 )

@@ -178,7 +178,7 @@ cost_usd=$(echo "$input" | jq -r '.cost.total_cost_usd // 0')
 lines_added=$(echo "$input" | jq -r '.cost.total_lines_added // 0')
 lines_removed=$(echo "$input" | jq -r '.cost.total_lines_removed // 0')
 model_id=$(echo "$input" | jq -r '.model.id // ""')
-workspace_project_dir=$(echo "$input" | jq -r '.workspace.project_dir // ""')
+workspace_project_dir=$(echo "$input" | jq -r '.workspace.project_dir // ""' | tr ',' '_')
 
 if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
     # Get tokens from current_usage (includes cache)

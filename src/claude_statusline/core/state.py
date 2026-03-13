@@ -115,7 +115,7 @@ class StateEntry:
                 self.lines_removed,
                 self.session_id,
                 self.model_id,
-                self.workspace_project_dir,
+                self.workspace_project_dir.replace(",", "_"),
                 self.context_window_size,
             ]
         )
