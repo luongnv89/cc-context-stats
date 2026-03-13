@@ -52,9 +52,7 @@ def maybe_rotate_state_file(state_file):
         if len(lines) <= ROTATION_THRESHOLD:
             return
         keep = lines[-ROTATION_KEEP:]
-        fd, tmp_path = tempfile.mkstemp(
-            dir=os.path.dirname(state_file), suffix=".tmp"
-        )
+        fd, tmp_path = tempfile.mkstemp(dir=os.path.dirname(state_file), suffix=".tmp")
         try:
             with os.fdopen(fd, "w") as tmp_f:
                 tmp_f.writelines(keep)
@@ -66,9 +64,8 @@ def maybe_rotate_state_file(state_file):
                 pass
             raise
     except OSError as e:
-        sys.stderr.write(
-            f"[statusline] warning: failed to rotate state file: {e}\n"
-        )
+        sys.stderr.write(f"[statusline] warning: failed to rotate state file: {e}\n")
+
 
 # ANSI Colors
 BLUE = "\033[0;34m"
