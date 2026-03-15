@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-03-15
+
+### Added
+
+- **Installation checker** (`scripts/check-install.sh`) — Verifies both statusline and context-stats CLI are properly installed regardless of method (bash, npm, pip). Checks command availability, settings.json configuration, and functional output. Runnable locally or via `curl | bash`
+- **MI monotonicity tests** — 60 new tests across Python (25), Node.js (23), and Bash (12) ensuring MI score always reflects context length: more free context = higher MI. Tests cover CPS monotonicity, composite MI under varying ES/PS, fine-grained 1% resolution, zone alignment, and all beta values
+- **Shared monotonicity test vectors** — `tests/fixtures/mi_monotonicity_vectors.json` with utilization steps, ES/PS scenarios, and beta variants for cross-implementation parity
+
+### Fixed
+
+- **npm bin entry** — Removed `claude-statusline` from npm bin (not a user-facing CLI)
+- **Self-dependency** — Removed accidental self-dependency in package.json
+- **Upgrade detection** — Installer now detects and reports version upgrades
+- **npm package exports** — Added proper bin entries for `context-stats` CLI
+
 ## [1.8.0] - 2026-03-15
 
 ### Added
