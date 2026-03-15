@@ -1,15 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 72" width="360" height="72">
   <!-- Black version for light backgrounds — no background rectangle -->
 
-  <!-- Mark: Context wave -->
+  <!-- Mark: MI degradation curve (descending) -->
   <g transform="translate(8, 4)">
-    <path d="M 10 48 C 16 48, 18 42, 22 40 C 26 38, 28 36, 32 32 C 36 28, 38 22, 42 18 C 46 14, 50 16, 54 14"
+    <path d="M 10 14 C 14 14, 18 15, 22 17 C 26 19, 30 24, 34 30 C 38 36, 42 43, 46 47 C 50 51, 52 52, 54 53"
           stroke="#1A1A1A" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M 10 52 C 16 52, 18 46, 22 44 C 26 42, 28 40, 32 36 C 36 32, 38 26, 42 22 C 46 18, 50 20, 54 18"
+    <path d="M 10 18 C 14 18, 18 19, 22 21 C 26 23, 30 28, 34 34 C 38 40, 42 47, 46 51 C 50 54, 52 55, 54 56"
           stroke="#1A1A1A" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.25"/>
-    <circle cx="42" cy="18" r="3.5" fill="#1A1A1A"/>
-    <circle cx="42" cy="18" r="6" fill="#1A1A1A" opacity="0.12"/>
-    <line x1="10" y1="54" x2="54" y2="54" stroke="#1A1A1A" stroke-width="1" stroke-linecap="round" opacity="0.3"/>
+    <circle cx="34" cy="30" r="3.5" fill="#1A1A1A"/>
+    <circle cx="34" cy="30" r="6" fill="#1A1A1A" opacity="0.12"/>
+    <circle cx="10" cy="14" r="2" fill="#1A1A1A" opacity="0.5"/>
+    <line x1="10" y1="56" x2="54" y2="56" stroke="#1A1A1A" stroke-width="1" stroke-linecap="round" opacity="0.25"/>
   </g>
 
   <!-- Divider -->
