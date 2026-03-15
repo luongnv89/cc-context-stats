@@ -37,7 +37,8 @@ context-stats --type delta       # Context growth per interaction (default)
 context-stats --type cumulative  # Total context usage over time
 context-stats --type both        # Show both graphs
 context-stats --type io          # Input/output token breakdown
-context-stats --type all         # Show all graphs
+context-stats --type mi          # Model Intelligence over time
+context-stats --type all         # Show all graphs including MI
 ```
 
 ### Diagnostic Dump
@@ -72,11 +73,16 @@ Max: 4,787  Min: 0  Points: 254
 
 Session Summary
 ----------------------------------------------------------------------------
+  Context Remaining:   43,038/200,000 (21%)
   >>> DUMB ZONE <<< (You are in the dumb zone - Dex Horthy says so)
+  Model Intelligence:  0.646  (Context pressure building, consider wrapping up)
+    Context: 79% used
 
-  Context Remaining:   43,038 (21%)
+  Last Growth:         +2,500
   Input Tokens:        59,015
   Output Tokens:       43,429
+  Total Cost:          $0.1234
+  Model:               claude-sonnet-4-6
   Session Duration:    2h 29m
 
 Powered by cc-context-stats v1.10.0 - https://github.com/luongnv89/cc-context-stats
@@ -86,6 +92,8 @@ Powered by cc-context-stats v1.10.0 - https://github.com/luongnv89/cc-context-st
 
 - **Live Monitoring**: Automatic refresh every 2 seconds (configurable)
 - **Zone Awareness**: Color-coded status based on context usage
+- **Model Intelligence (MI)**: Benchmark-calibrated score with per-model profiles (Opus/Sonnet/Haiku) showing how much the model has degraded
+- **MI Over Time Graph**: `--type mi` shows MI degradation trajectory across the session
 - **Project Display**: Shows project name and session ID
 - **ASCII Graphs**: Smooth area charts with gradient fills
 - **Minimal Output**: Clean summary with just the essential info
@@ -134,8 +142,9 @@ OPTIONS:
                    - delta: Context growth per interaction (default)
                    - cumulative: Total context usage over time
                    - io: Input/output tokens over time
+                   - mi: Model Intelligence over time
                    - both: Show cumulative and delta graphs
-                   - all: Show all graphs including I/O
+                   - all: Show all graphs including I/O and MI
     -w [interval]  Set refresh interval in seconds (default: 2)
     --no-watch     Show graphs once and exit (disable live monitoring)
     --no-color     Disable color output

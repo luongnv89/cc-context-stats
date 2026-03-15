@@ -26,23 +26,32 @@ show_session=false # Hide session ID
 # Disable rotating text animations
 reduced_motion=false  # (default) Animations enabled
 reduced_motion=true   # Disable animations for accessibility
+
+# Model Intelligence (MI) score display
+show_mi=true   # (default) Show MI score in status line and summary
+show_mi=false  # Disable MI display
+
+# MI curve beta override
+mi_curve_beta=0    # (default) Use model-specific profile (opus=1.8, sonnet=1.5, haiku=1.2)
+mi_curve_beta=1.5  # Override with custom beta for all models
 ```
 
 ## Status Line Components
 
 ```
-[Opus 4.5] my-project | main [3] | 64,000 free (32.0%) [+2,500] [AC:45k] session_id
+[Opus 4.6] my-project | main [3] | 64,000 free (32.0%) [+2,500] MI:0.918 [AC:45k] session_id
 ```
 
 | Component     | Description              | Color            |
 | ------------- | ------------------------ | ---------------- |
-| `[Opus 4.5]`  | Current AI model         | Dim              |
+| `[Opus 4.6]`  | Current AI model         | Dim              |
 | `my-project`  | Current directory        | Blue             |
 | `main`        | Git branch               | Magenta          |
 | `[3]`         | Uncommitted changes      | Cyan             |
 | `64,000 free` | Available tokens         | Green/Yellow/Red |
 | `(32.0%)`     | Context usage percentage | -                |
-| `[+2,500]`    | Token delta              | -                |
+| `[+2,500]`    | Token delta              | Dim              |
+| `MI:0.918`    | Model Intelligence score | Green/Yellow/Red |
 | `[AC:45k]`    | Autocompact buffer       | Dim              |
 | `session_id`  | Current session          | Dim              |
 
@@ -55,6 +64,18 @@ Context availability is color-coded:
 | > 50%        | Green  |
 | > 25%        | Yellow |
 | <= 25%       | Red    |
+
+## Model Intelligence Colors
+
+MI score is color-coded based on degradation level:
+
+| MI Score | Color  | Meaning                                    |
+| -------- | ------ | ------------------------------------------ |
+| > 0.70   | Green  | Model is operating well                    |
+| 0.40-0.70| Yellow | Context pressure building, consider wrap up|
+| < 0.40   | Red    | Significant degradation, start new session |
+
+MI uses per-model degradation profiles. Set `mi_curve_beta` to override the auto-detected profile.
 
 ## Autocompact Display
 
