@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="icon-wave-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+    <linearGradient id="icon-mi-grad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#22C55E"/>
       <stop offset="50%" stop-color="#E9AB34"/>
       <stop offset="100%" stop-color="#EF4444"/>
@@ -10,18 +10,21 @@
   <!-- Background -->
   <rect width="512" height="512" rx="96" fill="#1A1A1A"/>
 
-  <!-- Context wave (scaled up) -->
-  <path d="M 96 376 C 144 376, 160 328, 192 312 C 224 296, 240 280, 272 248 C 304 216, 320 168, 352 136 C 384 104, 400 120, 432 104"
-        stroke="url(#icon-wave-grad)" stroke-width="24" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- MI degradation curve (descending, scaled up) -->
+  <path d="M 80 112 C 112 112, 144 120, 176 136 C 208 152, 240 192, 272 240 C 304 288, 336 344, 368 376 C 400 408, 416 416, 432 424"
+        stroke="url(#icon-mi-grad)" stroke-width="24" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 
   <!-- Echo line -->
-  <path d="M 96 408 C 144 408, 160 360, 192 344 C 224 328, 240 312, 272 280 C 304 248, 320 200, 352 168 C 384 136, 400 152, 432 136"
-        stroke="url(#icon-wave-grad)" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.25"/>
+  <path d="M 80 144 C 112 144, 144 152, 176 168 C 208 184, 240 224, 272 272 C 304 320, 336 376, 368 404 C 400 428, 416 436, 432 440"
+        stroke="url(#icon-mi-grad)" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.2"/>
 
-  <!-- Cursor dot -->
-  <circle cx="352" cy="136" r="28" fill="#E9AB34"/>
-  <circle cx="352" cy="136" r="48" fill="#E9AB34" opacity="0.12"/>
+  <!-- Cursor dot (amber, inflection) -->
+  <circle cx="272" cy="240" r="28" fill="#E9AB34"/>
+  <circle cx="272" cy="240" r="48" fill="#E9AB34" opacity="0.12"/>
+
+  <!-- Peak marker (green) -->
+  <circle cx="80" cy="112" r="16" fill="#22C55E" opacity="0.6"/>
 
   <!-- Baseline -->
-  <line x1="96" y1="424" x2="432" y2="424" stroke="#8B7D6B" stroke-width="6" stroke-linecap="round" opacity="0.35"/>
+  <line x1="80" y1="444" x2="432" y2="444" stroke="#8B7D6B" stroke-width="6" stroke-linecap="round" opacity="0.3"/>
 </svg>

@@ -1,9 +1,9 @@
 <div align="center">
   <img src="assets/logo/logo-full.svg" alt="cc-context-stats" width="320"/>
 
-  <h3>Know your zone. Ship with confidence.</h3>
+  <h3>Keep your model sharp. Ship with confidence.</h3>
 
-  <p>Real-time context monitoring for Claude Code — so you always know when you're sharp and when to wrap up.</p>
+  <p>Real-time model intelligence monitoring for Claude Code — know exactly when your model is at peak quality and when it's time for a fresh session.</p>
 
 [![PyPI version](https://badge.fury.io/py/cc-context-stats.svg)](https://pypi.org/project/cc-context-stats/)
 [![npm version](https://badge.fury.io/js/cc-context-stats.svg)](https://www.npmjs.com/package/cc-context-stats)
@@ -13,18 +13,19 @@
 
 </div>
 
-**Never run out of context unexpectedly** - monitor your session context in real-time.
+**Always use Claude at its best** — monitor model intelligence in real-time so you know exactly when quality starts to drop.
 
-![Context Stats](images/v1.6.1.png)
+![Context Stats - Model Intelligence](images/1.10/1.10.0-model-intelligence.png)
 
 ## Why Context Stats?
 
-When working with Claude Code on complex tasks, you can easily burn through your context window without realizing it. As your context fills up, Claude's performance degrades - this is what Dex Horthy calls the "dumb zone". Context Stats helps you:
+Research shows that LLM quality degrades as the context window fills up — even the best models lose retrieval accuracy at longer contexts. But you can't see this happening. Context Stats makes it visible:
 
+- **Model Intelligence (MI)** - A benchmark-calibrated score (1.000 → 0.000) that tracks how much quality has degraded, with per-model profiles for Opus, Sonnet, and Haiku
 - **Know your zone** - See if you're in the Smart Zone, Dumb Zone, or Wrap Up Zone
-- **Track context usage** - Real-time monitoring with live-updating graphs
-- **Get early warnings** - Color-coded status alerts you before performance degrades
-- **Make informed decisions** - Know when to start a fresh session
+- **Track context usage** - Real-time monitoring with live-updating ASCII graphs
+- **Get early warnings** - Color-coded alerts tell you when to start a fresh session
+- **Per-model awareness** - Opus retains quality longer than Sonnet, which degrades faster than Haiku. MI reflects this automatically
 
 ## Context Zones
 
@@ -117,10 +118,17 @@ This opens a live dashboard that refreshes every 2 seconds, showing:
 
 - Your current project and session
 - Context growth per interaction graph
-- Your current zone status
+- Model Intelligence degradation over time
+- Your current zone status and MI score
 - Remaining context percentage
 
 Press `Ctrl+C` to exit.
+
+### Graph Types
+
+| Delta (default) | Cumulative |
+|:---:|:---:|
+| ![Delta](images/1.10/1.10-delta.png) | ![Cumulative](images/1.10/1.10-cumulative.png) |
 
 ## Context Stats CLI
 
@@ -130,7 +138,8 @@ context-stats -w 5               # Custom refresh interval (5 seconds)
 context-stats --no-watch         # Show once and exit
 context-stats --type cumulative  # Show cumulative context usage
 context-stats --type both        # Show both graphs
-context-stats --type all         # Show all graphs including I/O
+context-stats --type mi          # Model Intelligence over time
+context-stats --type all         # Show all graphs including I/O and MI
 context-stats <session_id>       # View specific session
 context-stats explain            # Diagnostic dump (pipe JSON to stdin)
 context-stats --version          # Show version
@@ -149,19 +158,21 @@ Session Summary
 ----------------------------------------------------------------------------
   Context Remaining:   43,038/200,000 (21%)
   >>> DUMB ZONE <<< (You are in the dumb zone - Dex Horthy says so)
+  Model Intelligence:  0.646  (Context pressure building, consider wrapping up)
+    Context: 79% used
 
   Last Growth:         +2,500
   Input Tokens:        1,234
   Output Tokens:       567
   Lines Changed:       +45 / -12
   Total Cost:          $0.1234
-  Model:               claude-sonnet-4-20250514
+  Model:               claude-sonnet-4-6
   Session Duration:    2h 29m
 ```
 
 ## Status Line
 
-![Status Line](images/statusline-detail.png)
+![Status Line](images/1.10/1.10-statusline.png)
 
 The status line shows at-a-glance metrics in your Claude Code interface:
 
@@ -170,6 +181,7 @@ The status line shows at-a-glance metrics in your Claude Code interface:
 | Model     | Current Claude model                      |
 | Context   | Tokens used / remaining with color coding |
 | Delta     | Token change since last update            |
+| MI        | Model Intelligence score (per-model)      |
 | Git       | Branch name and uncommitted changes       |
 | Session   | Session ID for correlation                |
 
@@ -183,12 +195,26 @@ show_delta=true      # Show token delta in status line
 show_session=true    # Show session ID
 autocompact=true     # Show autocompact buffer indicator
 reduced_motion=false # Disable animations for accessibility
+show_mi=true         # Show Model Intelligence score
+mi_curve_beta=0      # Use model-specific profile (0=auto, or set custom beta)
 
 # Custom colors - named colors or hex (#rrggbb)
 color_green=#7dcfff
 color_red=#f7768e
 color_yellow=bright_yellow
 ```
+
+## Model Intelligence (MI)
+
+MI estimates how well the model will perform at your current context fill level, calibrated from the [MRCR v2 8-needle](https://docs.anthropic.com/) long context retrieval benchmark. The score drops from 1.000 (fresh context) to 0.000 (full context), with model-specific degradation rates:
+
+| Model | Beta | MI at 50% | MI at 75% | When to worry |
+|-------|------|-----------|-----------|---------------|
+| Opus  | 1.8  | 0.713     | 0.404     | ~60% used     |
+| Sonnet| 1.5  | 0.646     | 0.350     | ~50% used     |
+| Haiku | 1.2  | 0.565     | 0.292     | ~45% used     |
+
+The model is auto-detected from your session. See [Model Intelligence docs](docs/MODEL_INTELLIGENCE.md) for the full formula and benchmark data.
 
 ## How It Works
 
@@ -200,6 +226,7 @@ Context Stats hooks into Claude Code's status line feature to track token usage 
 - [Context Stats Guide](docs/context-stats.md) - Detailed CLI usage guide
 - [Configuration Options](docs/configuration.md) - All settings explained
 - [Available Scripts](docs/scripts.md) - Script variants and features
+- [Model Intelligence](docs/MODEL_INTELLIGENCE.md) - MI formula, per-model profiles, benchmark data
 - [Architecture](docs/ARCHITECTURE.md) - System design and components
 - [CSV Format](docs/CSV_FORMAT.md) - State file field specification
 - [Development](docs/DEVELOPMENT.md) - Dev setup, testing, and debugging

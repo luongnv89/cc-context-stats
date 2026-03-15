@@ -30,6 +30,7 @@ Complete status line with all features:
 - Git branch and changes
 - Token usage with color coding
 - Token delta tracking
+- Model Intelligence (MI) score with per-model profiles
 - Autocompact indicator
 - Session ID
 
@@ -60,6 +61,7 @@ Features beyond bash scripts:
 - Writes state files for context-stats CLI
 - Duplicate-entry deduplication
 - State file rotation (10k/5k threshold)
+- Model Intelligence (MI) with per-model profiles
 - 5-second git command timeout
 
 ### statusline.js
@@ -70,6 +72,7 @@ Features beyond bash scripts:
 - Writes state files for context-stats CLI
 - Duplicate-entry deduplication
 - State file rotation (10k/5k threshold)
+- Model Intelligence (MI) with per-model profiles
 - 5-second git command timeout
 
 ## Utility Scripts
@@ -83,7 +86,7 @@ Standalone bash CLI tool for visualizing token consumption. Reads state files wr
 All statusline scripts produce consistent output:
 
 ```
-[Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC:XXk] session_id
+[Model] directory | branch [changes] | XXk free (XX%) [+delta] MI:0.XXX [AC:XXk] session_id
 ```
 
 ## Architecture

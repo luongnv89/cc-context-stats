@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
   <defs>
-    <linearGradient id="fav-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+    <linearGradient id="fav-mi-grad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#22C55E"/>
       <stop offset="50%" stop-color="#E9AB34"/>
       <stop offset="100%" stop-color="#EF4444"/>
@@ -10,10 +10,10 @@
   <!-- Background -->
   <rect width="16" height="16" rx="3" fill="#1A1A1A"/>
 
-  <!-- Simplified wave for 16x16 -->
-  <path d="M 2 12 C 4 12, 5 10, 7 8 C 9 6, 10 4, 12 3 C 13 2, 14 3, 14 2.5"
-        stroke="url(#fav-grad)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Simplified MI curve (descending) for 16x16 -->
+  <path d="M 2 3 C 4 3, 6 5, 8 8 C 10 11, 12 12.5, 14 13"
+        stroke="url(#fav-mi-grad)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
 
-  <!-- Dot -->
-  <circle cx="12" cy="3" r="1.5" fill="#E9AB34"/>
+  <!-- Dot at inflection -->
+  <circle cx="8" cy="8" r="1.5" fill="#E9AB34"/>
 </svg>
