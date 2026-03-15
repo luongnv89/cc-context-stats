@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.1] - 2026-03-15
+
+### Fixed
+
+- **`--version` flag for bash CLI** — `context-stats --version` now works when installed via npm (was returning "Unknown option")
+- **Quick Start docs** — Show correct statusline command per install method (pip/npm vs shell script)
+
+### Changed
+
+- **Logo redesign** — Curve now descends (MI declining) instead of ascending (context growing), reflecting the model intelligence pivot
+- **README messaging** — Pivoted tagline to "Keep your model sharp. Ship with confidence." with MI as lead feature
+- **Statusline screenshots** — Side-by-side green/yellow screenshots showing MI color changes
+- **Documentation** — Updated all docs (configuration, context-stats, scripts) for v1.10+ MI features
+
 ## [1.11.0] - 2026-03-15
 
 ### Changed
