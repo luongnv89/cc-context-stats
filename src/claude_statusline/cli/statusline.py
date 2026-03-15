@@ -103,14 +103,14 @@ def main() -> None:
         # Format tokens based on token_detail setting
         free_display = format_tokens(free_tokens, config.token_detail)
 
-        # Color based on free percentage
-        free_pct_int = int(free_pct)
-        if free_pct_int > 50:
-            ctx_color = colors.green
-        elif free_pct_int > 25:
-            ctx_color = colors.yellow
-        else:
-            ctx_color = colors.red
+        # Color based on MI thresholds (consistent with MI display)
+        from claude_statusline.graphs.intelligence import get_mi_color as _get_ctx_color, calculate_context_pressure, get_model_profile
+
+        _utilization = used_tokens / total_size if total_size > 0 else 0.0
+        _beta = get_model_profile(model_id)
+        _mi = calculate_context_pressure(_utilization, _beta)
+        ctx_color_name = _get_ctx_color(_mi, _utilization)
+        ctx_color = getattr(colors, ctx_color_name)
 
         context_info = f" | {ctx_color}{free_display} ({free_pct:.1f}%){colors.reset}"
 
@@ -147,7 +147,7 @@ def main() -> None:
                 delta = used_tokens - prev_tokens
                 if has_prev and delta > 0:
                     delta_display = format_tokens(delta, config.token_detail)
-                    delta_info = f" {colors.dim}[+{delta_display}]{colors.reset}"
+                    delta_info = f" | {colors.dim}+{delta_display}{colors.reset}"
 
             # Calculate MI score — pure function of utilization, no prev entry needed
             if config.show_mi:
@@ -160,9 +160,9 @@ def main() -> None:
                 mi_score = calculate_intelligence(
                     entry, total_size, model_id, config.mi_curve_beta
                 )
-                mi_color_name = get_mi_color(mi_score.mi)
+                mi_color_name = get_mi_color(mi_score.mi, mi_score.utilization)
                 mi_color = getattr(colors, mi_color_name)
-                mi_info = f" {mi_color}MI:{format_mi_score(mi_score.mi)}{colors.reset}"
+                mi_info = f" | {mi_color}MI:{format_mi_score(mi_score.mi)}{colors.reset}"
 
             # Only append if context usage changed (avoid duplicates)
             if not has_prev or used_tokens != prev_tokens:
@@ -170,12 +170,12 @@ def main() -> None:
 
     # Display session_id if enabled
     if config.show_session and session_id:
-        session_info = f" {colors.dim}{session_id}{colors.reset}"
+        session_info = f" | {colors.dim}{session_id}{colors.reset}"
 
     # Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC] [session_id]
     base = f"{colors.dim}[{model}]{colors.reset} {colors.blue}{dir_name}{colors.reset}"
     max_width = get_terminal_width()
-    parts = [base, git_info, context_info, delta_info, mi_info, ac_info, session_info]
+    parts = [base, git_info, context_info, mi_info, delta_info, session_info]
     print(fit_to_width(parts, max_width))
 
 

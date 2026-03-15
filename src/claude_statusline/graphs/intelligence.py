@@ -16,9 +16,12 @@ from dataclasses import dataclass
 
 from claude_statusline.core.state import StateEntry
 
-# Hardcoded constants — not configurable
-MI_GREEN_THRESHOLD = 0.70
-MI_YELLOW_THRESHOLD = 0.40
+# MI color thresholds — based on MI value and context utilization
+MI_GREEN_THRESHOLD = 0.90
+MI_YELLOW_THRESHOLD = 0.80
+# Context utilization zones (used as fallback for color decisions)
+MI_CONTEXT_YELLOW_THRESHOLD = 0.40  # 40% context used
+MI_CONTEXT_RED_THRESHOLD = 0.80     # 80% context used
 
 # Per-model degradation profiles calibrated from MRCR v2 8-needle benchmark
 # beta controls curve shape: higher = quality retained longer
@@ -102,20 +105,28 @@ def calculate_intelligence(
     return IntelligenceScore(mi=mi, utilization=utilization)
 
 
-def get_mi_color(mi: float) -> str:
-    """Get color name for MI score.
+def get_mi_color(mi: float, utilization: float = 0.0) -> str:
+    """Get color name for MI score considering both MI and context utilization.
+
+    Rules:
+      - Green: MI >= 0.90
+      - Yellow: MI < 0.90 and > 0.80, OR context 40%-80%
+      - Red: MI <= 0.80, OR context > 80%
 
     Args:
         mi: MI score value
+        utilization: Context utilization ratio (0-1)
 
     Returns:
         Color name: "green", "yellow", or "red"
     """
-    if mi > MI_GREEN_THRESHOLD:
-        return "green"
-    if mi > MI_YELLOW_THRESHOLD:
+    # Red: MI critically low or context nearly full
+    if mi <= MI_YELLOW_THRESHOLD or utilization >= MI_CONTEXT_RED_THRESHOLD:
+        return "red"
+    # Yellow: MI degrading or context in warning zone
+    if mi < MI_GREEN_THRESHOLD or utilization >= MI_CONTEXT_YELLOW_THRESHOLD:
         return "yellow"
-    return "red"
+    return "green"
 
 
 def format_mi_score(mi: float) -> str:

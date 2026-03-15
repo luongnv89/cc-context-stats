@@ -220,22 +220,34 @@ float_lt() {
     [ "$mi" = "1.000" ]
 }
 
-# --- Color thresholds ---
+# --- Color thresholds (MI + utilization) ---
 
-@test "MI color: green for MI > 0.70" {
+@test "MI color: green for MI >= 0.90 and low utilization" {
     local color
-    color=$(get_mi_color "0.75")
+    color=$(get_mi_color "0.95" "0.10")
     [ "$color" = "green" ]
 }
 
-@test "MI color: yellow for MI 0.40-0.70" {
+@test "MI color: yellow for MI < 0.90" {
     local color
-    color=$(get_mi_color "0.55")
+    color=$(get_mi_color "0.85" "0.10")
     [ "$color" = "yellow" ]
 }
 
-@test "MI color: red for MI < 0.40" {
+@test "MI color: yellow when context 40-80%" {
     local color
-    color=$(get_mi_color "0.30")
+    color=$(get_mi_color "0.95" "0.50")
+    [ "$color" = "yellow" ]
+}
+
+@test "MI color: red for MI <= 0.80" {
+    local color
+    color=$(get_mi_color "0.75" "0.10")
+    [ "$color" = "red" ]
+}
+
+@test "MI color: red when context >= 80%" {
+    local color
+    color=$(get_mi_color "0.95" "0.85")
     [ "$color" = "red" ]
 }

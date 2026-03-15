@@ -105,11 +105,11 @@ compute_mi() {
 }
 
 get_mi_color() {
-    local mi_val="$1"
-    awk -v mi="$mi_val" 'BEGIN {
-        if (mi + 0 > 0.70) print "green"
-        else if (mi + 0 > 0.40) print "yellow"
-        else print "red"
+    local mi_val="$1" utilization="$2"
+    awk -v mi="$mi_val" -v u="$utilization" 'BEGIN {
+        if (mi + 0 <= 0.80 || u + 0 >= 0.80) print "red"
+        else if (mi + 0 < 0.90 || u + 0 >= 0.40) print "yellow"
+        else print "green"
     }'
 }
 
@@ -320,14 +320,15 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
         free_display=$(awk "BEGIN {printf \"%.1fk\", $free_tokens / 1000}")
     fi
 
-    # Color based on free percentage
-    if [[ "$free_pct_int" -gt 50 ]]; then
-        ctx_color="$GREEN"
-    elif [[ "$free_pct_int" -gt 25 ]]; then
-        ctx_color="$YELLOW"
-    else
-        ctx_color="$RED"
-    fi
+    # Color based on MI thresholds (consistent with MI display)
+    ctx_mi_val=$(compute_mi "$used_tokens" "$total_size" "$model_id" "$mi_curve_beta")
+    ctx_util=$(awk -v u="$used_tokens" -v t="$total_size" 'BEGIN { if (t > 0) printf "%.4f", u/t; else print "0" }')
+    ctx_color_name=$(get_mi_color "$ctx_mi_val" "$ctx_util")
+    case "$ctx_color_name" in
+        green)  ctx_color="$GREEN" ;;
+        yellow) ctx_color="$YELLOW" ;;
+        red)    ctx_color="$RED" ;;
+    esac
 
     context_info=" | ${ctx_color}${free_display} (${free_pct}%)${RESET}"
 
@@ -380,20 +381,21 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
                 else
                     delta_display=$(awk "BEGIN {printf \"%.1fk\", $delta / 1000}")
                 fi
-                delta_info=" ${DIM}[+${delta_display}]${RESET}"
+                delta_info=" | ${DIM}+${delta_display}${RESET}"
             fi
         fi
 
         # Calculate and display MI score if enabled
         if [[ "$show_mi_enabled" == "true" ]]; then
             mi_val=$(compute_mi "$used_tokens" "$total_size" "$model_id" "$mi_curve_beta")
-            mi_color_name=$(get_mi_color "$mi_val")
+            mi_util=$(awk -v u="$used_tokens" -v t="$total_size" 'BEGIN { if (t > 0) printf "%.4f", u/t; else print "0" }')
+            mi_color_name=$(get_mi_color "$mi_val" "$mi_util")
             case "$mi_color_name" in
                 green)  mi_color="$GREEN" ;;
                 yellow) mi_color="$YELLOW" ;;
                 red)    mi_color="$RED" ;;
             esac
-            mi_info=" ${mi_color}MI:${mi_val}${RESET}"
+            mi_info=" | ${mi_color}MI:${mi_val}${RESET}"
         fi
 
         # Only append if context usage changed (avoid duplicates from multiple refreshes)
@@ -408,10 +410,10 @@ fi
 
 # Display session_id if enabled
 if [[ "$show_session_enabled" == "true" && -n "$session_id" ]]; then
-    session_info=" ${DIM}${session_id}${RESET}"
+    session_info=" | ${DIM}${session_id}${RESET}"
 fi
 
 # Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC] [S:session_id]
 base="${DIM}[${model}]${RESET} ${BLUE}${dir_name}${RESET}"
 max_width=$(get_terminal_width)
-fit_to_width "$max_width" "$base" "$git_info" "$context_info" "$delta_info" "$mi_info" "$ac_info" "$session_info"
+fit_to_width "$max_width" "$base" "$git_info" "$context_info" "$mi_info" "$delta_info" "$session_info"

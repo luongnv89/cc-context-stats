@@ -174,26 +174,43 @@ class TestComposite:
 
 
 class TestColor:
-    def test_green(self):
-        assert get_mi_color(0.8) == "green"
+    def test_green_high_mi_low_util(self):
+        assert get_mi_color(0.95, 0.10) == "green"
 
-    def test_yellow(self):
-        assert get_mi_color(0.5) == "yellow"
+    def test_yellow_mi_below_green(self):
+        assert get_mi_color(0.85, 0.10) == "yellow"
 
-    def test_red(self):
-        assert get_mi_color(0.2) == "red"
+    def test_yellow_context_in_warning_zone(self):
+        """MI is green but context 40-80% forces yellow."""
+        assert get_mi_color(0.95, 0.50) == "yellow"
 
-    def test_boundary_green(self):
-        assert get_mi_color(MI_GREEN_THRESHOLD + 0.001) == "green"
+    def test_red_mi_critically_low(self):
+        assert get_mi_color(0.75, 0.10) == "red"
 
-    def test_boundary_yellow_upper(self):
-        assert get_mi_color(MI_GREEN_THRESHOLD) == "yellow"
+    def test_red_context_nearly_full(self):
+        """MI is decent but context >80% forces red."""
+        assert get_mi_color(0.95, 0.85) == "red"
 
-    def test_boundary_yellow_lower(self):
-        assert get_mi_color(MI_YELLOW_THRESHOLD + 0.001) == "yellow"
+    def test_boundary_green_threshold(self):
+        assert get_mi_color(MI_GREEN_THRESHOLD, 0.0) == "green"
+        assert get_mi_color(MI_GREEN_THRESHOLD - 0.001, 0.0) == "yellow"
 
-    def test_boundary_red(self):
-        assert get_mi_color(MI_YELLOW_THRESHOLD) == "red"
+    def test_boundary_yellow_threshold(self):
+        assert get_mi_color(MI_YELLOW_THRESHOLD + 0.001, 0.0) == "yellow"
+        assert get_mi_color(MI_YELLOW_THRESHOLD, 0.0) == "red"
+
+    def test_context_overrides_mi(self):
+        """Context utilization can override MI-based color."""
+        # MI says green, but context 80%+ forces red
+        assert get_mi_color(0.95, 0.80) == "red"
+        # MI says green, but context 40%+ forces yellow
+        assert get_mi_color(0.95, 0.40) == "yellow"
+
+    def test_default_utilization(self):
+        """When utilization not provided, only MI matters."""
+        assert get_mi_color(0.95) == "green"
+        assert get_mi_color(0.85) == "yellow"
+        assert get_mi_color(0.75) == "red"
 
 
 # --- Format tests ---

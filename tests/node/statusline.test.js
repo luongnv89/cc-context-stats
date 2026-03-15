@@ -100,9 +100,9 @@ describe('statusline.js', () => {
             expect(result.stdout).toContain('%');
         });
 
-        test('shows AC indicator', async () => {
+        test('AC indicator removed from statusline', async () => {
             const result = await runScript(sampleInput);
-            expect(result.stdout).toContain('[AC:');
+            expect(result.stdout).not.toContain('[AC:');
         });
 
         test('shows percentage', async () => {

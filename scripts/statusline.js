@@ -36,9 +36,11 @@ const os = require('os');
 const ROTATION_THRESHOLD = 10000;
 const ROTATION_KEEP = 5000;
 
-// Model Intelligence constants (hardcoded, not configurable)
-const MI_GREEN_THRESHOLD = 0.70;
-const MI_YELLOW_THRESHOLD = 0.40;
+// Model Intelligence color thresholds
+const MI_GREEN_THRESHOLD = 0.90;
+const MI_YELLOW_THRESHOLD = 0.80;
+const MI_CONTEXT_YELLOW = 0.40;  // 40% context used
+const MI_CONTEXT_RED = 0.80;     // 80% context used
 
 // Per-model degradation profiles: beta controls curve shape
 // Higher beta = quality retained longer (degradation happens later)
@@ -82,12 +84,14 @@ function computeMI(usedTokens, contextWindowSize, modelId, betaOverride) {
 }
 
 /**
- * Return ANSI color code for MI score.
+ * Return ANSI color code for MI score considering both MI and context utilization.
  */
-function getMIColor(mi, greenColor, yellowColor, redColor) {
-    if (mi > MI_GREEN_THRESHOLD) return greenColor || GREEN;
-    if (mi > MI_YELLOW_THRESHOLD) return yellowColor || YELLOW;
-    return redColor || RED;
+function getMIColor(mi, utilization, greenColor, yellowColor, redColor) {
+    if (mi <= MI_YELLOW_THRESHOLD || utilization >= MI_CONTEXT_RED)
+        return redColor || RED;
+    if (mi < MI_GREEN_THRESHOLD || utilization >= MI_CONTEXT_YELLOW)
+        return yellowColor || YELLOW;
+    return greenColor || GREEN;
 }
 
 /**
@@ -471,15 +475,10 @@ process.stdin.on('end', () => {
             ? freeTokens.toLocaleString('en-US')
             : `${(freeTokens / 1000).toFixed(1)}k`;
 
-        // Color based on free percentage
-        let ctxColor;
-        if (freePctInt > 50) {
-            ctxColor = cGreen;
-        } else if (freePctInt > 25) {
-            ctxColor = cYellow;
-        } else {
-            ctxColor = cRed;
-        }
+        // Color based on MI thresholds (consistent with MI display)
+        const ctxUtil = totalSize > 0 ? usedTokens / totalSize : 0;
+        const ctxMI = computeMI(usedTokens, totalSize, modelId, miCurveBeta);
+        const ctxColor = getMIColor(ctxMI.mi, ctxUtil, cGreen, cYellow, cRed);
 
         contextInfo = ` | ${ctxColor}${freeDisplay} (${freePct.toFixed(1)}%)${RESET}`;
 
@@ -550,15 +549,16 @@ process.stdin.on('end', () => {
                     const deltaDisplay = tokenDetail
                         ? delta.toLocaleString('en-US')
                         : `${(delta / 1000).toFixed(1)}k`;
-                    deltaInfo = ` ${DIM}[+${deltaDisplay}]${RESET}`;
+                    deltaInfo = ` | ${DIM}+${deltaDisplay}${RESET}`;
                 }
             }
 
             // Calculate and display MI score if enabled
             if (showMI) {
                 const miResult = computeMI(usedTokens, totalSize, modelId, miCurveBeta);
-                const miColor = getMIColor(miResult.mi, cGreen, cYellow, cRed);
-                miInfo = ` ${miColor}MI:${miResult.mi.toFixed(3)}${RESET}`;
+                const miUtil = totalSize > 0 ? usedTokens / totalSize : 0;
+                const miColor = getMIColor(miResult.mi, miUtil, cGreen, cYellow, cRed);
+                miInfo = ` | ${miColor}MI:${miResult.mi.toFixed(3)}${RESET}`;
             }
 
             // Only append if context usage changed (avoid duplicates from multiple refreshes)
@@ -596,13 +596,13 @@ process.stdin.on('end', () => {
 
     // Display session_id if enabled
     if (showSession && sessionId) {
-        sessionInfo = ` ${DIM}${sessionId}${RESET}`;
+        sessionInfo = ` | ${DIM}${sessionId}${RESET}`;
     }
 
     // Output: [Model] dir | branch [n] | free (%) [+delta] [AC] session
     const base = `${DIM}[${model}]${RESET} ${cBlue}${dirName}${RESET}`;
     const maxWidth = getTerminalWidth();
-    const parts = [base, gitInfo, contextInfo, deltaInfo, miInfo, acInfo, sessionInfo];
+    const parts = [base, gitInfo, contextInfo, miInfo, deltaInfo, sessionInfo];
     console.log(fitToWidth(parts, maxWidth));
 });
 

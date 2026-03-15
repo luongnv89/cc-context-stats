@@ -41,17 +41,10 @@ teardown() {
     [[ "$result" == *"%"* ]]
 }
 
-@test "shows AC indicator when autocompact enabled" {
+@test "AC indicator removed from statusline" {
     input='{"model":{"display_name":"Claude"},"workspace":{"current_dir":"/tmp","project_dir":"/tmp"},"context_window":{"context_window_size":200000,"current_usage":{"input_tokens":10000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}'
     result=$(echo "$input" | "$SCRIPT")
-    [[ "$result" == *"[AC:"* ]]
-}
-
-@test "shows AC:off when autocompact disabled in config" {
-    echo "autocompact=false" > "$TEST_HOME/.claude/statusline.conf"
-    input='{"model":{"display_name":"Claude"},"workspace":{"current_dir":"/tmp","project_dir":"/tmp"},"context_window":{"context_window_size":200000,"current_usage":{"input_tokens":10000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}'
-    result=$(echo "$input" | "$SCRIPT")
-    [[ "$result" == *"[AC:off]"* ]]
+    [[ "$result" != *"[AC:"* ]]
 }
 
 @test "shows exact tokens by default (token_detail=true)" {

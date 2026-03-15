@@ -26,7 +26,7 @@
   "zone_thresholds": {
     "smart_zone_max_pct": 40,
     "dumb_zone_max_pct": 80,
-    "mi_green": 0.70,
-    "mi_yellow": 0.40
+    "mi_green": 0.90,
+    "mi_yellow": 0.80
   }
 }

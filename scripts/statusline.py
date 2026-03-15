@@ -38,9 +38,11 @@ import tempfile
 ROTATION_THRESHOLD = 10_000
 ROTATION_KEEP = 5_000
 
-# Model Intelligence constants (hardcoded, not configurable)
-MI_GREEN_THRESHOLD = 0.70
-MI_YELLOW_THRESHOLD = 0.40
+# Model Intelligence color thresholds
+MI_GREEN_THRESHOLD = 0.90
+MI_YELLOW_THRESHOLD = 0.80
+MI_CONTEXT_YELLOW = 0.40  # 40% context used
+MI_CONTEXT_RED = 0.80     # 80% context used
 
 # Per-model degradation profiles: beta controls curve shape
 # Higher beta = quality retained longer (degradation happens later)
@@ -79,13 +81,13 @@ def compute_mi(used_tokens, context_window_size, model_id="", beta_override=0.0)
     return max(0.0, 1.0 - u ** beta)
 
 
-def get_mi_color(mi):
-    """Return ANSI color code for MI score."""
-    if mi > MI_GREEN_THRESHOLD:
-        return GREEN
-    if mi > MI_YELLOW_THRESHOLD:
+def get_mi_color(mi, utilization=0.0):
+    """Return ANSI color code for MI score considering both MI and context utilization."""
+    if mi <= MI_YELLOW_THRESHOLD or utilization >= MI_CONTEXT_RED:
+        return RED
+    if mi < MI_GREEN_THRESHOLD or utilization >= MI_CONTEXT_YELLOW:
         return YELLOW
-    return RED
+    return GREEN
 
 
 def maybe_rotate_state_file(state_file):
@@ -434,13 +436,10 @@ def main():
         else:
             free_display = f"{free_tokens / 1000:.1f}k"
 
-        # Color based on free percentage
-        if free_pct_int > 50:
-            ctx_color = c_green
-        elif free_pct_int > 25:
-            ctx_color = c_yellow
-        else:
-            ctx_color = c_red
+        # Color based on MI thresholds (consistent with MI display)
+        ctx_util = used_tokens / total_size if total_size > 0 else 0.0
+        ctx_mi = compute_mi(used_tokens, total_size, model_id, mi_curve_beta)
+        ctx_color = get_mi_color(ctx_mi, ctx_util)
 
         context_info = f" | {ctx_color}{free_display} ({free_pct:.1f}%){RESET}"
 
@@ -500,13 +499,14 @@ def main():
                         delta_display = f"{delta:,}"
                     else:
                         delta_display = f"{delta / 1000:.1f}k"
-                    delta_info = f" {DIM}[+{delta_display}]{RESET}"
+                    delta_info = f" | {DIM}+{delta_display}{RESET}"
 
             # Calculate and display MI score if enabled
             if show_mi:
                 mi_val = compute_mi(used_tokens, total_size, model_id, mi_curve_beta)
-                mi_color = get_mi_color(mi_val)
-                mi_info = f" {mi_color}MI:{mi_val:.3f}{RESET}"
+                mi_util = used_tokens / total_size if total_size > 0 else 0.0
+                mi_color = get_mi_color(mi_val, mi_util)
+                mi_info = f" | {mi_color}MI:{mi_val:.3f}{RESET}"
 
             # Only append if context usage changed (avoid duplicates from multiple refreshes)
             if not has_prev or used_tokens != prev_tokens:
@@ -540,12 +540,12 @@ def main():
 
     # Display session_id if enabled
     if show_session and session_id:
-        session_info = f" {DIM}{session_id}{RESET}"
+        session_info = f" | {DIM}{session_id}{RESET}"
 
     # Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC] [S:session_id]
     base = f"{DIM}[{model}]{RESET} {c_blue}{dir_name}{RESET}"
     max_width = get_terminal_width()
-    parts = [base, git_info, context_info, delta_info, mi_info, ac_info, session_info]
+    parts = [base, git_info, context_info, mi_info, delta_info, session_info]
     print(fit_to_width(parts, max_width))
 
 

@@ -327,17 +327,15 @@ class GraphRenderer:
         # Model Intelligence score
         if mi_score is not None:
             from claude_statusline.graphs.intelligence import (
-                MI_GREEN_THRESHOLD,
-                MI_YELLOW_THRESHOLD,
                 format_mi_score,
                 get_mi_color,
             )
 
-            mi_color_name = get_mi_color(mi_score.mi)
+            mi_color_name = get_mi_color(mi_score.mi, mi_score.utilization)
             mi_color = getattr(self.colors, mi_color_name)
-            if mi_score.mi > MI_GREEN_THRESHOLD:
+            if mi_color_name == "green":
                 mi_hint = "Model is operating well"
-            elif mi_score.mi > MI_YELLOW_THRESHOLD:
+            elif mi_color_name == "yellow":
                 mi_hint = "Context pressure building, consider wrapping up"
             else:
                 mi_hint = "Significant degradation, start new session"

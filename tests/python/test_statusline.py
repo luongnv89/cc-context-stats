@@ -73,11 +73,11 @@ class TestStatuslineScript:
         assert code == 0
         assert "%" in output
 
-    def test_shows_ac_indicator(self, sample_input):
-        """Should show autocompact indicator."""
+    def test_ac_not_in_statusline(self, sample_input):
+        """AC indicator removed from statusline to save space."""
         output, code = run_script(sample_input)
         assert code == 0
-        assert "[AC:" in output
+        assert "[AC:" not in output
 
     def test_handles_missing_model(self):
         """Should handle missing model gracefully."""
