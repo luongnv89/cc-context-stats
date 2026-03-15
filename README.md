@@ -15,7 +15,7 @@
 
 **Never run out of context unexpectedly** - monitor your session context in real-time.
 
-![Context Stats](images/v1.6.1.png)
+![Context Stats - Model Intelligence](images/1.10/1.10.0-model-intelligence.png)
 
 ## Why Context Stats?
 
@@ -118,10 +118,17 @@ This opens a live dashboard that refreshes every 2 seconds, showing:
 
 - Your current project and session
 - Context growth per interaction graph
-- Your current zone status
+- Model Intelligence degradation over time
+- Your current zone status and MI score
 - Remaining context percentage
 
 Press `Ctrl+C` to exit.
+
+### Graph Types
+
+| Delta (default) | Cumulative |
+|:---:|:---:|
+| ![Delta](images/1.10/1.10-delta.png) | ![Cumulative](images/1.10/1.10-cumulative.png) |
 
 ## Context Stats CLI
 
@@ -165,7 +172,7 @@ Session Summary
 
 ## Status Line
 
-![Status Line](images/statusline-detail.png)
+![Status Line](images/1.10/1.10-statusline.png)
 
 The status line shows at-a-glance metrics in your Claude Code interface:
 
