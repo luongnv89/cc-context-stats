@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from claude_statusline.core.colors import ColorManager
@@ -94,6 +95,7 @@ class GraphRenderer:
         timestamps: list[int],
         title: str,
         color: str,
+        label_fn: Callable[[int], str] | None = None,
     ) -> None:
         """Render a timeseries ASCII graph.
 
@@ -102,6 +104,7 @@ class GraphRenderer:
             timestamps: Corresponding timestamps for x-axis labels
             title: Graph title
             color: ANSI color code for the graph
+            label_fn: Optional function to format Y-axis labels. If None, uses format_tokens().
         """
         n = len(data)
         if n == 0:
@@ -119,12 +122,14 @@ class GraphRenderer:
         width = self.dimensions.graph_width
         height = self.dimensions.graph_height
 
+        fmt = label_fn if label_fn else lambda v: format_tokens(v, self.token_detail)
+
         # Print title and stats
         self._emit()
         self._emit(f"{self.colors.bold}{title}{self.colors.reset}")
         self._emit(
-            f"{self.colors.dim}Max: {format_tokens(max_val, self.token_detail)}  "
-            f"Min: {format_tokens(min_val, self.token_detail)}  "
+            f"{self.colors.dim}Max: {fmt(max_val)}  "
+            f"Min: {fmt(min_val)}  "
             f"Points: {n}{self.colors.reset}"
         )
         self._emit()
@@ -138,7 +143,7 @@ class GraphRenderer:
 
             # Show labels at top, middle, and bottom
             if r == 0 or r == height // 2 or r == height - 1:
-                label = format_tokens(val, self.token_detail)
+                label = fmt(val)
             else:
                 label = ""
 
@@ -259,12 +264,14 @@ class GraphRenderer:
         self,
         entries: list,  # list[StateEntry]
         deltas: list[int],
+        mi_score: object | None = None,  # IntelligenceScore
     ) -> None:
         """Render summary statistics.
 
         Args:
             entries: List of StateEntry objects
             deltas: List of token deltas
+            mi_score: Optional IntelligenceScore for MI display
         """
         if not entries:
             return
@@ -316,6 +323,34 @@ class GraphRenderer:
                 f"  {status_color}{self.colors.bold}>>> {status_text.upper()} <<<{self.colors.reset} "
                 f"{self.colors.dim}({status_hint}){self.colors.reset}"
             )
+
+        # Model Intelligence score
+        if mi_score is not None:
+            from claude_statusline.graphs.intelligence import (
+                format_mi_score,
+                get_mi_color,
+            )
+
+            mi_color_name = get_mi_color(mi_score.mi)
+            mi_color = getattr(self.colors, mi_color_name)
+            if mi_score.mi > 0.65:
+                mi_hint = "Model is operating well"
+            elif mi_score.mi > 0.35:
+                mi_hint = "Context pressure is degrading answer quality"
+            else:
+                mi_hint = "Severely degraded, consider new session"
+            self._emit(
+                f"  {mi_color}{'Model Intelligence:':<20}{self.colors.reset} "
+                f"{format_mi_score(mi_score.mi)}  "
+                f"{self.colors.dim}({mi_hint}){self.colors.reset}"
+            )
+            self._emit(
+                f"  {self.colors.dim}  CPS: {mi_score.cps:.2f}  "
+                f"ES: {mi_score.es:.2f}  "
+                f"PS: {mi_score.ps:.2f}{self.colors.reset}"
+            )
+
+        if last.context_window_size > 0:
             self._emit()
 
         # Session details (ordered: Last Growth, I/O, Lines, Cost, Model, Duration)

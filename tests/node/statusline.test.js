@@ -97,7 +97,7 @@ describe('statusline.js', () => {
 
         test('shows free tokens indicator', async () => {
             const result = await runScript(sampleInput);
-            expect(result.stdout).toContain('free');
+            expect(result.stdout).toContain('%');
         });
 
         test('shows AC indicator', async () => {
@@ -162,21 +162,21 @@ describe('statusline.js', () => {
             const input = loadFixture('low_usage');
             const result = await runScript(input);
             expect(result.code).toBe(0);
-            expect(result.stdout).toContain('free');
+            expect(result.stdout).toContain('%');
         });
 
         test('handles medium_usage fixture', async () => {
             const input = loadFixture('medium_usage');
             const result = await runScript(input);
             expect(result.code).toBe(0);
-            expect(result.stdout).toContain('free');
+            expect(result.stdout).toContain('%');
         });
 
         test('handles high_usage fixture', async () => {
             const input = loadFixture('high_usage');
             const result = await runScript(input);
             expect(result.code).toBe(0);
-            expect(result.stdout).toContain('free');
+            expect(result.stdout).toContain('%');
         });
 
         test('all JSON fixtures succeed', async () => {

@@ -30,6 +30,8 @@ class Config:
     show_session: bool = True
     show_io_tokens: bool = True
     reduced_motion: bool = False
+    show_mi: bool = True
+    mi_curve_beta: float = 1.5
 
     # Custom color overrides (slot_name -> ANSI code)
     color_overrides: dict[str, str] = field(default_factory=dict)
@@ -78,6 +80,12 @@ show_session=true
 # Disable rotating text animations
 reduced_motion=false
 
+# Model Intelligence (MI) score display
+show_mi=true
+
+# MI degradation curve shape (higher = steeper initial drop)
+# mi_curve_beta=1.5
+
 # Custom colors - use named colors or hex (#rrggbb)
 # Available color slots: color_green, color_yellow, color_red,
 #   color_blue, color_magenta, color_cyan
@@ -120,6 +128,13 @@ reduced_motion=false
                     self.show_io_tokens = value_lower != "false"
                 elif key == "reduced_motion":
                     self.reduced_motion = value_lower != "false"
+                elif key == "show_mi":
+                    self.show_mi = value_lower != "false"
+                elif key == "mi_curve_beta":
+                    try:
+                        self.mi_curve_beta = float(raw_value)
+                    except ValueError:
+                        pass
                 elif key in _COLOR_KEYS:
                     slot = _COLOR_KEYS[key]
                     ansi = parse_color(raw_value)
@@ -144,5 +159,7 @@ reduced_motion=false
             "show_session": self.show_session,
             "show_io_tokens": self.show_io_tokens,
             "reduced_motion": self.reduced_motion,
+            "show_mi": self.show_mi,
+            "mi_curve_beta": self.mi_curve_beta,
             "color_overrides": dict(self.color_overrides),
         }

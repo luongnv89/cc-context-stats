@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-03-15
+
+### Added
+
+- **Model Intelligence (MI) score** — Heuristic quality score estimating answer quality based on context utilization, cache efficiency, and output productivity. Inspired by the Michelangelo paper (arXiv:2409.12640). Displayed as `MI:X.XX` in the statusline with green/yellow/red color coding
+- **MI score in all implementations** — MI computation available across Python package, standalone Python, Node.js, and Bash (via `awk`) statusline scripts with full cross-implementation parity
+- **MI timeseries graph** — `context-stats --type mi` renders MI score trajectory over time as an ASCII graph with decimal Y-axis labels
+- **MI in session summary** — `context-stats` summary now shows MI score with sub-component breakdown (CPS, ES, PS) and interpretation text
+- **Shared test vectors** — `tests/fixtures/mi_test_vectors.json` with 6 vectors ensuring Python and Node.js produce identical MI scores within ±0.01 tolerance
+- **`label_fn` parameter for `render_timeseries()`** — Optional custom Y-axis label formatter, used by MI graph to display decimals instead of token counts
+- **Bash feature parity** — `statusline-full.sh` now supports custom color overrides, state file rotation, MI score display, and all config keys (`show_mi`, `mi_curve_beta`, `reduced_motion`, `show_io_tokens`)
+- **Config: `show_mi`** — Toggle MI score display (default: `true`)
+- **Config: `mi_curve_beta`** — Adjust MI degradation curve shape (default: `1.5`)
+
+### Changed
+
+- **Compact context display** — Removed "free" word from context info (`872,748 (87.3%)` instead of `872,748 free (87.3%)`) across all implementations
+- **Decoupled state reads from `show_delta`** — State file is now read when either `show_delta` or `show_mi` is enabled, allowing MI to work independently of delta display
+- **Node.js terminal width default** — Changed from `80` to `200` when no TTY is detected (matching Python behavior), preventing `fitToWidth` from dropping statusline parts in Claude Code's subprocess
+
+### Fixed
+
+- **Node.js terminal width** — Fixed `getTerminalWidth()` defaulting to 80 in Claude Code's subprocess, which caused MI, delta, AC, and session parts to be silently dropped
+
 ## [1.7.0] - 2026-03-14
 
 ### Added

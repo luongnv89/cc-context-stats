@@ -106,13 +106,13 @@ class TestFitToWidth:
     def test_realistic_ansi_strings(self):
         base = "\033[2m[Claude]\033[0m \033[0;34mdir\033[0m"
         git = " | \033[0;35mmain\033[0m"
-        ctx = " | \033[0;32m150.0k free (75.0%)\033[0m"
+        ctx = " | \033[0;32m150.0k (75.0%)\033[0m"
         session = " \033[2mtest-session-uuid-1234\033[0m"
 
-        # base=[Claude] dir = 12, git= | main = 7, ctx= | 150.0k free (75.0%) = 22,
-        # session= test-session-uuid-1234 = 23 => total = 64
+        # base=[Claude] dir = 12, git= | main = 7, ctx= | 150.0k (75.0%) = 17,
+        # session= test-session-uuid-1234 = 23 => total = 59
         result = fit_to_width([base, git, ctx, session], 80)
-        assert visible_width(result) == 64
+        assert visible_width(result) == 59
 
         # With tight width, session should be dropped
         result = fit_to_width([base, git, ctx, session], 50)

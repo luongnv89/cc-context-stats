@@ -22,7 +22,7 @@
 # State file format (CSV):
 #   timestamp,total_input_tokens,total_output_tokens,current_usage_input_tokens,current_usage_output_tokens,current_usage_cache_creation,current_usage_cache_read,total_cost_usd,total_lines_added,total_lines_removed,session_id,model_id,workspace_project_dir
 
-# Colors
+# Colors (defaults, overridable via config)
 BLUE='\033[0;34m'
 MAGENTA='\033[0;35m'
 CYAN='\033[0;36m'
@@ -31,6 +31,92 @@ YELLOW='\033[0;33m'
 RED='\033[0;31m'
 DIM='\033[2m'
 RESET='\033[0m'
+
+# Named colors for config parsing
+declare -A COLOR_NAMES=(
+    [black]='\033[0;30m' [red]='\033[0;31m' [green]='\033[0;32m'
+    [yellow]='\033[0;33m' [blue]='\033[0;34m' [magenta]='\033[0;35m'
+    [cyan]='\033[0;36m' [white]='\033[0;37m'
+    [bright_black]='\033[0;90m' [bright_red]='\033[0;91m' [bright_green]='\033[0;92m'
+    [bright_yellow]='\033[0;93m' [bright_blue]='\033[0;94m' [bright_magenta]='\033[0;95m'
+    [bright_cyan]='\033[0;96m' [bright_white]='\033[0;97m'
+)
+
+# Color config key to slot mapping
+declare -A COLOR_KEYS=(
+    [color_green]=GREEN [color_yellow]=YELLOW [color_red]=RED
+    [color_blue]=BLUE [color_magenta]=MAGENTA [color_cyan]=CYAN
+)
+
+# Parse a color name or #rrggbb hex into an ANSI escape code
+parse_color() {
+    local value
+    value=$(echo "$1" | tr '[:upper:]' '[:lower:]' | xargs)
+    if [[ -n "${COLOR_NAMES[$value]+x}" ]]; then
+        echo "${COLOR_NAMES[$value]}"
+        return
+    fi
+    if [[ "$value" =~ ^#[0-9a-f]{6}$ ]]; then
+        local r=$((16#${value:1:2}))
+        local g=$((16#${value:3:2}))
+        local b=$((16#${value:5:2}))
+        echo "\033[38;2;${r};${g};${b}m"
+        return
+    fi
+}
+
+# State file rotation constants
+ROTATION_THRESHOLD=10000
+ROTATION_KEEP=5000
+
+# Rotate state file if it exceeds threshold
+maybe_rotate_state_file() {
+    local state_file="$1"
+    [[ -f "$state_file" ]] || return
+    local line_count
+    line_count=$(wc -l < "$state_file" | tr -d ' ')
+    if [[ "$line_count" -gt "$ROTATION_THRESHOLD" ]]; then
+        local tmp_file="${state_file}.tmp.$$"
+        tail -n "$ROTATION_KEEP" "$state_file" > "$tmp_file" && mv "$tmp_file" "$state_file" || rm -f "$tmp_file"
+    fi
+}
+
+# Model Intelligence computation (uses awk for float math)
+compute_mi() {
+    local used_tokens=$1 context_window=$2 cache_read_val=$3 total_context=$4
+    local delta_lines=$5 delta_output=$6 beta=$7
+    awk -v used="$used_tokens" -v cw="$context_window" -v cr="$cache_read_val" \
+        -v tc="$total_context" -v dl="$delta_lines" -v do_val="$delta_output" -v b="$beta" '
+    BEGIN {
+        if (cw == 0) { printf "1.00 1.000 1.000 0.500"; exit }
+        # CPS
+        u = used / cw
+        if (u <= 0) cps = 1.0
+        else { cps = 1.0 - (u ^ b); if (cps < 0) cps = 0.0 }
+        # ES
+        if (tc == 0) es = 1.0
+        else es = 0.3 + 0.7 * (cr / tc)
+        # PS
+        if (do_val == "" || do_val + 0 <= 0) ps = 0.5
+        else {
+            ratio = dl / do_val
+            normalized = ratio / 0.2
+            if (normalized > 1.0) normalized = 1.0
+            ps = 0.2 + 0.8 * normalized
+        }
+        mi = 0.60 * cps + 0.25 * es + 0.15 * ps
+        printf "%.2f %.3f %.3f %.3f", mi, cps, es, ps
+    }'
+}
+
+get_mi_color() {
+    local mi_val="$1"
+    awk -v mi="$mi_val" 'BEGIN {
+        if (mi + 0 > 0.65) print "green"
+        else if (mi + 0 > 0.35) print "yellow"
+        else print "red"
+    }'
+}
 
 # Read JSON input from stdin
 input=$(cat)
@@ -63,12 +149,11 @@ autocompact_enabled=true
 token_detail_enabled=true
 show_delta_enabled=true
 show_session_enabled=true
-autocompact=""    # Will be set by sourced config
-token_detail=""   # Will be set by sourced config
-show_delta=""     # Will be set by sourced config
-show_session=""   # Will be set by sourced config
+show_mi_enabled=true
+mi_curve_beta=1.5
 ac_info=""
 delta_info=""
+mi_info=""
 session_info=""
 
 # Create config file with defaults if it doesn't exist
@@ -87,24 +172,44 @@ show_delta=true
 
 # Show session_id in status line
 show_session=true
+
+# Model Intelligence (MI) score display
+show_mi=true
+
+# MI degradation curve shape (higher = steeper initial drop)
+# mi_curve_beta=1.5
 EOF
 fi
 
 if [[ -f ~/.claude/statusline.conf ]]; then
-    # shellcheck source=/dev/null
-    source ~/.claude/statusline.conf
-    if [[ "$autocompact" == "false" ]]; then
-        autocompact_enabled=false
-    fi
-    if [[ "$token_detail" == "false" ]]; then
-        token_detail_enabled=false
-    fi
-    if [[ "$show_delta" == "false" ]]; then
-        show_delta_enabled=false
-    fi
-    if [[ "$show_session" == "false" ]]; then
-        show_session_enabled=false
-    fi
+    while IFS= read -r line; do
+        line=$(echo "$line" | xargs)
+        [[ -z "$line" || "$line" == \#* ]] && continue
+        [[ "$line" != *=* ]] && continue
+        key="${line%%=*}"
+        key=$(echo "$key" | xargs)
+        raw_value="${line#*=}"
+        raw_value=$(echo "$raw_value" | xargs)
+        value_lower=$(echo "$raw_value" | tr '[:upper:]' '[:lower:]')
+        case "$key" in
+            autocompact)    [[ "$value_lower" == "false" ]] && autocompact_enabled=false ;;
+            token_detail)   [[ "$value_lower" == "false" ]] && token_detail_enabled=false ;;
+            show_delta)     [[ "$value_lower" == "false" ]] && show_delta_enabled=false ;;
+            show_session)   [[ "$value_lower" == "false" ]] && show_session_enabled=false ;;
+            show_mi)        [[ "$value_lower" == "false" ]] && show_mi_enabled=false ;;
+            mi_curve_beta)  mi_curve_beta="$raw_value" ;;
+            color_*)
+                if [[ -n "${COLOR_KEYS[$key]+x}" ]]; then
+                    local slot="${COLOR_KEYS[$key]}"
+                    local ansi
+                    ansi=$(parse_color "$raw_value")
+                    if [[ -n "$ansi" ]]; then
+                        eval "$slot='$ansi'"
+                    fi
+                fi
+                ;;
+        esac
+    done < ~/.claude/statusline.conf
 fi
 
 # Width-fitting helpers
@@ -229,10 +334,10 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
         ctx_color="$RED"
     fi
 
-    context_info=" | ${ctx_color}${free_display} free (${free_pct}%)${RESET}"
+    context_info=" | ${ctx_color}${free_display} (${free_pct}%)${RESET}"
 
-    # Calculate and display token delta if enabled
-    if [[ "$show_delta_enabled" == "true" ]]; then
+    # Read previous entry if needed for delta OR MI
+    if [[ "$show_delta_enabled" == "true" || "$show_mi_enabled" == "true" ]]; then
         # Use session_id for per-session state (avoids conflicts with parallel sessions)
         state_dir=~/.claude/statusline
         mkdir -p "$state_dir"
@@ -245,7 +350,6 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
                 if [[ ! -f "$new_file" ]]; then
                     mv "$old_file" "$new_file" 2>/dev/null || true
                 else
-                    # New file exists, just remove old one
                     rm -f "$old_file" 2>/dev/null || true
                 fi
             fi
@@ -258,37 +362,67 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
         fi
         has_prev=false
         prev_tokens=0
+        prev_output_tokens=0
+        prev_lines_added=0
+        prev_lines_removed=0
         if [[ -f "$state_file" ]]; then
             has_prev=true
-            # Read last line and calculate previous context usage
-            # CSV: ts[0],in[1],out[2],cur_in[3],cur_out[4],cache_create[5],cache_read[6]
+            # Read last line and calculate previous state
+            # CSV: ts[0],in[1],out[2],cur_in[3],cur_out[4],cache_create[5],cache_read[6],
+            #      cost[7],+lines[8],-lines[9],session[10],model[11],dir[12],size[13]
             last_line=$(tail -1 "$state_file" 2>/dev/null)
             if [[ -n "$last_line" ]]; then
                 prev_cur_in=$(echo "$last_line" | cut -d',' -f4)
                 prev_cache_create=$(echo "$last_line" | cut -d',' -f6)
                 prev_cache_read=$(echo "$last_line" | cut -d',' -f7)
                 prev_tokens=$(( ${prev_cur_in:-0} + ${prev_cache_create:-0} + ${prev_cache_read:-0} ))
+                prev_output_tokens=$(echo "$last_line" | cut -d',' -f3)
+                prev_lines_added=$(echo "$last_line" | cut -d',' -f9)
+                prev_lines_removed=$(echo "$last_line" | cut -d',' -f10)
             fi
         fi
-        # Calculate delta
-        delta=$((used_tokens - prev_tokens))
-        # delta calculated for display
-        # Only show positive delta (and skip first run when no previous state)
-        if [[ "$has_prev" == "true" && "$delta" -gt 0 ]]; then
-            if [[ "$token_detail_enabled" == "true" ]]; then
-                delta_display=$(awk -v n="$delta" 'BEGIN { printf "%\047d", n }')
+
+        # Calculate and display token delta if enabled
+        if [[ "$show_delta_enabled" == "true" ]]; then
+            delta=$((used_tokens - prev_tokens))
+            if [[ "$has_prev" == "true" && "$delta" -gt 0 ]]; then
+                if [[ "$token_detail_enabled" == "true" ]]; then
+                    delta_display=$(awk -v n="$delta" 'BEGIN { printf "%\047d", n }')
+                else
+                    delta_display=$(awk "BEGIN {printf \"%.1fk\", $delta / 1000}")
+                fi
+                delta_info=" ${DIM}[+${delta_display}]${RESET}"
+            fi
+        fi
+
+        # Calculate and display MI score if enabled
+        if [[ "$show_mi_enabled" == "true" ]]; then
+            if [[ "$has_prev" == "true" ]]; then
+                delta_la=$(( ${lines_added:-0} - ${prev_lines_added:-0} ))
+                delta_lr=$(( ${lines_removed:-0} - ${prev_lines_removed:-0} ))
+                mi_delta_lines=$(( delta_la + delta_lr ))
+                mi_delta_output=$(( ${total_output_tokens:-0} - ${prev_output_tokens:-0} ))
             else
-                delta_display=$(awk "BEGIN {printf \"%.1fk\", $delta / 1000}")
+                mi_delta_lines=0
+                mi_delta_output=""
             fi
-            delta_info=" ${DIM}[+${delta_display}]${RESET}"
+            mi_result=$(compute_mi "$used_tokens" "$total_size" "$cache_read" "$used_tokens" "$mi_delta_lines" "$mi_delta_output" "$mi_curve_beta")
+            mi_val=$(echo "$mi_result" | cut -d' ' -f1)
+            mi_color_name=$(get_mi_color "$mi_val")
+            case "$mi_color_name" in
+                green)  mi_color="$GREEN" ;;
+                yellow) mi_color="$YELLOW" ;;
+                red)    mi_color="$RED" ;;
+            esac
+            mi_info=" ${mi_color}MI:${mi_val}${RESET}"
         fi
+
         # Only append if context usage changed (avoid duplicates from multiple refreshes)
         cur_input_tokens=$(echo "$current_usage" | jq -r '.input_tokens // 0')
         cur_output_tokens=$(echo "$current_usage" | jq -r '.output_tokens // 0')
         if [[ "$has_prev" != "true" || "$used_tokens" != "$prev_tokens" ]]; then
-            # Append current usage with comprehensive format
-            # Format: ts,in,out,cur_in,cur_out,cache_create,cache_read,cost,+lines,-lines,session,model,dir,size
             echo "$(date +%s),$total_input_tokens,$total_output_tokens,$cur_input_tokens,$cur_output_tokens,$cache_creation,$cache_read,$cost_usd,$lines_added,$lines_removed,$session_id,$model_id,$workspace_project_dir,$total_size" >>"$state_file"
+            maybe_rotate_state_file "$state_file"
         fi
     fi
 fi
@@ -301,4 +435,4 @@ fi
 # Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC] [S:session_id]
 base="${DIM}[${model}]${RESET} ${BLUE}${dir_name}${RESET}"
 max_width=$(get_terminal_width)
-fit_to_width "$max_width" "$base" "$git_info" "$context_info" "$delta_info" "$ac_info" "$session_info"
+fit_to_width "$max_width" "$base" "$git_info" "$context_info" "$delta_info" "$mi_info" "$ac_info" "$session_info"

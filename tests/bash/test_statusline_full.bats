@@ -38,7 +38,7 @@ teardown() {
     result=$(cat "$FIXTURES/valid_full.json" | "$SCRIPT")
     [[ "$result" == *"Opus 4.5"* ]]
     [[ "$result" == *"my-project"* ]]
-    [[ "$result" == *"free"* ]]
+    [[ "$result" == *"%"* ]]
 }
 
 @test "shows AC indicator when autocompact enabled" {
@@ -58,8 +58,8 @@ teardown() {
     input='{"model":{"display_name":"Claude"},"workspace":{"current_dir":"/tmp","project_dir":"/tmp"},"context_window":{"context_window_size":200000,"current_usage":{"input_tokens":10000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}'
     result=$(echo "$input" | "$SCRIPT")
     # Should NOT show 'k' suffix by default, should show comma-formatted number
-    [[ "$result" != *"k free"* ]]
-    [[ "$result" == *"free"* ]]
+    [[ "$result" != *"k ("* ]]
+    [[ "$result" == *"%"* ]]
 }
 
 @test "shows abbreviated tokens when token_detail=false" {
@@ -67,7 +67,7 @@ teardown() {
     input='{"model":{"display_name":"Claude"},"workspace":{"current_dir":"/tmp","project_dir":"/tmp"},"context_window":{"context_window_size":200000,"current_usage":{"input_tokens":10000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}'
     result=$(echo "$input" | "$SCRIPT")
     # Should show 'k' suffix for abbreviated format
-    [[ "$result" == *"k free"* ]]
+    [[ "$result" == *"k ("* ]]
 }
 
 @test "handles missing context window gracefully" {
@@ -79,7 +79,7 @@ teardown() {
 @test "calculates free tokens percentage correctly" {
     # Low usage fixture: 30k tokens used out of 200k = 85% free
     result=$(cat "$FIXTURES/low_usage.json" | "$SCRIPT")
-    [[ "$result" == *"free"* ]]
+    [[ "$result" == *"%"* ]]
 }
 
 @test "uses fixture files correctly" {

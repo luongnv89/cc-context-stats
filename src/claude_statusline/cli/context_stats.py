@@ -59,8 +59,9 @@ OPTIONS:
                    - delta: Context growth per interaction (default)
                    - cumulative: Total context usage over time
                    - io: Input/output tokens over time
+                   - mi: Model Intelligence score over time
                    - both: Show cumulative and delta graphs
-                   - all: Show all graphs including I/O
+                   - all: Show all graphs including I/O and MI
     -w [interval]  Set refresh interval in seconds (default: 2)
     --no-watch     Show graphs once and exit (disable live monitoring)
     --no-color     Disable color output
@@ -111,7 +112,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("session_id", nargs="?", default=None, help="Session ID")
     parser.add_argument(
         "--type",
-        choices=["cumulative", "delta", "io", "both", "all"],
+        choices=["cumulative", "delta", "io", "mi", "both", "all"],
         default="delta",
         help="Graph type to display (default: delta)",
     )
@@ -284,8 +285,37 @@ def render_once(
             current_output, timestamps, "Output Tokens (per request)", colors.magenta
         )
 
+    # Compute MI scores for graph and summary
+    mi_score = None
+    if graph_type in ("mi", "all") or True:  # Always compute for summary
+        from claude_statusline.graphs.intelligence import calculate_intelligence
+
+        mi_config = config if config else Config.load()
+        beta = mi_config.mi_curve_beta if config else 1.5
+
+        mi_scores = []
+        for i, entry in enumerate(entries):
+            prev = entries[i - 1] if i > 0 else None
+            ctx_window = entry.context_window_size
+            score = calculate_intelligence(entry, prev, ctx_window, beta)
+            mi_scores.append(score)
+
+        if mi_scores:
+            mi_score = mi_scores[-1]
+
+        if graph_type in ("mi", "all") and len(mi_scores) > 0:
+            # Scale MI scores to [0, 1000] for integer renderer
+            mi_data = [int(s.mi * 1000) for s in mi_scores]
+            renderer.render_timeseries(
+                mi_data,
+                timestamps,
+                "Model Intelligence Over Time",
+                colors.yellow,
+                label_fn=lambda v: f"{v / 1000:.2f}",
+            )
+
     # Summary and footer
-    renderer.render_summary(entries, deltas)
+    renderer.render_summary(entries, deltas, mi_score=mi_score)
     renderer.render_footer(__version__)
 
     if watch_mode:

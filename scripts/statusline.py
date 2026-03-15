@@ -38,6 +38,53 @@ import tempfile
 ROTATION_THRESHOLD = 10_000
 ROTATION_KEEP = 5_000
 
+# Model Intelligence constants (hardcoded, not configurable)
+MI_WEIGHT_CPS = 0.60
+MI_WEIGHT_ES = 0.25
+MI_WEIGHT_PS = 0.15
+MI_GREEN_THRESHOLD = 0.65
+MI_YELLOW_THRESHOLD = 0.35
+MI_PRODUCTIVITY_TARGET = 0.2
+
+
+def compute_mi(used_tokens, context_window_size, cache_read, total_context,
+               delta_lines, delta_output, beta=1.5):
+    """Compute Model Intelligence score. Returns (mi, cps, es, ps)."""
+    # Guard clause
+    if context_window_size == 0:
+        return (1.0, 1.0, 1.0, 0.5)
+
+    # CPS
+    u = used_tokens / context_window_size
+    cps = max(0.0, 1.0 - u ** beta) if u > 0 else 1.0
+
+    # ES
+    if total_context == 0:
+        es = 1.0
+    else:
+        cache_hit_ratio = cache_read / total_context
+        es = 0.3 + 0.7 * cache_hit_ratio
+
+    # PS
+    if delta_output is None or delta_output <= 0:
+        ps = 0.5
+    else:
+        ratio = delta_lines / delta_output
+        normalized = min(1.0, ratio / MI_PRODUCTIVITY_TARGET)
+        ps = 0.2 + 0.8 * normalized
+
+    mi = MI_WEIGHT_CPS * cps + MI_WEIGHT_ES * es + MI_WEIGHT_PS * ps
+    return (mi, cps, es, ps)
+
+
+def get_mi_color(mi):
+    """Return ANSI color code for MI score."""
+    if mi > MI_GREEN_THRESHOLD:
+        return GREEN
+    if mi > MI_YELLOW_THRESHOLD:
+        return YELLOW
+    return RED
+
 
 def maybe_rotate_state_file(state_file):
     """Rotate a state file if it exceeds ROTATION_THRESHOLD lines.
@@ -220,6 +267,9 @@ def read_config():
         "show_delta": True,
         "show_session": True,
         "show_io_tokens": True,
+        "reduced_motion": False,
+        "show_mi": True,
+        "mi_curve_beta": 1.5,
         "colors": {},
     }
     config_path = os.path.expanduser("~/.claude/statusline.conf")
@@ -274,6 +324,15 @@ show_session=true
                     config["show_session"] = value_lower != "false"
                 elif key == "show_io_tokens":
                     config["show_io_tokens"] = value_lower != "false"
+                elif key == "reduced_motion":
+                    config["reduced_motion"] = value_lower != "false"
+                elif key == "show_mi":
+                    config["show_mi"] = value_lower != "false"
+                elif key == "mi_curve_beta":
+                    try:
+                        config["mi_curve_beta"] = float(raw_value)
+                    except ValueError:
+                        pass
                 elif key in _COLOR_KEYS:
                     ansi = _parse_color(raw_value)
                     if ansi:
@@ -302,6 +361,8 @@ def main():
     token_detail = config["token_detail"]
     show_delta = config["show_delta"]
     show_session = config["show_session"]
+    show_mi = config["show_mi"]
+    mi_curve_beta = config["mi_curve_beta"]
     # Note: show_io_tokens setting is read but not yet implemented
 
     # Apply color overrides from config
@@ -323,6 +384,7 @@ def main():
     context_info = ""
     ac_info = ""
     delta_info = ""
+    mi_info = ""
     session_info = ""
     total_size = data.get("context_window", {}).get("context_window_size", 0)
     current_usage = data.get("context_window", {}).get("current_usage")
@@ -378,10 +440,10 @@ def main():
         else:
             ctx_color = c_red
 
-        context_info = f" | {ctx_color}{free_display} free ({free_pct:.1f}%){RESET}"
+        context_info = f" | {ctx_color}{free_display} ({free_pct:.1f}%){RESET}"
 
-        # Calculate and display token delta if enabled
-        if show_delta:
+        # Read previous entry if needed for delta OR MI
+        if show_delta or show_mi:
             import glob
             import shutil
             import time
@@ -404,44 +466,66 @@ def main():
                 state_file = os.path.join(state_dir, "statusline.state")
             has_prev = False
             prev_tokens = 0
+            prev_lines_added = 0
+            prev_lines_removed = 0
+            prev_output_tokens = 0
             try:
                 if os.path.exists(state_file):
                     has_prev = True
-                    # Read last line to get previous context usage
+                    # Read last line to get previous state
                     with open(state_file) as f:
-                        lines = f.readlines()
-                        if lines:
-                            last_line = lines[-1].strip()
+                        file_lines = f.readlines()
+                        if file_lines:
+                            last_line = file_lines[-1].strip()
                             if "," in last_line:
-                                parts = last_line.split(",")
+                                csv_parts = last_line.split(",")
                                 # Calculate previous context usage:
                                 # cur_input + cache_creation + cache_read
                                 # CSV indices: cur_in[3], cache_create[5], cache_read[6]
-                                prev_cur_input = int(parts[3]) if len(parts) > 3 else 0
-                                prev_cache_creation = int(parts[5]) if len(parts) > 5 else 0
-                                prev_cache_read = int(parts[6]) if len(parts) > 6 else 0
+                                prev_cur_input = int(csv_parts[3]) if len(csv_parts) > 3 else 0
+                                prev_cache_creation = int(csv_parts[5]) if len(csv_parts) > 5 else 0
+                                prev_cache_read = int(csv_parts[6]) if len(csv_parts) > 6 else 0
                                 prev_tokens = prev_cur_input + prev_cache_creation + prev_cache_read
+                                # For MI productivity score
+                                prev_output_tokens = int(csv_parts[2]) if len(csv_parts) > 2 else 0
+                                prev_lines_added = int(csv_parts[8]) if len(csv_parts) > 8 else 0
+                                prev_lines_removed = int(csv_parts[9]) if len(csv_parts) > 9 else 0
                             else:
                                 # Old format - single value
                                 prev_tokens = int(last_line or 0)
             except (OSError, ValueError) as e:
                 sys.stderr.write(f"[statusline] warning: failed to read state file: {e}\n")
                 prev_tokens = 0
-            # Calculate delta (difference in context window usage)
-            delta = used_tokens - prev_tokens
-            # Only show positive delta (and skip first run when no previous state)
-            if has_prev and delta > 0:
-                if token_detail:
-                    delta_display = f"{delta:,}"
+
+            # Calculate and display token delta if enabled
+            if show_delta:
+                delta = used_tokens - prev_tokens
+                if has_prev and delta > 0:
+                    if token_detail:
+                        delta_display = f"{delta:,}"
+                    else:
+                        delta_display = f"{delta / 1000:.1f}k"
+                    delta_info = f" {DIM}[+{delta_display}]{RESET}"
+
+            # Calculate and display MI score if enabled
+            if show_mi:
+                if has_prev:
+                    delta_la = lines_added - prev_lines_added
+                    delta_lr = lines_removed - prev_lines_removed
+                    delta_lines = delta_la + delta_lr
+                    delta_output = total_output_tokens - prev_output_tokens
                 else:
-                    delta_display = f"{delta / 1000:.1f}k"
-                delta_info = f" {DIM}[+{delta_display}]{RESET}"
+                    delta_lines = 0
+                    delta_output = None
+                mi_val, _, _, _ = compute_mi(
+                    used_tokens, total_size, cache_read, used_tokens,
+                    delta_lines, delta_output, mi_curve_beta,
+                )
+                mi_color = get_mi_color(mi_val)
+                mi_info = f" {mi_color}MI:{mi_val:.2f}{RESET}"
+
             # Only append if context usage changed (avoid duplicates from multiple refreshes)
             if not has_prev or used_tokens != prev_tokens:
-                # Append current usage with comprehensive format
-                # Format: ts,total_in,total_out,cur_in,cur_out,cache_create,cache_read,
-                #         cost_usd,lines_added,lines_removed,session_id,model_id,project_dir,
-                #         context_window_size
                 try:
                     cur_input_tokens = current_usage.get("input_tokens", 0)
                     cur_output_tokens = current_usage.get("output_tokens", 0)
@@ -477,7 +561,7 @@ def main():
     # Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC] [S:session_id]
     base = f"{DIM}[{model}]{RESET} {c_blue}{dir_name}{RESET}"
     max_width = get_terminal_width()
-    parts = [base, git_info, context_info, delta_info, ac_info, session_info]
+    parts = [base, git_info, context_info, delta_info, mi_info, ac_info, session_info]
     print(fit_to_width(parts, max_width))
 
 

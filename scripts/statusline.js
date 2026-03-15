@@ -36,6 +36,61 @@ const os = require('os');
 const ROTATION_THRESHOLD = 10000;
 const ROTATION_KEEP = 5000;
 
+// Model Intelligence constants (hardcoded, not configurable)
+const MI_WEIGHT_CPS = 0.60;
+const MI_WEIGHT_ES = 0.25;
+const MI_WEIGHT_PS = 0.15;
+const MI_GREEN_THRESHOLD = 0.65;
+const MI_YELLOW_THRESHOLD = 0.35;
+const MI_PRODUCTIVITY_TARGET = 0.2;
+
+/**
+ * Compute Model Intelligence score.
+ * Returns { mi, cps, es, ps }.
+ */
+function computeMI(usedTokens, contextWindowSize, cacheRead, totalContext,
+                   deltaLines, deltaOutput, beta = 1.5) {
+    // Guard clause
+    if (contextWindowSize === 0) {
+        return { mi: 1.0, cps: 1.0, es: 1.0, ps: 0.5 };
+    }
+
+    // CPS
+    const u = usedTokens / contextWindowSize;
+    const cps = u > 0 ? Math.max(0, 1 - Math.pow(u, beta)) : 1.0;
+
+    // ES
+    let es;
+    if (totalContext === 0) {
+        es = 1.0;
+    } else {
+        const cacheHitRatio = cacheRead / totalContext;
+        es = 0.3 + 0.7 * cacheHitRatio;
+    }
+
+    // PS
+    let ps;
+    if (deltaOutput === null || deltaOutput === undefined || deltaOutput <= 0) {
+        ps = 0.5;
+    } else {
+        const ratio = deltaLines / deltaOutput;
+        const normalized = Math.min(1.0, ratio / MI_PRODUCTIVITY_TARGET);
+        ps = 0.2 + 0.8 * normalized;
+    }
+
+    const mi = MI_WEIGHT_CPS * cps + MI_WEIGHT_ES * es + MI_WEIGHT_PS * ps;
+    return { mi, cps, es, ps };
+}
+
+/**
+ * Return ANSI color code for MI score.
+ */
+function getMIColor(mi, greenColor, yellowColor, redColor) {
+    if (mi > MI_GREEN_THRESHOLD) return greenColor || GREEN;
+    if (mi > MI_YELLOW_THRESHOLD) return yellowColor || YELLOW;
+    return redColor || RED;
+}
+
 /**
  * Rotate a state file if it exceeds ROTATION_THRESHOLD lines.
  * Keeps the most recent ROTATION_KEEP lines via atomic temp-file + rename.
@@ -141,8 +196,24 @@ function visibleWidth(s) {
 /**
  * Return the terminal width in columns, defaulting to 80.
  */
+/**
+ * Return the terminal width in columns.
+ *
+ * When running inside Claude Code's statusline subprocess, neither $COLUMNS
+ * nor process.stdout.columns can detect the real terminal width (they return
+ * undefined or 80). If COLUMNS is not explicitly set and we'd fall back to 80,
+ * use a generous default of 200 so that no parts are unnecessarily dropped;
+ * Claude Code's own UI handles any overflow/truncation.
+ */
 function getTerminalWidth() {
-    return process.stdout.columns || parseInt(process.env.COLUMNS, 10) || 80;
+    if (process.env.COLUMNS) {
+        return parseInt(process.env.COLUMNS, 10) || 200;
+    }
+    const cols = process.stdout.columns;
+    if (cols && cols !== 80) {
+        return cols;
+    }
+    return 200;
 }
 
 /**
@@ -220,6 +291,8 @@ function readConfig() {
         showSession: true,
         showIoTokens: true,
         reducedMotion: false,
+        showMI: true,
+        miCurveBeta: 1.5,
         colors: {},
     };
     const configPath = path.join(os.homedir(), '.claude', 'statusline.conf');
@@ -280,6 +353,13 @@ show_session=true
                 config.showIoTokens = valueTrimmed !== 'false';
             } else if (keyTrimmed === 'reduced_motion') {
                 config.reducedMotion = valueTrimmed !== 'false';
+            } else if (keyTrimmed === 'show_mi') {
+                config.showMI = valueTrimmed !== 'false';
+            } else if (keyTrimmed === 'mi_curve_beta') {
+                const parsed = parseFloat(rawValue);
+                if (!isNaN(parsed)) {
+                    config.miCurveBeta = parsed;
+                }
             } else if (COLOR_CONFIG_KEYS[keyTrimmed]) {
                 const ansi = parseColor(rawValue);
                 if (ansi) {
@@ -340,7 +420,10 @@ process.stdin.on('end', () => {
     let contextInfo = '';
     let acInfo = '';
     let deltaInfo = '';
+    let miInfo = '';
     let sessionInfo = '';
+    const showMI = config.showMI;
+    const miCurveBeta = config.miCurveBeta;
     const totalSize = data.context_window?.context_window_size || 0;
     const currentUsage = data.context_window?.current_usage;
     const totalInputTokens = data.context_window?.total_input_tokens || 0;
@@ -399,10 +482,10 @@ process.stdin.on('end', () => {
             ctxColor = cRed;
         }
 
-        contextInfo = ` | ${ctxColor}${freeDisplay} free (${freePct.toFixed(1)}%)${RESET}`;
+        contextInfo = ` | ${ctxColor}${freeDisplay} (${freePct.toFixed(1)}%)${RESET}`;
 
-        // Calculate and display token delta if enabled
-        if (showDelta) {
+        // Read previous entry if needed for delta OR MI
+        if (showDelta || showMI) {
             const stateDir = path.join(os.homedir(), '.claude', 'statusline');
             if (!fs.existsSync(stateDir)) {
                 fs.mkdirSync(stateDir, { recursive: true });
@@ -432,10 +515,13 @@ process.stdin.on('end', () => {
             const stateFile = path.join(stateDir, stateFileName);
             let hasPrev = false;
             let prevTokens = 0;
+            let prevOutputTokens = 0;
+            let prevLinesAdded = 0;
+            let prevLinesRemoved = 0;
             try {
                 if (fs.existsSync(stateFile)) {
                     hasPrev = true;
-                    // Read last line to get previous context usage
+                    // Read last line to get previous state
                     const content = fs.readFileSync(stateFile, 'utf8').trim();
                     const lines = content.split('\n');
                     const lastLine = lines[lines.length - 1];
@@ -448,6 +534,10 @@ process.stdin.on('end', () => {
                         const prevCacheCreation = parseInt(parts[5], 10) || 0;
                         const prevCacheRead = parseInt(parts[6], 10) || 0;
                         prevTokens = prevCurInput + prevCacheCreation + prevCacheRead;
+                        // For MI productivity score
+                        prevOutputTokens = parseInt(parts[2], 10) || 0;
+                        prevLinesAdded = parseInt(parts[8], 10) || 0;
+                        prevLinesRemoved = parseInt(parts[9], 10) || 0;
                     } else {
                         // Old format - single value
                         prevTokens = parseInt(lastLine, 10) || 0;
@@ -459,20 +549,40 @@ process.stdin.on('end', () => {
                 );
                 prevTokens = 0;
             }
-            // Calculate delta (difference in context window usage)
-            const delta = usedTokens - prevTokens;
-            // Only show positive delta (and skip first run when no previous state)
-            if (hasPrev && delta > 0) {
-                const deltaDisplay = tokenDetail
-                    ? delta.toLocaleString('en-US')
-                    : `${(delta / 1000).toFixed(1)}k`;
-                deltaInfo = ` ${DIM}[+${deltaDisplay}]${RESET}`;
+
+            // Calculate and display token delta if enabled
+            if (showDelta) {
+                const delta = usedTokens - prevTokens;
+                if (hasPrev && delta > 0) {
+                    const deltaDisplay = tokenDetail
+                        ? delta.toLocaleString('en-US')
+                        : `${(delta / 1000).toFixed(1)}k`;
+                    deltaInfo = ` ${DIM}[+${deltaDisplay}]${RESET}`;
+                }
             }
+
+            // Calculate and display MI score if enabled
+            if (showMI) {
+                let deltaLines, deltaOutput;
+                if (hasPrev) {
+                    const deltaLA = linesAdded - prevLinesAdded;
+                    const deltaLR = linesRemoved - prevLinesRemoved;
+                    deltaLines = deltaLA + deltaLR;
+                    deltaOutput = totalOutputTokens - prevOutputTokens;
+                } else {
+                    deltaLines = 0;
+                    deltaOutput = null;
+                }
+                const miResult = computeMI(
+                    usedTokens, totalSize, cacheRead, usedTokens,
+                    deltaLines, deltaOutput, miCurveBeta
+                );
+                const miColor = getMIColor(miResult.mi, cGreen, cYellow, cRed);
+                miInfo = ` ${miColor}MI:${miResult.mi.toFixed(2)}${RESET}`;
+            }
+
             // Only append if context usage changed (avoid duplicates from multiple refreshes)
             if (!hasPrev || usedTokens !== prevTokens) {
-                // Append current usage with comprehensive format
-                // Format: ts,total_in,total_out,cur_in,cur_out,cache_create,cache_read,
-                //         cost_usd,lines_added,lines_removed,session_id,model_id,project_dir
                 try {
                     const timestamp = Math.floor(Date.now() / 1000);
                     const curInputTokens = currentUsage.input_tokens || 0;
@@ -512,11 +622,11 @@ process.stdin.on('end', () => {
     // Output: [Model] dir | branch [n] | free (%) [+delta] [AC] session
     const base = `${DIM}[${model}]${RESET} ${cBlue}${dirName}${RESET}`;
     const maxWidth = getTerminalWidth();
-    const parts = [base, gitInfo, contextInfo, deltaInfo, acInfo, sessionInfo];
+    const parts = [base, gitInfo, contextInfo, deltaInfo, miInfo, acInfo, sessionInfo];
     console.log(fitToWidth(parts, maxWidth));
 });
 
 // Export for testing
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { maybeRotateStateFile, ROTATION_THRESHOLD, ROTATION_KEEP };
+    module.exports = { maybeRotateStateFile, ROTATION_THRESHOLD, ROTATION_KEEP, computeMI };
 }

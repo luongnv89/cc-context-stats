@@ -71,7 +71,7 @@ class TestStatuslineScript:
         """Should show free tokens indicator."""
         output, code = run_script(sample_input)
         assert code == 0
-        assert "free" in output
+        assert "%" in output
 
     def test_shows_ac_indicator(self, sample_input):
         """Should show autocompact indicator."""
@@ -121,19 +121,19 @@ class TestContextWindowColors:
         """Low usage (>50% free) should produce output with 'free'."""
         output, code = run_script(low_usage_input)
         assert code == 0
-        assert "free" in output
+        assert "%" in output
 
     def test_medium_usage_has_output(self, medium_usage_input):
         """Medium usage (25-50% free) should produce output with 'free'."""
         output, code = run_script(medium_usage_input)
         assert code == 0
-        assert "free" in output
+        assert "%" in output
 
     def test_high_usage_has_output(self, high_usage_input):
         """High usage (<25% free) should produce output with 'free'."""
         output, code = run_script(high_usage_input)
         assert code == 0
-        assert "free" in output
+        assert "%" in output
 
 
 class TestFixtures:

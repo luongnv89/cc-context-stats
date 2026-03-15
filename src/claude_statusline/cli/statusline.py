@@ -65,6 +65,7 @@ def main() -> None:
     context_info = ""
     ac_info = ""
     delta_info = ""
+    mi_info = ""
     session_info = ""
 
     total_size = data.get("context_window", {}).get("context_window_size", 0)
@@ -111,23 +112,15 @@ def main() -> None:
         else:
             ctx_color = colors.red
 
-        context_info = f" | {ctx_color}{free_display} free ({free_pct:.1f}%){colors.reset}"
+        context_info = f" | {ctx_color}{free_display} ({free_pct:.1f}%){colors.reset}"
 
-        # Calculate and display token delta if enabled
-        if config.show_delta:
+        # Read previous entry if needed for delta OR MI
+        if config.show_delta or config.show_mi:
             state_file = StateFile(session_id)
             prev_entry = state_file.read_last_entry()
 
             prev_tokens = prev_entry.current_used_tokens if prev_entry else 0
             has_prev = prev_entry is not None
-
-            # Calculate delta
-            delta = used_tokens - prev_tokens
-
-            # Only show positive delta (and skip first run when no previous state)
-            if has_prev and delta > 0:
-                delta_display = format_tokens(delta, config.token_detail)
-                delta_info = f" {colors.dim}[+{delta_display}]{colors.reset}"
 
             # Build current entry
             cur_input_tokens = current_usage.get("input_tokens", 0)
@@ -150,6 +143,28 @@ def main() -> None:
                 context_window_size=total_size,
             )
 
+            # Calculate and display token delta if enabled
+            if config.show_delta:
+                delta = used_tokens - prev_tokens
+                if has_prev and delta > 0:
+                    delta_display = format_tokens(delta, config.token_detail)
+                    delta_info = f" {colors.dim}[+{delta_display}]{colors.reset}"
+
+            # Calculate and display MI score if enabled
+            if config.show_mi:
+                from claude_statusline.graphs.intelligence import (
+                    calculate_intelligence,
+                    format_mi_score,
+                    get_mi_color,
+                )
+
+                mi_score = calculate_intelligence(
+                    entry, prev_entry, total_size, config.mi_curve_beta
+                )
+                mi_color_name = get_mi_color(mi_score.mi)
+                mi_color = getattr(colors, mi_color_name)
+                mi_info = f" {mi_color}MI:{format_mi_score(mi_score.mi)}{colors.reset}"
+
             # Only append if context usage changed (avoid duplicates from multiple refreshes)
             if not has_prev or used_tokens != prev_tokens:
                 state_file.append_entry(entry)
@@ -161,7 +176,7 @@ def main() -> None:
     # Output: [Model] directory | branch [changes] | XXk free (XX%) [+delta] [AC] [session_id]
     base = f"{colors.dim}[{model}]{colors.reset} {colors.blue}{dir_name}{colors.reset}"
     max_width = get_terminal_width()
-    parts = [base, git_info, context_info, delta_info, ac_info, session_info]
+    parts = [base, git_info, context_info, delta_info, mi_info, ac_info, session_info]
     print(fit_to_width(parts, max_width))
 
 
