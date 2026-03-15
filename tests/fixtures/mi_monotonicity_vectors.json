@@ -1,0 +1,51 @@
+{
+  "description": "Monotonicity test: MI must reflect context length — more free context means better MI",
+  "context_window": 200000,
+  "beta": 1.5,
+  "cache_read": 0,
+  "delta_lines": 0,
+  "delta_output": null,
+  "note": "ES and PS are held constant (ES=0.3 no cache, PS=0.5 no previous). Only CPS varies with utilization.",
+  "utilization_steps": [
+    { "pct": 0,   "used": 0,      "description": "empty context" },
+    { "pct": 5,   "used": 10000,  "description": "5% used" },
+    { "pct": 10,  "used": 20000,  "description": "10% used" },
+    { "pct": 20,  "used": 40000,  "description": "20% used" },
+    { "pct": 30,  "used": 60000,  "description": "30% used" },
+    { "pct": 40,  "used": 80000,  "description": "40% used - entering dumb zone" },
+    { "pct": 50,  "used": 100000, "description": "50% used" },
+    { "pct": 60,  "used": 120000, "description": "60% used" },
+    { "pct": 70,  "used": 140000, "description": "70% used" },
+    { "pct": 80,  "used": 160000, "description": "80% used - entering wrap up zone" },
+    { "pct": 90,  "used": 180000, "description": "90% used" },
+    { "pct": 95,  "used": 190000, "description": "95% used" },
+    { "pct": 100, "used": 200000, "description": "100% used - full context" }
+  ],
+  "varying_es_ps_scenarios": [
+    {
+      "description": "High cache, high productivity",
+      "cache_read_ratio": 0.8,
+      "delta_lines": 100,
+      "delta_output": 500
+    },
+    {
+      "description": "No cache, no productivity",
+      "cache_read_ratio": 0.0,
+      "delta_lines": 0,
+      "delta_output": 1000
+    },
+    {
+      "description": "Mid cache, mid productivity",
+      "cache_read_ratio": 0.4,
+      "delta_lines": 30,
+      "delta_output": 500
+    }
+  ],
+  "beta_variants": [1.0, 1.5, 2.0, 3.0],
+  "zone_thresholds": {
+    "smart_zone_max_pct": 40,
+    "dumb_zone_max_pct": 80,
+    "mi_green": 0.65,
+    "mi_yellow": 0.35
+  }
+}

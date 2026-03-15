@@ -324,6 +324,9 @@ main() {
     echo "To change settings, edit: $CLAUDE_DIR/statusline.conf"
     echo
     echo "Run 'context-stats' to visualize token usage for any session."
+    echo
+    echo "To verify your installation at any time, run:"
+    echo "  curl -fsSL https://raw.githubusercontent.com/luongnv89/cc-context-stats/main/scripts/check-install.sh | bash"
 }
 
 main

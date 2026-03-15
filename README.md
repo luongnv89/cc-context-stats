@@ -68,6 +68,20 @@ Or with uv:
 uv pip install cc-context-stats
 ```
 
+### Verify Installation
+
+After installing via any method, verify that both the statusline and context-stats CLI are working:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/luongnv89/cc-context-stats/main/scripts/check-install.sh | bash
+```
+
+Or if you cloned the repo:
+
+```bash
+./scripts/check-install.sh
+```
+
 ## Quick Start
 
 ### Status Line Integration
