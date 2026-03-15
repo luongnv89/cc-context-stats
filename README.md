@@ -183,7 +183,11 @@ Session Summary
 
 ## Status Line
 
-![Status Line](images/1.10/statusline-green.png)
+Colors change based on MI score and context utilization — green when the model is sharp, yellow as quality degrades:
+
+| MI >= 0.90 (green) | MI < 0.90 (yellow) |
+|:---:|:---:|
+| ![Green](images/1.10/statusline-green.png) | ![Yellow](images/1.10/1.10-statusline.png) |
 
 The status line shows at-a-glance metrics in your Claude Code interface:
 
