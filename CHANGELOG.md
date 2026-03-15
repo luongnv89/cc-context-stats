@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-03-15
+
+### Changed
+
+- **MI-aware color system** — MI color thresholds now: green >= 0.90, yellow < 0.90 or context 40-80%, red <= 0.80 or context >= 80%. Context token color matches MI color for consistency
+- **Consistent pipe separators** — All statusline fields now separated by `|` instead of mixed brackets/spaces
+- **Delta repositioned** — Delta moved after MI: `... | MI:0.980 | +144 | session_id`
+- **Model name without brackets** — `Opus 4.6 (1M context) | dir` instead of `[Opus 4.6 (1M context)] dir`
+
+### Removed
+
+- **Autocompact (AC) indicator** — Removed from statusline to save space. AC setting is user-configured and doesn't need constant display
+
 ## [1.10.0] - 2026-03-15
 
 ### Changed
