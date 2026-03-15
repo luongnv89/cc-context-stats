@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-03-15
+
+### Changed
+
+- **MI redesign: pure utilization-based formula with per-model profiles** — Replaced the 3-component composite (CPS+ES+PS) with `MI(u) = max(0, 1 - u^beta)` where beta is model-specific. Eliminates zig-zag chart behavior caused by noisy cache efficiency and productivity metrics
+- **Per-model degradation profiles** — Opus (beta=1.8) retains quality longest, Sonnet (beta=1.5) moderate, Haiku (beta=1.2) degrades earliest. Model auto-detected from `model_id` string
+- **3-decimal MI display** — MI now shows as `MI:0.995` instead of `MI:1.00` for better precision at low utilization
+- **Color thresholds adjusted** — Green >0.70 (was >0.65), Yellow >0.40 (was >0.35) to reflect the simplified pure-utilization scale
+- **`mi_curve_beta` config default** — Changed from `1.5` to `0` (meaning "use model-specific profile"). Set to a positive value to override
+
+### Removed
+
+- **ES (Efficiency Score)** — Cache hit ratio metric removed from MI; it measured API caching behavior, not model intelligence
+- **PS (Productivity Score)** — Lines-per-token metric removed from MI; it measured model activity, not intelligence degradation
+- **`IntelligenceConfig` dataclass** — Unused after redesign; beta is passed directly
+
+### Fixed
+
+- **MI no longer needs previous state entry** — Reduces file I/O when `show_delta=false`
+- **Beta fallback bug in context-stats** — Was ignoring user-configured `mi_curve_beta` and falling back to hardcoded 1.5
+- **MI computed for all entries unnecessarily** — Now only computes MI for last entry when graph type is not `mi` or `all`
+- **Hardcoded thresholds in renderer** — Now uses `MI_GREEN_THRESHOLD`/`MI_YELLOW_THRESHOLD` constants
+
 ## [1.9.1] - 2026-03-15
 
 ### Fixed
