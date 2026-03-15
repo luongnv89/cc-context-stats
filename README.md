@@ -87,8 +87,9 @@ Or if you cloned the repo:
 
 ### Status Line Integration
 
-Add to `~/.claude/settings.json`:
+Add to `~/.claude/settings.json` (the command depends on how you installed):
 
+**pip or npm install:**
 ```json
 {
   "statusLine": {
@@ -98,7 +99,17 @@ Add to `~/.claude/settings.json`:
 }
 ```
 
-Restart Claude Code to see real-time token stats in your status bar.
+**Shell script install (`install.sh`):**
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  }
+}
+```
+
+Restart Claude Code to see real-time model intelligence and context stats in your status bar.
 
 ### Real-Time Monitoring
 
