@@ -58,6 +58,9 @@ The following logic is duplicated across three implementations and **must be kep
 | Color parser | `core/colors.py:parse_color()` | `_parse_color()` | `parseColor()` |
 | Git info | `core/git.py:get_git_info()` | `get_git_info()` | `getGitInfo()` |
 | State rotation | `core/state.py` | `maybe_rotate_state_file()` | `maybeRotateStateFile()` |
+| MI profiles | `graphs/intelligence.py:MODEL_PROFILES` | `MODEL_PROFILES` | `MODEL_PROFILES` |
+| MI formula | `graphs/intelligence.py:calculate_context_pressure()` | `compute_mi()` | `computeMI()` |
+| MI colors | `graphs/intelligence.py:get_mi_color()` | `get_mi_color()` | `getMIColor()` |
 
 ## Cross-References
 

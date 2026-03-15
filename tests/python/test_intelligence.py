@@ -10,17 +10,13 @@ import pytest
 from claude_statusline.core.state import StateEntry
 from claude_statusline.graphs.intelligence import (
     MI_GREEN_THRESHOLD,
-    MI_WEIGHT_CPS,
-    MI_WEIGHT_ES,
-    MI_WEIGHT_PS,
     MI_YELLOW_THRESHOLD,
-    IntelligenceScore,
+    MODEL_PROFILES,
     calculate_context_pressure,
-    calculate_efficiency,
     calculate_intelligence,
-    calculate_productivity,
     format_mi_score,
     get_mi_color,
+    get_model_profile,
 )
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
@@ -34,6 +30,7 @@ def _make_entry(
     lines_added=0,
     lines_removed=0,
     context_window_size=200000,
+    model_id="test-model",
 ) -> StateEntry:
     """Helper to create a StateEntry with sane defaults."""
     return StateEntry(
@@ -48,13 +45,45 @@ def _make_entry(
         lines_added=lines_added,
         lines_removed=lines_removed,
         session_id="test",
-        model_id="test-model",
+        model_id=model_id,
         workspace_project_dir="/test",
         context_window_size=context_window_size,
     )
 
 
-# --- CPS tests ---
+# --- Model profile tests ---
+
+
+class TestModelProfile:
+    def test_opus_detected(self):
+        assert get_model_profile("claude-opus-4-6[1m]") == MODEL_PROFILES["opus"]
+
+    def test_sonnet_detected(self):
+        assert get_model_profile("claude-sonnet-4-6") == MODEL_PROFILES["sonnet"]
+
+    def test_haiku_detected(self):
+        assert get_model_profile("claude-haiku-4-5-20251001") == MODEL_PROFILES["haiku"]
+
+    def test_unknown_falls_back_to_default(self):
+        assert get_model_profile("unknown-model-xyz") == MODEL_PROFILES["default"]
+
+    def test_case_insensitive(self):
+        assert get_model_profile("Claude-OPUS-4-6") == MODEL_PROFILES["opus"]
+
+    def test_empty_string_returns_default(self):
+        assert get_model_profile("") == MODEL_PROFILES["default"]
+
+    def test_all_profiles_are_positive(self):
+        for name, beta in MODEL_PROFILES.items():
+            assert beta > 0, f"Profile {name} beta must be positive"
+
+    def test_opus_retains_quality_longest(self):
+        """Higher beta = quality retained longer. Opus should have highest beta."""
+        assert MODEL_PROFILES["opus"] > MODEL_PROFILES["sonnet"]
+        assert MODEL_PROFILES["sonnet"] > MODEL_PROFILES["haiku"]
+
+
+# --- MI formula tests ---
 
 
 class TestContextPressure:
@@ -62,148 +91,83 @@ class TestContextPressure:
         assert calculate_context_pressure(0.0) == 1.0
 
     def test_full_context(self):
+        # MI = 1 - 1^beta = 0 for any beta
         assert calculate_context_pressure(1.0) == 0.0
 
-    def test_half_context(self):
-        cps = calculate_context_pressure(0.5)
-        assert 0.64 < cps < 0.66  # ~0.646
+    def test_half_context_default(self):
+        mi = calculate_context_pressure(0.5)
+        assert 0.64 < mi < 0.66  # 1 - 0.5^1.5 ≈ 0.646
 
     def test_custom_beta_linear(self):
-        cps = calculate_context_pressure(0.5, beta=1.0)
-        assert cps == pytest.approx(0.5, abs=0.01)
+        mi = calculate_context_pressure(0.5, beta=1.0)
+        assert mi == pytest.approx(0.5, abs=0.01)
 
     def test_custom_beta_quadratic(self):
-        cps = calculate_context_pressure(0.5, beta=2.0)
-        assert cps == pytest.approx(0.75, abs=0.01)
+        mi = calculate_context_pressure(0.5, beta=2.0)
+        assert mi == pytest.approx(0.75, abs=0.01)
 
     def test_over_capacity_clamped(self):
-        cps = calculate_context_pressure(1.5)
-        assert cps == 0.0
+        mi = calculate_context_pressure(1.5)
+        assert mi == 0.0
 
     def test_negative_utilization(self):
         assert calculate_context_pressure(-0.1) == 1.0
 
 
-# --- CPS guard clause ---
+# --- Guard clause ---
 
 
 class TestGuardClause:
     def test_zero_context_window(self):
         entry = _make_entry(current_input=50000)
-        score = calculate_intelligence(entry, None, context_window_size=0)
+        score = calculate_intelligence(entry, context_window_size=0)
         assert score.mi == 1.0
-        assert score.cps == 1.0
-        assert score.es == 1.0
-        assert score.ps == 0.5
         assert score.utilization == 0.0
 
 
-# --- ES tests ---
-
-
-class TestEfficiency:
-    def test_no_tokens(self):
-        entry = _make_entry()
-        assert calculate_efficiency(entry) == 1.0
-
-    def test_all_cache_read(self):
-        entry = _make_entry(cache_read=100000)
-        assert calculate_efficiency(entry) == 1.0
-
-    def test_no_cache(self):
-        entry = _make_entry(current_input=100000)
-        assert calculate_efficiency(entry) == pytest.approx(0.3, abs=0.01)
-
-    def test_mixed_cache(self):
-        # 60% cache read
-        entry = _make_entry(current_input=20000, cache_creation=20000, cache_read=60000)
-        es = calculate_efficiency(entry)
-        assert es == pytest.approx(0.3 + 0.7 * 0.6, abs=0.01)
-
-
-# --- PS tests ---
-
-
-class TestProductivity:
-    def test_no_previous_entry(self):
-        entry = _make_entry(total_output=1000, lines_added=100)
-        assert calculate_productivity(entry, None) == 0.5
-
-    def test_no_output(self):
-        prev = _make_entry(total_output=1000)
-        cur = _make_entry(total_output=1000)  # no increase
-        assert calculate_productivity(cur, prev) == 0.5
-
-    def test_high_productivity(self):
-        prev = _make_entry(total_output=0, lines_added=0, lines_removed=0)
-        cur = _make_entry(total_output=100, lines_added=20, lines_removed=5)
-        ps = calculate_productivity(cur, prev)
-        # ratio = 25/100 = 0.25, normalized = min(1, 0.25/0.2) = 1.0
-        assert ps == pytest.approx(1.0, abs=0.01)
-
-    def test_zero_productivity(self):
-        prev = _make_entry(total_output=0, lines_added=0, lines_removed=0)
-        cur = _make_entry(total_output=1000, lines_added=0, lines_removed=0)
-        ps = calculate_productivity(cur, prev)
-        assert ps == pytest.approx(0.2, abs=0.01)
-
-    def test_moderate_productivity(self):
-        prev = _make_entry(total_output=0, lines_added=0, lines_removed=0)
-        cur = _make_entry(total_output=1000, lines_added=50, lines_removed=10)
-        ps = calculate_productivity(cur, prev)
-        # ratio = 60/1000 = 0.06, normalized = min(1, 0.06/0.2) = 0.3
-        assert ps == pytest.approx(0.2 + 0.8 * 0.3, abs=0.01)
-
-    def test_capping(self):
-        prev = _make_entry(total_output=0, lines_added=0, lines_removed=0)
-        cur = _make_entry(total_output=10, lines_added=100, lines_removed=100)
-        ps = calculate_productivity(cur, prev)
-        # ratio = 200/10 = 20, normalized = min(1, 20/0.2) = 1.0
-        assert ps == pytest.approx(1.0, abs=0.01)
-
-    def test_consecutive_diffs(self):
-        """Verify PS uses consecutive entry diffs, not cumulative totals."""
-        prev = _make_entry(total_output=500, lines_added=50, lines_removed=10)
-        cur = _make_entry(total_output=600, lines_added=55, lines_removed=12)
-        ps = calculate_productivity(cur, prev)
-        # delta_lines = (55-50) + (12-10) = 7, delta_output = 100
-        # ratio = 7/100 = 0.07, normalized = 0.07/0.2 = 0.35
-        assert ps == pytest.approx(0.2 + 0.8 * 0.35, abs=0.01)
-
-
-# --- Composite tests ---
+# --- Composite MI tests ---
 
 
 class TestComposite:
-    def test_optimal_conditions(self):
-        prev = _make_entry(total_output=0, lines_added=0, lines_removed=0)
-        cur = _make_entry(
-            current_input=1000, cache_read=9000, total_output=100,
-            lines_added=25, lines_removed=5,
-        )
-        score = calculate_intelligence(cur, prev, 200000)
-        assert score.mi > 0.9
+    def test_fresh_opus_session(self):
+        cur = _make_entry(current_input=10000, model_id="claude-opus-4-6")
+        score = calculate_intelligence(cur, 200000, "claude-opus-4-6")
+        assert score.mi > 0.98
 
-    def test_worst_conditions(self):
-        prev = _make_entry(total_output=0, lines_added=0, lines_removed=0)
-        cur = _make_entry(
-            current_input=200000, total_output=10000,
-            lines_added=0, lines_removed=0,
-        )
-        score = calculate_intelligence(cur, prev, 200000)
-        assert score.mi < 0.2
+    def test_full_context_always_zero(self):
+        """All models reach MI=0.0 at full context (alpha=1.0 for all)."""
+        for model in ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"]:
+            cur = _make_entry(current_input=200000, model_id=model)
+            score = calculate_intelligence(cur, 200000, model)
+            assert score.mi == 0.0, f"{model} at full context should be 0.0"
 
-    def test_weight_sum(self):
-        assert MI_WEIGHT_CPS + MI_WEIGHT_ES + MI_WEIGHT_PS == pytest.approx(1.0)
+    def test_opus_retains_longer_than_sonnet(self):
+        """Opus should have higher MI than sonnet at same utilization."""
+        cur_o = _make_entry(current_input=100000, model_id="claude-opus-4-6")
+        cur_s = _make_entry(current_input=100000, model_id="claude-sonnet-4-6")
+        o = calculate_intelligence(cur_o, 200000, "claude-opus-4-6")
+        s = calculate_intelligence(cur_s, 200000, "claude-sonnet-4-6")
+        assert o.mi > s.mi
+
+    def test_beta_override(self):
+        cur = _make_entry(current_input=100000, model_id="claude-opus-4-6")
+        score = calculate_intelligence(cur, 200000, "claude-opus-4-6", beta_override=1.0)
+        # MI = 1 - 0.5^1.0 = 0.5
+        assert score.mi == pytest.approx(0.5, abs=0.01)
 
     def test_bounds(self):
         """MI should always be in [0, 1]."""
-        prev = _make_entry(total_output=0)
         for u in [0.0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0]:
             used = int(u * 200000)
-            cur = _make_entry(current_input=used, total_output=1000, lines_added=50)
-            score = calculate_intelligence(cur, prev, 200000)
+            cur = _make_entry(current_input=used)
+            score = calculate_intelligence(cur, 200000, "claude-sonnet-4-6")
             assert 0.0 <= score.mi <= 1.0, f"MI out of bounds at u={u}: {score.mi}"
+
+    def test_uses_entry_model_id_if_not_provided(self):
+        cur = _make_entry(current_input=100000, model_id="claude-opus-4-6")
+        score = calculate_intelligence(cur, 200000)
+        opus_expected = calculate_intelligence(cur, 200000, "claude-opus-4-6")
+        assert score.mi == pytest.approx(opus_expected.mi, abs=0.001)
 
 
 # --- Color tests ---
@@ -236,18 +200,18 @@ class TestColor:
 
 
 class TestFormat:
-    def test_two_decimals(self):
-        assert format_mi_score(0.82) == "0.82"
+    def test_three_decimals(self):
+        assert format_mi_score(0.823) == "0.823"
 
     def test_zero(self):
-        assert format_mi_score(0.0) == "0.00"
+        assert format_mi_score(0.0) == "0.000"
 
     def test_one(self):
-        assert format_mi_score(1.0) == "1.00"
+        assert format_mi_score(1.0) == "1.000"
 
     def test_rounding(self):
-        assert format_mi_score(0.8249) == "0.82"
-        assert format_mi_score(0.8251) == "0.83"
+        assert format_mi_score(0.82449) == "0.824"
+        assert format_mi_score(0.82451) == "0.825"
 
 
 # --- Shared test vectors ---
@@ -266,49 +230,23 @@ class TestSharedVectors:
             inp = vec["input"]
             exp = vec["expected"]
 
-            # Build entries from vector input
-            current_input = inp["current_input"]
-            cache_creation = inp["cache_creation"]
-            cache_read = inp["cache_read"]
-            # current_used should equal current_input + cache_creation + cache_read
-            # but we trust the vector's current_used for the entry construction
             cur = _make_entry(
-                current_input=current_input,
-                cache_creation=cache_creation,
-                cache_read=cache_read,
-                total_output=inp["cur_output"],
-                lines_added=inp["cur_lines_added"],
-                lines_removed=inp["cur_lines_removed"],
+                current_input=inp["current_used"],
+                model_id=inp["model_id"],
                 context_window_size=inp["context_window"],
             )
 
-            has_prev = inp["prev_output"] is not None
-            if has_prev:
-                prev = _make_entry(
-                    total_output=inp["prev_output"],
-                    lines_added=inp["prev_lines_added"],
-                    lines_removed=inp["prev_lines_removed"],
-                )
-            else:
-                prev = None
+            beta_override = inp["beta_override"] if inp["beta_override"] is not None else 0.0
 
             score = calculate_intelligence(
-                cur, prev, inp["context_window"], inp["beta"]
+                cur, inp["context_window"], inp["model_id"], beta_override
             )
 
-            assert score.cps == pytest.approx(exp["cps"], abs=0.01), (
-                f"CPS mismatch for '{vec['description']}': "
-                f"got {score.cps}, expected {exp['cps']}"
-            )
-            assert score.es == pytest.approx(exp["es"], abs=0.01), (
-                f"ES mismatch for '{vec['description']}': "
-                f"got {score.es}, expected {exp['es']}"
-            )
-            assert score.ps == pytest.approx(exp["ps"], abs=0.01), (
-                f"PS mismatch for '{vec['description']}': "
-                f"got {score.ps}, expected {exp['ps']}"
-            )
             assert score.mi == pytest.approx(exp["mi"], abs=0.01), (
                 f"MI mismatch for '{vec['description']}': "
-                f"got {score.mi}, expected {exp['mi']}"
+                f"got {score.mi:.4f}, expected {exp['mi']}"
+            )
+            assert score.utilization == pytest.approx(exp["utilization"], abs=0.01), (
+                f"Utilization mismatch for '{vec['description']}': "
+                f"got {score.utilization:.4f}, expected {exp['utilization']}"
             )

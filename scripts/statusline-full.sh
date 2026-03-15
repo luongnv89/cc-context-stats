@@ -82,38 +82,33 @@ maybe_rotate_state_file() {
 }
 
 # Model Intelligence computation (uses awk for float math)
+# MI(u) = max(0, 1 - u^beta) where beta is model-specific
 compute_mi() {
-    local used_tokens=$1 context_window=$2 cache_read_val=$3 total_context=$4
-    local delta_lines=$5 delta_output=$6 beta=$7
-    awk -v used="$used_tokens" -v cw="$context_window" -v cr="$cache_read_val" \
-        -v tc="$total_context" -v dl="$delta_lines" -v do_val="$delta_output" -v b="$beta" '
+    local used_tokens=$1 context_window=$2 model_id=$3 beta_override=$4
+    awk -v used="$used_tokens" -v cw="$context_window" -v mid="$model_id" -v bo="$beta_override" '
     BEGIN {
-        if (cw == 0) { printf "1.00 1.000 1.000 0.500"; exit }
-        # CPS
+        if (cw == 0) { printf "1.000"; exit }
+        # Model profile lookup (beta only)
+        mid_lower = tolower(mid)
+        if (index(mid_lower, "opus") > 0)       beta = 1.8
+        else if (index(mid_lower, "sonnet") > 0) beta = 1.5
+        else if (index(mid_lower, "haiku") > 0)  beta = 1.2
+        else                                      beta = 1.5
+        # Beta override
+        if (bo + 0 > 0) beta = bo + 0
+        # MI calculation
         u = used / cw
-        if (u <= 0) cps = 1.0
-        else { cps = 1.0 - (u ^ b); if (cps < 0) cps = 0.0 }
-        # ES
-        if (tc == 0) es = 1.0
-        else es = 0.3 + 0.7 * (cr / tc)
-        # PS
-        if (do_val == "" || do_val + 0 <= 0) ps = 0.5
-        else {
-            ratio = dl / do_val
-            normalized = ratio / 0.2
-            if (normalized > 1.0) normalized = 1.0
-            ps = 0.2 + 0.8 * normalized
-        }
-        mi = 0.60 * cps + 0.25 * es + 0.15 * ps
-        printf "%.2f %.3f %.3f %.3f", mi, cps, es, ps
+        if (u <= 0) mi = 1.0
+        else { mi = 1.0 - (u ^ beta); if (mi < 0) mi = 0.0 }
+        printf "%.3f", mi
     }'
 }
 
 get_mi_color() {
     local mi_val="$1"
     awk -v mi="$mi_val" 'BEGIN {
-        if (mi + 0 > 0.65) print "green"
-        else if (mi + 0 > 0.35) print "yellow"
+        if (mi + 0 > 0.70) print "green"
+        else if (mi + 0 > 0.40) print "yellow"
         else print "red"
     }'
 }
@@ -150,7 +145,7 @@ token_detail_enabled=true
 show_delta_enabled=true
 show_session_enabled=true
 show_mi_enabled=true
-mi_curve_beta=1.5
+mi_curve_beta=0
 ac_info=""
 delta_info=""
 mi_info=""
@@ -176,8 +171,8 @@ show_session=true
 # Model Intelligence (MI) score display
 show_mi=true
 
-# MI degradation curve shape (higher = steeper initial drop)
-# mi_curve_beta=1.5
+# MI curve beta override (0 = use model-specific profile)
+# mi_curve_beta=0
 EOF
 fi
 
@@ -362,9 +357,6 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
         fi
         has_prev=false
         prev_tokens=0
-        prev_output_tokens=0
-        prev_lines_added=0
-        prev_lines_removed=0
         if [[ -f "$state_file" ]]; then
             has_prev=true
             # Read last line and calculate previous state
@@ -376,9 +368,6 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
                 prev_cache_create=$(echo "$last_line" | cut -d',' -f6)
                 prev_cache_read=$(echo "$last_line" | cut -d',' -f7)
                 prev_tokens=$(( ${prev_cur_in:-0} + ${prev_cache_create:-0} + ${prev_cache_read:-0} ))
-                prev_output_tokens=$(echo "$last_line" | cut -d',' -f3)
-                prev_lines_added=$(echo "$last_line" | cut -d',' -f9)
-                prev_lines_removed=$(echo "$last_line" | cut -d',' -f10)
             fi
         fi
 
@@ -397,17 +386,7 @@ if [[ "$total_size" -gt 0 && "$current_usage" != "null" ]]; then
 
         # Calculate and display MI score if enabled
         if [[ "$show_mi_enabled" == "true" ]]; then
-            if [[ "$has_prev" == "true" ]]; then
-                delta_la=$(( ${lines_added:-0} - ${prev_lines_added:-0} ))
-                delta_lr=$(( ${lines_removed:-0} - ${prev_lines_removed:-0} ))
-                mi_delta_lines=$(( delta_la + delta_lr ))
-                mi_delta_output=$(( ${total_output_tokens:-0} - ${prev_output_tokens:-0} ))
-            else
-                mi_delta_lines=0
-                mi_delta_output=""
-            fi
-            mi_result=$(compute_mi "$used_tokens" "$total_size" "$cache_read" "$used_tokens" "$mi_delta_lines" "$mi_delta_output" "$mi_curve_beta")
-            mi_val=$(echo "$mi_result" | cut -d' ' -f1)
+            mi_val=$(compute_mi "$used_tokens" "$total_size" "$model_id" "$mi_curve_beta")
             mi_color_name=$(get_mi_color "$mi_val")
             case "$mi_color_name" in
                 green)  mi_color="$GREEN" ;;

@@ -39,42 +39,44 @@ ROTATION_THRESHOLD = 10_000
 ROTATION_KEEP = 5_000
 
 # Model Intelligence constants (hardcoded, not configurable)
-MI_WEIGHT_CPS = 0.60
-MI_WEIGHT_ES = 0.25
-MI_WEIGHT_PS = 0.15
-MI_GREEN_THRESHOLD = 0.65
-MI_YELLOW_THRESHOLD = 0.35
-MI_PRODUCTIVITY_TARGET = 0.2
+MI_GREEN_THRESHOLD = 0.70
+MI_YELLOW_THRESHOLD = 0.40
+
+# Per-model degradation profiles: beta controls curve shape
+# Higher beta = quality retained longer (degradation happens later)
+MODEL_PROFILES = {
+    "opus":    1.8,
+    "sonnet":  1.5,
+    "haiku":   1.2,
+    "default": 1.5,
+}
 
 
-def compute_mi(used_tokens, context_window_size, cache_read, total_context,
-               delta_lines, delta_output, beta=1.5):
-    """Compute Model Intelligence score. Returns (mi, cps, es, ps)."""
+def get_model_profile(model_id):
+    """Match model_id to degradation beta."""
+    model_lower = (model_id or "").lower()
+    for family in ("opus", "sonnet", "haiku"):
+        if family in model_lower:
+            return MODEL_PROFILES[family]
+    return MODEL_PROFILES["default"]
+
+
+def compute_mi(used_tokens, context_window_size, model_id="", beta_override=0.0):
+    """Compute Model Intelligence score. Returns mi (float).
+
+    MI(u) = max(0, 1 - u^beta) where beta is model-specific.
+    """
     # Guard clause
     if context_window_size == 0:
-        return (1.0, 1.0, 1.0, 0.5)
+        return 1.0
 
-    # CPS
+    beta_from_profile = get_model_profile(model_id)
+    beta = beta_override if beta_override > 0 else beta_from_profile
+
     u = used_tokens / context_window_size
-    cps = max(0.0, 1.0 - u ** beta) if u > 0 else 1.0
-
-    # ES
-    if total_context == 0:
-        es = 1.0
-    else:
-        cache_hit_ratio = cache_read / total_context
-        es = 0.3 + 0.7 * cache_hit_ratio
-
-    # PS
-    if delta_output is None or delta_output <= 0:
-        ps = 0.5
-    else:
-        ratio = delta_lines / delta_output
-        normalized = min(1.0, ratio / MI_PRODUCTIVITY_TARGET)
-        ps = 0.2 + 0.8 * normalized
-
-    mi = MI_WEIGHT_CPS * cps + MI_WEIGHT_ES * es + MI_WEIGHT_PS * ps
-    return (mi, cps, es, ps)
+    if u <= 0:
+        return 1.0
+    return max(0.0, 1.0 - u ** beta)
 
 
 def get_mi_color(mi):
@@ -269,7 +271,7 @@ def read_config():
         "show_io_tokens": True,
         "reduced_motion": False,
         "show_mi": True,
-        "mi_curve_beta": 1.5,
+        "mi_curve_beta": 0.0,
         "colors": {},
     }
     config_path = os.path.expanduser("~/.claude/statusline.conf")
@@ -466,9 +468,6 @@ def main():
                 state_file = os.path.join(state_dir, "statusline.state")
             has_prev = False
             prev_tokens = 0
-            prev_lines_added = 0
-            prev_lines_removed = 0
-            prev_output_tokens = 0
             try:
                 if os.path.exists(state_file):
                     has_prev = True
@@ -486,10 +485,6 @@ def main():
                                 prev_cache_creation = int(csv_parts[5]) if len(csv_parts) > 5 else 0
                                 prev_cache_read = int(csv_parts[6]) if len(csv_parts) > 6 else 0
                                 prev_tokens = prev_cur_input + prev_cache_creation + prev_cache_read
-                                # For MI productivity score
-                                prev_output_tokens = int(csv_parts[2]) if len(csv_parts) > 2 else 0
-                                prev_lines_added = int(csv_parts[8]) if len(csv_parts) > 8 else 0
-                                prev_lines_removed = int(csv_parts[9]) if len(csv_parts) > 9 else 0
                             else:
                                 # Old format - single value
                                 prev_tokens = int(last_line or 0)
@@ -509,20 +504,9 @@ def main():
 
             # Calculate and display MI score if enabled
             if show_mi:
-                if has_prev:
-                    delta_la = lines_added - prev_lines_added
-                    delta_lr = lines_removed - prev_lines_removed
-                    delta_lines = delta_la + delta_lr
-                    delta_output = total_output_tokens - prev_output_tokens
-                else:
-                    delta_lines = 0
-                    delta_output = None
-                mi_val, _, _, _ = compute_mi(
-                    used_tokens, total_size, cache_read, used_tokens,
-                    delta_lines, delta_output, mi_curve_beta,
-                )
+                mi_val = compute_mi(used_tokens, total_size, model_id, mi_curve_beta)
                 mi_color = get_mi_color(mi_val)
-                mi_info = f" {mi_color}MI:{mi_val:.2f}{RESET}"
+                mi_info = f" {mi_color}MI:{mi_val:.3f}{RESET}"
 
             # Only append if context usage changed (avoid duplicates from multiple refreshes)
             if not has_prev or used_tokens != prev_tokens:

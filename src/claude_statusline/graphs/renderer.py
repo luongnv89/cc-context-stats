@@ -327,27 +327,28 @@ class GraphRenderer:
         # Model Intelligence score
         if mi_score is not None:
             from claude_statusline.graphs.intelligence import (
+                MI_GREEN_THRESHOLD,
+                MI_YELLOW_THRESHOLD,
                 format_mi_score,
                 get_mi_color,
             )
 
             mi_color_name = get_mi_color(mi_score.mi)
             mi_color = getattr(self.colors, mi_color_name)
-            if mi_score.mi > 0.65:
+            if mi_score.mi > MI_GREEN_THRESHOLD:
                 mi_hint = "Model is operating well"
-            elif mi_score.mi > 0.35:
-                mi_hint = "Context pressure is degrading answer quality"
+            elif mi_score.mi > MI_YELLOW_THRESHOLD:
+                mi_hint = "Context pressure building, consider wrapping up"
             else:
-                mi_hint = "Severely degraded, consider new session"
+                mi_hint = "Significant degradation, start new session"
             self._emit(
                 f"  {mi_color}{'Model Intelligence:':<20}{self.colors.reset} "
                 f"{format_mi_score(mi_score.mi)}  "
                 f"{self.colors.dim}({mi_hint}){self.colors.reset}"
             )
             self._emit(
-                f"  {self.colors.dim}  CPS: {mi_score.cps:.2f}  "
-                f"ES: {mi_score.es:.2f}  "
-                f"PS: {mi_score.ps:.2f}{self.colors.reset}"
+                f"  {self.colors.dim}  Context: "
+                f"{mi_score.utilization * 100:.0f}% used{self.colors.reset}"
             )
 
         if last.context_window_size > 0:

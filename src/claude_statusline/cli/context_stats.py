@@ -285,33 +285,40 @@ def render_once(
             current_output, timestamps, "Output Tokens (per request)", colors.magenta
         )
 
-    # Compute MI scores for graph and summary
+    # Compute MI scores for graph and/or summary
     mi_score = None
-    if graph_type in ("mi", "all") or True:  # Always compute for summary
+    if entries:
         from claude_statusline.graphs.intelligence import calculate_intelligence
 
         mi_config = config if config else Config.load()
-        beta = mi_config.mi_curve_beta if config else 1.5
+        beta = mi_config.mi_curve_beta
 
-        mi_scores = []
-        for i, entry in enumerate(entries):
-            prev = entries[i - 1] if i > 0 else None
-            ctx_window = entry.context_window_size
-            score = calculate_intelligence(entry, prev, ctx_window, beta)
-            mi_scores.append(score)
+        if graph_type in ("mi", "all"):
+            # Compute MI for all entries (needed for timeseries graph)
+            mi_scores = []
+            for entry in entries:
+                ctx_window = entry.context_window_size
+                score = calculate_intelligence(
+                    entry, ctx_window, entry.model_id, beta
+                )
+                mi_scores.append(score)
 
-        if mi_scores:
             mi_score = mi_scores[-1]
 
-        if graph_type in ("mi", "all") and len(mi_scores) > 0:
-            # Scale MI scores to [0, 1000] for integer renderer
-            mi_data = [int(s.mi * 1000) for s in mi_scores]
+            # Scale MI scores to [0, 10000] for integer renderer (3 decimal precision)
+            mi_data = [int(s.mi * 10000) for s in mi_scores]
             renderer.render_timeseries(
                 mi_data,
                 timestamps,
                 "Model Intelligence Over Time",
                 colors.yellow,
-                label_fn=lambda v: f"{v / 1000:.2f}",
+                label_fn=lambda v: f"{v / 10000:.3f}",
+            )
+        else:
+            # Only compute MI for last entry (for summary display)
+            last = entries[-1]
+            mi_score = calculate_intelligence(
+                last, last.context_window_size, last.model_id, beta
             )
 
     # Summary and footer

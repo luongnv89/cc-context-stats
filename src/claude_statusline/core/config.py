@@ -31,7 +31,7 @@ class Config:
     show_io_tokens: bool = True
     reduced_motion: bool = False
     show_mi: bool = True
-    mi_curve_beta: float = 1.5
+    mi_curve_beta: float = 0.0  # 0 = use model-specific profile default
 
     # Custom color overrides (slot_name -> ANSI code)
     color_overrides: dict[str, str] = field(default_factory=dict)
@@ -83,8 +83,9 @@ reduced_motion=false
 # Model Intelligence (MI) score display
 show_mi=true
 
-# MI degradation curve shape (higher = steeper initial drop)
-# mi_curve_beta=1.5
+# MI curve beta override (0 = use model-specific profile)
+# Set to override the per-model default (e.g., 1.5 for moderate decay)
+# mi_curve_beta=0
 
 # Custom colors - use named colors or hex (#rrggbb)
 # Available color slots: color_green, color_yellow, color_red,

@@ -37,49 +37,48 @@ const ROTATION_THRESHOLD = 10000;
 const ROTATION_KEEP = 5000;
 
 // Model Intelligence constants (hardcoded, not configurable)
-const MI_WEIGHT_CPS = 0.60;
-const MI_WEIGHT_ES = 0.25;
-const MI_WEIGHT_PS = 0.15;
-const MI_GREEN_THRESHOLD = 0.65;
-const MI_YELLOW_THRESHOLD = 0.35;
-const MI_PRODUCTIVITY_TARGET = 0.2;
+const MI_GREEN_THRESHOLD = 0.70;
+const MI_YELLOW_THRESHOLD = 0.40;
+
+// Per-model degradation profiles: beta controls curve shape
+// Higher beta = quality retained longer (degradation happens later)
+const MODEL_PROFILES = {
+    opus:    1.8,
+    sonnet:  1.5,
+    haiku:   1.2,
+    default: 1.5,
+};
+
+/**
+ * Match model_id to degradation beta.
+ */
+function getModelProfile(modelId) {
+    const lower = (modelId || '').toLowerCase();
+    for (const family of ['opus', 'sonnet', 'haiku']) {
+        if (lower.includes(family)) return MODEL_PROFILES[family];
+    }
+    return MODEL_PROFILES.default;
+}
 
 /**
  * Compute Model Intelligence score.
- * Returns { mi, cps, es, ps }.
+ * MI(u) = max(0, 1 - u^beta) where beta is model-specific.
+ * Returns { mi }.
  */
-function computeMI(usedTokens, contextWindowSize, cacheRead, totalContext,
-                   deltaLines, deltaOutput, beta = 1.5) {
+function computeMI(usedTokens, contextWindowSize, modelId, betaOverride) {
     // Guard clause
     if (contextWindowSize === 0) {
-        return { mi: 1.0, cps: 1.0, es: 1.0, ps: 0.5 };
+        return { mi: 1.0 };
     }
 
-    // CPS
+    const betaFromProfile = getModelProfile(modelId || '');
+    const beta = (betaOverride && betaOverride > 0) ? betaOverride : betaFromProfile;
+
     const u = usedTokens / contextWindowSize;
-    const cps = u > 0 ? Math.max(0, 1 - Math.pow(u, beta)) : 1.0;
+    if (u <= 0) return { mi: 1.0 };
 
-    // ES
-    let es;
-    if (totalContext === 0) {
-        es = 1.0;
-    } else {
-        const cacheHitRatio = cacheRead / totalContext;
-        es = 0.3 + 0.7 * cacheHitRatio;
-    }
-
-    // PS
-    let ps;
-    if (deltaOutput === null || deltaOutput === undefined || deltaOutput <= 0) {
-        ps = 0.5;
-    } else {
-        const ratio = deltaLines / deltaOutput;
-        const normalized = Math.min(1.0, ratio / MI_PRODUCTIVITY_TARGET);
-        ps = 0.2 + 0.8 * normalized;
-    }
-
-    const mi = MI_WEIGHT_CPS * cps + MI_WEIGHT_ES * es + MI_WEIGHT_PS * ps;
-    return { mi, cps, es, ps };
+    const mi = Math.max(0, 1 - Math.pow(u, beta));
+    return { mi };
 }
 
 /**
@@ -292,7 +291,7 @@ function readConfig() {
         showIoTokens: true,
         reducedMotion: false,
         showMI: true,
-        miCurveBeta: 1.5,
+        miCurveBeta: 0,
         colors: {},
     };
     const configPath = path.join(os.homedir(), '.claude', 'statusline.conf');
@@ -515,9 +514,6 @@ process.stdin.on('end', () => {
             const stateFile = path.join(stateDir, stateFileName);
             let hasPrev = false;
             let prevTokens = 0;
-            let prevOutputTokens = 0;
-            let prevLinesAdded = 0;
-            let prevLinesRemoved = 0;
             try {
                 if (fs.existsSync(stateFile)) {
                     hasPrev = true;
@@ -535,9 +531,6 @@ process.stdin.on('end', () => {
                         const prevCacheRead = parseInt(parts[6], 10) || 0;
                         prevTokens = prevCurInput + prevCacheCreation + prevCacheRead;
                         // For MI productivity score
-                        prevOutputTokens = parseInt(parts[2], 10) || 0;
-                        prevLinesAdded = parseInt(parts[8], 10) || 0;
-                        prevLinesRemoved = parseInt(parts[9], 10) || 0;
                     } else {
                         // Old format - single value
                         prevTokens = parseInt(lastLine, 10) || 0;
@@ -563,22 +556,9 @@ process.stdin.on('end', () => {
 
             // Calculate and display MI score if enabled
             if (showMI) {
-                let deltaLines, deltaOutput;
-                if (hasPrev) {
-                    const deltaLA = linesAdded - prevLinesAdded;
-                    const deltaLR = linesRemoved - prevLinesRemoved;
-                    deltaLines = deltaLA + deltaLR;
-                    deltaOutput = totalOutputTokens - prevOutputTokens;
-                } else {
-                    deltaLines = 0;
-                    deltaOutput = null;
-                }
-                const miResult = computeMI(
-                    usedTokens, totalSize, cacheRead, usedTokens,
-                    deltaLines, deltaOutput, miCurveBeta
-                );
+                const miResult = computeMI(usedTokens, totalSize, modelId, miCurveBeta);
                 const miColor = getMIColor(miResult.mi, cGreen, cYellow, cRed);
-                miInfo = ` ${miColor}MI:${miResult.mi.toFixed(2)}${RESET}`;
+                miInfo = ` ${miColor}MI:${miResult.mi.toFixed(3)}${RESET}`;
             }
 
             // Only append if context usage changed (avoid duplicates from multiple refreshes)

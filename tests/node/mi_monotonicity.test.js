@@ -1,8 +1,8 @@
 /**
  * Tests that MI always reflects context length: more free context = better MI.
  *
- * Verifies monotonicity property across CPS, composite MI, different beta
- * values, ES/PS scenarios, and zone alignment.
+ * Verifies monotonicity property across model profiles, beta values,
+ * and zone alignment.
  */
 
 const path = require('path');
@@ -12,79 +12,16 @@ const { computeMI } = require('../../scripts/statusline');
 const VECTORS_PATH = path.join(__dirname, '..', 'fixtures', 'mi_monotonicity_vectors.json');
 const vectors = JSON.parse(fs.readFileSync(VECTORS_PATH, 'utf8'));
 
-// --- CPS monotonicity ---
-
-describe('CPS monotonicity', () => {
-    test('CPS decreases as utilization increases', () => {
-        const steps = vectors.utilization_steps;
-        const beta = vectors.beta;
-        const cw = vectors.context_window;
-
-        let prevCPS = null;
-        for (const step of steps) {
-            const used = step.used;
-            // computeMI returns { mi, cps, es, ps }
-            const result = computeMI(used, cw, 0, used, 0, null, beta);
-
-            if (prevCPS !== null) {
-                expect(result.cps).toBeLessThanOrEqual(prevCPS + 1e-9);
-            }
-            prevCPS = result.cps;
-        }
-    });
-
-    test('CPS strictly decreases between non-zero utilization steps', () => {
-        const steps = vectors.utilization_steps.filter(s => s.used > 0);
-        const beta = vectors.beta;
-        const cw = vectors.context_window;
-
-        let prevCPS = null;
-        for (const step of steps) {
-            const result = computeMI(step.used, cw, 0, step.used, 0, null, beta);
-
-            if (prevCPS !== null) {
-                expect(result.cps).toBeLessThan(prevCPS);
-            }
-            prevCPS = result.cps;
-        }
-    });
-
-    test.each([1.0, 1.5, 2.0, 3.0])('CPS monotonic for beta=%s', (beta) => {
-        const cw = 200000;
-        let prevCPS = null;
-
-        for (let pct = 0; pct <= 100; pct += 5) {
-            const used = Math.floor(pct / 100 * cw);
-            const result = computeMI(used, cw, 0, used, 0, null, beta);
-
-            if (prevCPS !== null) {
-                expect(result.cps).toBeLessThanOrEqual(prevCPS + 1e-9);
-            }
-            prevCPS = result.cps;
-        }
-    });
-
-    test('CPS boundary values', () => {
-        const cw = 200000;
-        const empty = computeMI(0, cw, 0, 0, 0, null, 1.5);
-        const full = computeMI(cw, cw, 0, cw, 0, 100, 1.5);
-
-        expect(empty.cps).toBe(1.0);
-        expect(full.cps).toBe(0.0);
-    });
-});
-
-// --- Composite MI monotonicity ---
+// --- MI monotonicity ---
 
 describe('MI monotonicity', () => {
-    test('MI decreases with utilization (no cache, no prev)', () => {
+    test('MI decreases with utilization (default/sonnet profile)', () => {
         const steps = vectors.utilization_steps;
         const cw = vectors.context_window;
 
         let prevMI = null;
         for (const step of steps) {
-            // No cache (ES=0.3), no prev (PS=0.5 via null deltaOutput)
-            const result = computeMI(step.used, cw, 0, step.used, 0, null, 1.5);
+            const result = computeMI(step.used, cw, 'claude-sonnet-4-6');
 
             if (prevMI !== null) {
                 expect(result.mi).toBeLessThanOrEqual(prevMI + 1e-9);
@@ -93,54 +30,15 @@ describe('MI monotonicity', () => {
         }
     });
 
-    test('MI decreases with utilization (high cache)', () => {
-        const steps = vectors.utilization_steps;
-        const cw = vectors.context_window;
+    test.each(['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5', 'unknown-model'])(
+        'MI decreases for model %s',
+        (modelId) => {
+            const steps = vectors.utilization_steps;
+            const cw = vectors.context_window;
 
-        let prevMI = null;
-        for (const step of steps) {
-            const used = step.used;
-            const cacheRead = Math.floor(used * 0.8);
-            const result = computeMI(used, cw, cacheRead, used, 0, null, 1.5);
-
-            if (prevMI !== null) {
-                expect(result.mi).toBeLessThanOrEqual(prevMI + 1e-9);
-            }
-            prevMI = result.mi;
-        }
-    });
-
-    test('MI decreases with utilization (with productivity)', () => {
-        const steps = vectors.utilization_steps;
-        const cw = vectors.context_window;
-
-        let prevMI = null;
-        for (const step of steps) {
-            const used = step.used;
-            // deltaLines=120, deltaOutput=1000 => productive
-            const result = computeMI(used, cw, 0, used, 120, 1000, 1.5);
-
-            if (prevMI !== null) {
-                expect(result.mi).toBeLessThanOrEqual(prevMI + 1e-9);
-            }
-            prevMI = result.mi;
-        }
-    });
-
-    test('MI decreases across all ES/PS scenarios', () => {
-        const steps = vectors.utilization_steps;
-        const cw = vectors.context_window;
-
-        for (const scenario of vectors.varying_es_ps_scenarios) {
             let prevMI = null;
-
             for (const step of steps) {
-                const used = step.used;
-                const cacheRead = Math.floor(used * scenario.cache_read_ratio);
-                const dl = scenario.delta_lines;
-                const dOutput = scenario.delta_output;
-
-                const result = computeMI(used, cw, cacheRead, used, dl, dOutput, 1.5);
+                const result = computeMI(step.used, cw, modelId);
 
                 if (prevMI !== null) {
                     expect(result.mi).toBeLessThanOrEqual(prevMI + 1e-9);
@@ -148,15 +46,15 @@ describe('MI monotonicity', () => {
                 prevMI = result.mi;
             }
         }
-    });
+    );
 
-    test.each([1.0, 1.5, 2.0, 3.0])('MI decreases for beta=%s', (beta) => {
+    test.each([1.0, 1.5, 2.0, 3.0])('MI decreases for beta_override=%s', (beta) => {
         const cw = 200000;
         let prevMI = null;
 
         for (let pct = 0; pct <= 100; pct += 5) {
             const used = Math.floor(pct / 100 * cw);
-            const result = computeMI(used, cw, 0, used, 0, null, beta);
+            const result = computeMI(used, cw, 'claude-opus-4-6', beta);
 
             if (prevMI !== null) {
                 expect(result.mi).toBeLessThanOrEqual(prevMI + 1e-9);
@@ -169,35 +67,23 @@ describe('MI monotonicity', () => {
 // --- Fine-grained resolution ---
 
 describe('MI fine-grained monotonicity', () => {
-    test('MI monotonic at 1% resolution', () => {
-        const cw = 200000;
-        let prevMI = null;
+    test.each(['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5'])(
+        'MI monotonic at 1%% resolution for %s',
+        (modelId) => {
+            const cw = 200000;
+            let prevMI = null;
 
-        for (let pct = 0; pct <= 100; pct++) {
-            const used = Math.floor(pct / 100 * cw);
-            const result = computeMI(used, cw, 0, used, 0, null, 1.5);
+            for (let pct = 0; pct <= 100; pct++) {
+                const used = Math.floor(pct / 100 * cw);
+                const result = computeMI(used, cw, modelId);
 
-            if (prevMI !== null) {
-                expect(result.mi).toBeLessThanOrEqual(prevMI + 1e-9);
+                if (prevMI !== null) {
+                    expect(result.mi).toBeLessThanOrEqual(prevMI + 1e-9);
+                }
+                prevMI = result.mi;
             }
-            prevMI = result.mi;
         }
-    });
-
-    test('CPS monotonic at 1% resolution', () => {
-        const cw = 200000;
-        let prevCPS = null;
-
-        for (let pct = 0; pct <= 100; pct++) {
-            const used = Math.floor(pct / 100 * cw);
-            const result = computeMI(used, cw, 0, used, 0, null, 1.5);
-
-            if (prevCPS !== null) {
-                expect(result.cps).toBeLessThanOrEqual(prevCPS + 1e-9);
-            }
-            prevCPS = result.cps;
-        }
-    });
+    );
 });
 
 // --- MI reflects context zones ---
@@ -205,77 +91,41 @@ describe('MI fine-grained monotonicity', () => {
 describe('MI reflects context zones', () => {
     test('smart zone MI > dumb zone MI > wrap up zone MI', () => {
         const cw = 200000;
-        const smart = computeMI(Math.floor(0.20 * cw), cw, 0, Math.floor(0.20 * cw), 0, null, 1.5);
-        const dumb = computeMI(Math.floor(0.60 * cw), cw, 0, Math.floor(0.60 * cw), 0, null, 1.5);
-        const wrap = computeMI(Math.floor(0.90 * cw), cw, 0, Math.floor(0.90 * cw), 0, null, 1.5);
+        const smart = computeMI(Math.floor(0.20 * cw), cw, 'claude-sonnet-4-6');
+        const dumb = computeMI(Math.floor(0.60 * cw), cw, 'claude-sonnet-4-6');
+        const wrap = computeMI(Math.floor(0.90 * cw), cw, 'claude-sonnet-4-6');
 
         expect(smart.mi).toBeGreaterThan(dumb.mi);
         expect(dumb.mi).toBeGreaterThan(wrap.mi);
     });
 
-    test('empty context has highest MI', () => {
+    test('empty context has MI=1.0', () => {
         const cw = 200000;
-        const result = computeMI(0, cw, 0, 0, 0, null, 1.5);
-
-        // CPS=1.0, ES=1.0 (no tokens => default 1.0... wait, totalContext=0 => ES=1.0)
-        // Actually: totalContext (4th arg) = 0, so ES=1.0
-        // PS=0.5 (null deltaOutput)
-        // MI = 0.60*1.0 + 0.25*1.0 + 0.15*0.5 = 0.925
-        // But if totalContext is passed as used (0), ES=1.0
-        expect(result.cps).toBe(1.0);
-        expect(result.mi).toBeGreaterThan(0.7);
+        const result = computeMI(0, cw, 'claude-opus-4-6');
+        expect(result.mi).toBe(1.0);
     });
 
-    test('full context has lowest MI', () => {
+    test('opus retains higher MI than sonnet at 50% context', () => {
         const cw = 200000;
-        const result = computeMI(cw, cw, 0, cw, 0, 100, 1.5);
-
-        expect(result.cps).toBe(0.0);
-        expect(result.mi).toBeLessThan(0.3);
+        const opus = computeMI(cw / 2, cw, 'claude-opus-4-6');
+        const sonnet = computeMI(cw / 2, cw, 'claude-sonnet-4-6');
+        expect(opus.mi).toBeGreaterThan(sonnet.mi);
     });
 
-    test('MI spread covers meaningful range (>= 0.5)', () => {
+    test('all models reach MI=0 at full context', () => {
         const cw = 200000;
-        const empty = computeMI(0, cw, 0, 0, 0, null, 1.5);
-        const full = computeMI(cw, cw, 0, cw, 0, null, 1.5);
-
-        const spread = empty.mi - full.mi;
-        expect(spread).toBeGreaterThanOrEqual(0.5);
-    });
-});
-
-// --- MI sensitivity to context ---
-
-describe('MI sensitivity', () => {
-    test('worst-case ES/PS still monotonic', () => {
-        const cw = 200000;
-        let prevMI = null;
-
-        for (let pct = 0; pct <= 100; pct += 5) {
-            const used = Math.floor(pct / 100 * cw);
-            // No cache (ES=0.3), zero lines (PS=0.2)
-            const result = computeMI(used, cw, 0, used, 0, 1000, 1.5);
-
-            if (prevMI !== null) {
-                expect(result.mi).toBeLessThanOrEqual(prevMI + 1e-9);
-            }
-            prevMI = result.mi;
+        for (const model of ['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5']) {
+            const result = computeMI(cw, cw, model);
+            expect(result.mi).toBe(0);
         }
     });
 
-    test('best-case ES/PS still monotonic', () => {
+    test('MI spread is 1.0 for all models (0 to full)', () => {
         const cw = 200000;
-        let prevMI = null;
-
-        for (let pct = 0; pct <= 100; pct += 5) {
-            const used = Math.floor(pct / 100 * cw);
-            // All cache (ES=1.0), super productive (PS=1.0)
-            const result = computeMI(used, cw, used, used, 60, 100, 1.5);
-
-            if (prevMI !== null) {
-                expect(result.mi).toBeLessThanOrEqual(prevMI + 1e-9);
-            }
-            prevMI = result.mi;
+        for (const model of ['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5']) {
+            const empty = computeMI(0, cw, model);
+            const full = computeMI(cw, cw, model);
+            expect(empty.mi - full.mi).toBe(1.0);
         }
     });
 });

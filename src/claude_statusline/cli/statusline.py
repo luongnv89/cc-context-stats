@@ -114,13 +114,12 @@ def main() -> None:
 
         context_info = f" | {ctx_color}{free_display} ({free_pct:.1f}%){colors.reset}"
 
-        # Read previous entry if needed for delta OR MI
+        # State file management for delta display and history recording
         if config.show_delta or config.show_mi:
             state_file = StateFile(session_id)
             prev_entry = state_file.read_last_entry()
-
-            prev_tokens = prev_entry.current_used_tokens if prev_entry else 0
             has_prev = prev_entry is not None
+            prev_tokens = prev_entry.current_used_tokens if prev_entry else 0
 
             # Build current entry
             cur_input_tokens = current_usage.get("input_tokens", 0)
@@ -150,7 +149,7 @@ def main() -> None:
                     delta_display = format_tokens(delta, config.token_detail)
                     delta_info = f" {colors.dim}[+{delta_display}]{colors.reset}"
 
-            # Calculate and display MI score if enabled
+            # Calculate MI score — pure function of utilization, no prev entry needed
             if config.show_mi:
                 from claude_statusline.graphs.intelligence import (
                     calculate_intelligence,
@@ -159,13 +158,13 @@ def main() -> None:
                 )
 
                 mi_score = calculate_intelligence(
-                    entry, prev_entry, total_size, config.mi_curve_beta
+                    entry, total_size, model_id, config.mi_curve_beta
                 )
                 mi_color_name = get_mi_color(mi_score.mi)
                 mi_color = getattr(colors, mi_color_name)
                 mi_info = f" {mi_color}MI:{format_mi_score(mi_score.mi)}{colors.reset}"
 
-            # Only append if context usage changed (avoid duplicates from multiple refreshes)
+            # Only append if context usage changed (avoid duplicates)
             if not has_prev or used_tokens != prev_tokens:
                 state_file.append_entry(entry)
 
