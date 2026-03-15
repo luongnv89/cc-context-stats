@@ -4,8 +4,7 @@
   "description": "Monitor your Claude Code session context in real-time - track token usage and never run out of context",
   "main": "scripts/statusline.js",
   "bin": {
-    "context-stats": "scripts/context-stats.sh",
-    "claude-statusline": "scripts/statusline.js"
+    "context-stats": "scripts/context-stats.sh"
   },
   "scripts": {
     "test": "jest",
