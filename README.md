@@ -5,8 +5,8 @@
 
   <p>Real-time model intelligence monitoring for Claude Code — know exactly when your model is at peak quality and when it's time for a fresh session.</p>
 
-[![PyPI version](https://badge.fury.io/py/cc-context-stats.svg)](https://pypi.org/project/cc-context-stats/)
-[![npm version](https://badge.fury.io/js/cc-context-stats.svg)](https://www.npmjs.com/package/cc-context-stats)
+[![PyPI version](https://img.shields.io/pypi/v/cc-context-stats)](https://pypi.org/project/cc-context-stats/)
+[![npm version](https://img.shields.io/npm/v/cc-context-stats)](https://www.npmjs.com/package/cc-context-stats)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/cc-context-stats)](https://pypi.org/project/cc-context-stats/)
 [![npm Downloads](https://img.shields.io/npm/dm/cc-context-stats)](https://www.npmjs.com/package/cc-context-stats)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
