@@ -51,6 +51,17 @@ const MODEL_PROFILES = {
     default: 1.5,
 };
 
+// Zone indicator thresholds
+const LARGE_MODEL_THRESHOLD = 500000; // >= 500k context = 1M-class model
+const ZONE_1M_P_MAX = 70000;    // P zone: < 70k used
+const ZONE_1M_C_MAX = 100000;   // C zone: 70k–100k used
+const ZONE_1M_D_MAX = 250000;   // D zone: 100k–250k used
+const ZONE_1M_X_MAX = 275000;   // X zone: 250k–275k used; Z zone: >= 275k
+const ZONE_STD_DUMP_ZONE = 0.40;
+const ZONE_STD_WARN_BUFFER = 30000;
+const ZONE_STD_HARD_LIMIT = 0.70;
+const ZONE_STD_DEAD_ZONE = 0.75;
+
 /**
  * Match model_id to degradation beta.
  */
@@ -98,6 +109,50 @@ function getMIColor(mi, utilization, greenColor, yellowColor, redColor) {
         return yellowColor || YELLOW;
     }
     return greenColor || GREEN;
+}
+
+/**
+ * Determine context zone indicator (P/C/D/X/Z) based on token usage.
+ * Returns { zone, colorName }.
+ */
+function getContextZone(usedTokens, contextWindowSize) {
+    if (contextWindowSize === 0) {
+        return { zone: 'P', colorName: 'green' };
+    }
+
+    const isLarge = contextWindowSize >= LARGE_MODEL_THRESHOLD;
+
+    if (isLarge) {
+        if (usedTokens < ZONE_1M_P_MAX) return { zone: 'P', colorName: 'green' };
+        if (usedTokens < ZONE_1M_C_MAX) return { zone: 'C', colorName: 'yellow' };
+        if (usedTokens < ZONE_1M_D_MAX) return { zone: 'D', colorName: 'orange' };
+        if (usedTokens < ZONE_1M_X_MAX) return { zone: 'X', colorName: 'dark_red' };
+        return { zone: 'Z', colorName: 'gray' };
+    }
+
+    // Standard models (< 500k context)
+    const dumpZoneTokens = Math.floor(contextWindowSize * ZONE_STD_DUMP_ZONE);
+    const warnStart = Math.max(0, dumpZoneTokens - ZONE_STD_WARN_BUFFER);
+    const hardLimitTokens = Math.floor(contextWindowSize * ZONE_STD_HARD_LIMIT);
+    const deadZoneTokens = Math.floor(contextWindowSize * ZONE_STD_DEAD_ZONE);
+
+    if (usedTokens < warnStart) return { zone: 'P', colorName: 'green' };
+    if (usedTokens < dumpZoneTokens) return { zone: 'C', colorName: 'yellow' };
+    if (usedTokens < hardLimitTokens) return { zone: 'D', colorName: 'orange' };
+    if (usedTokens < deadZoneTokens) return { zone: 'X', colorName: 'dark_red' };
+    return { zone: 'Z', colorName: 'gray' };
+}
+
+/**
+ * Map zone color name to ANSI escape code.
+ */
+function zoneAnsiColor(colorName) {
+    if (colorName === 'green') return GREEN;
+    if (colorName === 'yellow') return YELLOW;
+    if (colorName === 'orange') return '\x1b[38;2;255;165;0m';
+    if (colorName === 'dark_red') return '\x1b[38;2;139;0;0m';
+    if (colorName === 'gray') return '\x1b[0;90m';
+    return RESET;
 }
 
 /**
@@ -557,7 +612,9 @@ process.stdin.on('end', () => {
                 const miResult = computeMI(usedTokens, totalSize, modelId, miCurveBeta);
                 const miUtil = totalSize > 0 ? usedTokens / totalSize : 0;
                 const miColor = getMIColor(miResult.mi, miUtil, cGreen, cYellow, cRed);
-                miInfo = ` | ${miColor}MI:${miResult.mi.toFixed(3)}${RESET}`;
+                const zoneResult = getContextZone(usedTokens, totalSize);
+                const zoneAnsi = zoneAnsiColor(zoneResult.colorName);
+                miInfo = ` | ${miColor}MI:${miResult.mi.toFixed(3)}${RESET} ${zoneAnsi}${zoneResult.zone}${RESET}`;
             }
 
             // Only append if context usage changed (avoid duplicates from multiple refreshes)
@@ -607,5 +664,5 @@ process.stdin.on('end', () => {
 
 // Export for testing
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { maybeRotateStateFile, ROTATION_THRESHOLD, ROTATION_KEEP, computeMI };
+    module.exports = { maybeRotateStateFile, ROTATION_THRESHOLD, ROTATION_KEEP, computeMI, getContextZone };
 }

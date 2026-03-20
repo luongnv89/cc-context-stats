@@ -5,7 +5,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const { computeMI } = require('../../scripts/statusline');
+const { computeMI, getContextZone } = require('../../scripts/statusline');
 
 const VECTORS_PATH = path.join(__dirname, '..', 'fixtures', 'mi_test_vectors.json');
 const vectors = JSON.parse(fs.readFileSync(VECTORS_PATH, 'utf8'));
@@ -54,6 +54,90 @@ describe('computeMI', () => {
         const opus = computeMI(140000, 200000, 'claude-opus-4-6');
         const sonnet = computeMI(140000, 200000, 'claude-sonnet-4-6');
         expect(opus.mi).toBeGreaterThan(sonnet.mi);
+    });
+});
+
+// --- Context zone tests ---
+
+describe('getContextZone', () => {
+    // 1M model tests
+    test('1M model, 50k used → P (green)', () => {
+        const z = getContextZone(50000, 1000000);
+        expect(z.zone).toBe('P');
+        expect(z.colorName).toBe('green');
+    });
+
+    test('1M model, 85k used → C (yellow)', () => {
+        const z = getContextZone(85000, 1000000);
+        expect(z.zone).toBe('C');
+        expect(z.colorName).toBe('yellow');
+    });
+
+    test('1M model, 150k used → D (orange)', () => {
+        const z = getContextZone(150000, 1000000);
+        expect(z.zone).toBe('D');
+        expect(z.colorName).toBe('orange');
+    });
+
+    test('1M model, 250k used → X (dark_red)', () => {
+        const z = getContextZone(250000, 1000000);
+        expect(z.zone).toBe('X');
+        expect(z.colorName).toBe('dark_red');
+    });
+
+    test('1M model, 300k used → Z (gray)', () => {
+        const z = getContextZone(300000, 1000000);
+        expect(z.zone).toBe('Z');
+        expect(z.colorName).toBe('gray');
+    });
+
+    // Boundary tests
+    test('boundary: 70k → C (not P)', () => {
+        expect(getContextZone(70000, 1000000).zone).toBe('C');
+        expect(getContextZone(69999, 1000000).zone).toBe('P');
+    });
+
+    test('boundary: 100k → D (not C)', () => {
+        expect(getContextZone(100000, 1000000).zone).toBe('D');
+        expect(getContextZone(99999, 1000000).zone).toBe('C');
+    });
+
+    test('boundary: 275k → Z (past X), X is 250k–275k range', () => {
+        expect(getContextZone(275000, 1000000).zone).toBe('Z');
+        expect(getContextZone(274999, 1000000).zone).toBe('X');
+        // 250001 is now within X range (not Z)
+        expect(getContextZone(250001, 1000000).zone).toBe('X');
+    });
+
+    // Standard model tests
+    test('200k model, 20k used → P', () => {
+        expect(getContextZone(20000, 200000).zone).toBe('P');
+    });
+
+    test('200k model, 60k used → C', () => {
+        expect(getContextZone(60000, 200000).zone).toBe('C');
+    });
+
+    test('200k model, 100k (50%) → D', () => {
+        expect(getContextZone(100000, 200000).zone).toBe('D');
+    });
+
+    test('200k model, 140k (70%) → X', () => {
+        expect(getContextZone(140000, 200000).zone).toBe('X');
+    });
+
+    test('200k model, 150k (75%) → Z', () => {
+        expect(getContextZone(150000, 200000).zone).toBe('Z');
+    });
+
+    // Guard clause
+    test('context_window=0 → P', () => {
+        expect(getContextZone(50000, 0).zone).toBe('P');
+    });
+
+    // Large model threshold
+    test('500k context is treated as 1M-class', () => {
+        expect(getContextZone(50000, 500000).zone).toBe('P');
     });
 });
 
