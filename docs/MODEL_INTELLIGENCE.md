@@ -78,6 +78,38 @@ MI = max(0, 1 - 0.50^1.2) = 1 - 0.435 = 0.565
 
 **Implication**: Opus enters yellow around 60% utilization, sonnet around 50%, haiku around 45%. MI values are displayed with 3 decimal places (e.g., `MI:0.995`) for precision at low utilization.
 
+## Zone Indicators (P/C/D/X/Z)
+
+Zone indicators provide an at-a-glance signal for session state, displayed alongside the MI score. The zones use model-size-aware thresholds — 1M context models get absolute token thresholds, while standard models use utilization ratios.
+
+### Five States
+
+| Zone | Color | Meaning | 1M model (>= 500k ctx) | Standard model (< 500k ctx) |
+|------|-------|---------|------------------------|----------------------------|
+| **P** | Green | Planning mode — safe to plan and code | < 70k tokens used | < (40% - 30k tokens) |
+| **C** | Yellow | Code-only — avoid starting new plans | 70k–100k tokens | (40% - 30k) to 40% |
+| **D** | Orange | Dump zone — quality declining, finish up | 100k–250k tokens | 40%–70% utilization |
+| **X** | Dark red | Hard limit — start a new session | at 250k tokens | at 70% utilization |
+| **Z** | Light gray | Dead zone — nothing productive here | > 250k tokens | > 70% utilization |
+
+### Design Rationale
+
+The dump zone is **graduated, not a cliff**. When users enter **D** (orange), model quality is declining but they can still finish up current work. **X** (dark red) is the clear signal to start a new session. **Z** (light gray) communicates "past the point of usefulness" without alarm.
+
+The 100k dump zone limit for 1M models comes from [Matt Pocock (@mattpocockuk)](https://x.com/mattpocockuk). The 40% threshold for standard models was validated by Dex.
+
+### Why Model-Size-Aware Thresholds?
+
+A single 40% threshold doesn't work for 1M context models — 40% of 1M is 400k tokens, but empirical evidence shows quality degrades much earlier. The absolute token thresholds (70k/100k/250k) reflect real-world dump zone behavior observed in 1M context sessions.
+
+### Example Statusline Output
+
+```
+Claude Opus 4.6 | myproject | main | 850,000 (85.0%) | MI:0.713 P
+```
+
+The zone letter appears after the MI score, colored according to the zone.
+
 ## Design Rationale
 
 ### Why not CPS + ES + PS?
@@ -117,7 +149,7 @@ If `context_window_size == 0` (malformed data), MI returns 1.0 with utilization 
 
 ## Cross-Implementation Sync Points
 
-The MI formula is implemented in 4 languages and must be kept in sync:
+The MI formula and zone logic are implemented in 4 languages and must be kept in sync:
 
 | Logic | Package (`src/`) | Standalone Python | Node.js | Bash |
 |-------|-----------------|-------------------|---------|------|
@@ -125,3 +157,5 @@ The MI formula is implemented in 4 languages and must be kept in sync:
 | get_model_profile | `intelligence.py` | `statusline.py` | `statusline.js` | inline in awk |
 | MI formula | `calculate_context_pressure()` | `compute_mi()` | `computeMI()` | `compute_mi()` |
 | Color thresholds | `get_mi_color()` | `get_mi_color()` | `getMIColor()` | `get_mi_color()` |
+| Zone indicator | `get_context_zone()` | `get_context_zone()` | `getContextZone()` | (not yet) |
+| Zone constants | `ZONE_1M_*`, `ZONE_STD_*` | `ZONE_1M_*`, `ZONE_STD_*` | `ZONE_1M_*`, `ZONE_STD_*` | (not yet) |

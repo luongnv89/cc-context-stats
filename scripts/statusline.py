@@ -53,6 +53,15 @@ MODEL_PROFILES = {
     "default": 1.5,
 }
 
+# Zone indicator thresholds
+LARGE_MODEL_THRESHOLD = 500_000  # >= 500k context = 1M-class model
+ZONE_1M_P_MAX = 70_000    # P zone: < 70k used
+ZONE_1M_C_MAX = 100_000   # C zone: 70k–100k used
+ZONE_1M_D_MAX = 250_000   # D zone: 100k–250k used
+ZONE_STD_DUMP_ZONE = 0.40
+ZONE_STD_WARN_BUFFER = 30_000
+ZONE_STD_HARD_LIMIT = 0.70
+
 
 def get_model_profile(model_id):
     """Match model_id to degradation beta."""
@@ -88,6 +97,57 @@ def get_mi_color(mi, utilization=0.0):
     if mi < MI_GREEN_THRESHOLD or utilization >= MI_CONTEXT_YELLOW:
         return YELLOW
     return GREEN
+
+
+def get_context_zone(used_tokens, context_window_size):
+    """Determine context zone indicator (P/C/D/X/Z) based on token usage.
+
+    Returns (zone_letter, color_name) tuple.
+    """
+    if context_window_size == 0:
+        return ("P", "green")
+
+    is_large = context_window_size >= LARGE_MODEL_THRESHOLD
+
+    if is_large:
+        if used_tokens < ZONE_1M_P_MAX:
+            return ("P", "green")
+        if used_tokens < ZONE_1M_C_MAX:
+            return ("C", "yellow")
+        if used_tokens < ZONE_1M_D_MAX:
+            return ("D", "orange")
+        if used_tokens == ZONE_1M_D_MAX:
+            return ("X", "dark_red")
+        return ("Z", "gray")
+
+    dump_zone_tokens = int(context_window_size * ZONE_STD_DUMP_ZONE)
+    warn_start = max(0, dump_zone_tokens - ZONE_STD_WARN_BUFFER)
+    hard_limit_tokens = int(context_window_size * ZONE_STD_HARD_LIMIT)
+
+    if used_tokens < warn_start:
+        return ("P", "green")
+    if used_tokens < dump_zone_tokens:
+        return ("C", "yellow")
+    if used_tokens < hard_limit_tokens:
+        return ("D", "orange")
+    if used_tokens == hard_limit_tokens:
+        return ("X", "dark_red")
+    return ("Z", "gray")
+
+
+def _zone_ansi_color(color_name):
+    """Map zone color name to ANSI escape code."""
+    if color_name == "green":
+        return GREEN
+    if color_name == "yellow":
+        return YELLOW
+    if color_name == "orange":
+        return "\033[38;2;255;165;0m"  # RGB orange
+    if color_name == "dark_red":
+        return "\033[38;2;139;0;0m"  # RGB dark red
+    if color_name == "gray":
+        return "\033[0;90m"  # bright black / gray
+    return RESET
 
 
 def maybe_rotate_state_file(state_file):
@@ -502,7 +562,9 @@ def main():
                 mi_val = compute_mi(used_tokens, total_size, model_id, mi_curve_beta)
                 mi_util = used_tokens / total_size if total_size > 0 else 0.0
                 mi_color = get_mi_color(mi_val, mi_util)
-                mi_info = f" | {mi_color}MI:{mi_val:.3f}{RESET}"
+                zone_letter, zone_color_name = get_context_zone(used_tokens, total_size)
+                zone_ansi = _zone_ansi_color(zone_color_name)
+                mi_info = f" | {mi_color}MI:{mi_val:.3f}{RESET} {zone_ansi}{zone_letter}{RESET}"
 
             # Only append if context usage changed (avoid duplicates from multiple refreshes)
             if not has_prev or used_tokens != prev_tokens:

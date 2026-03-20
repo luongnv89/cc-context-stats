@@ -8,6 +8,13 @@ per model family.
 Formula: MI(u) = max(0, 1 - u^beta)
 Where u = utilization ratio, beta is model-specific.
 Higher beta = quality retained longer (degradation happens later).
+
+Zone indicators (P/C/D/X/Z) provide a quick signal for session state:
+  P = Planning mode (green)   — safe to plan and code
+  C = Code-only mode (yellow) — avoid starting new plans
+  D = Dump zone (orange)      — quality declining, finish up
+  X = Hard limit (dark red)   — start a new session
+  Z = Dead zone (gray)        — nothing productive here
 """
 
 from __future__ import annotations
@@ -23,6 +30,20 @@ MI_YELLOW_THRESHOLD = 0.80
 MI_CONTEXT_YELLOW_THRESHOLD = 0.40  # 40% context used
 MI_CONTEXT_RED_THRESHOLD = 0.80     # 80% context used
 
+# 1M model detection threshold (context windows >= 500k are treated as 1M-class)
+LARGE_MODEL_THRESHOLD = 500_000
+
+# Zone thresholds for 1M models (token counts)
+ZONE_1M_P_MAX = 70_000    # P zone: < 70k used
+ZONE_1M_C_MAX = 100_000   # C zone: 70k–100k used
+ZONE_1M_D_MAX = 250_000   # D zone: 100k–250k used
+# X zone: at 250k; Z zone: > 250k
+
+# Zone thresholds for standard models (< 1M) — expressed as utilization ratios
+ZONE_STD_DUMP_ZONE = 0.40    # dump zone starts at 40%
+ZONE_STD_WARN_BUFFER = 30_000  # warn 30k tokens before dump zone
+ZONE_STD_HARD_LIMIT = 0.70   # hard limit at 70%
+
 # Per-model degradation profiles calibrated from MRCR v2 8-needle benchmark
 # beta controls curve shape: higher = quality retained longer
 # All models drop from 1.0 to 0.0, but at different rates
@@ -32,6 +53,15 @@ MODEL_PROFILES: dict[str, float] = {
     "haiku": 1.2,   # degrades earliest
     "default": 1.5, # same as sonnet
 }
+
+
+@dataclass
+class ZoneInfo:
+    """Context zone indicator with color."""
+
+    zone: str      # "P", "C", "D", "X", or "Z"
+    color: str     # "green", "yellow", "orange", "dark_red", or "gray"
+    label: str     # Human-readable label
 
 
 @dataclass
@@ -103,6 +133,65 @@ def calculate_intelligence(
     mi = calculate_context_pressure(utilization, beta)
 
     return IntelligenceScore(mi=mi, utilization=utilization)
+
+
+def get_context_zone(
+    used_tokens: int,
+    context_window_size: int,
+) -> ZoneInfo:
+    """Determine the context zone indicator based on token usage.
+
+    For 1M models (context_window >= 500k):
+      P: < 70k used
+      C: 70k–100k used
+      D: 100k–250k used
+      X: at 250k used
+      Z: > 250k used
+
+    For standard models (< 500k context):
+      P: < (dump_zone - 30k)
+      C: (dump_zone - 30k) to dump_zone (40%)
+      D: 40%–70% utilization
+      X: at 70% utilization
+      Z: > 70% utilization
+
+    Args:
+        used_tokens: Number of tokens currently used
+        context_window_size: Total context window size in tokens
+
+    Returns:
+        ZoneInfo with zone letter, color name, and label
+    """
+    if context_window_size == 0:
+        return ZoneInfo(zone="P", color="green", label="Planning")
+
+    is_large_model = context_window_size >= LARGE_MODEL_THRESHOLD
+
+    if is_large_model:
+        if used_tokens < ZONE_1M_P_MAX:
+            return ZoneInfo(zone="P", color="green", label="Planning")
+        if used_tokens < ZONE_1M_C_MAX:
+            return ZoneInfo(zone="C", color="yellow", label="Code-only")
+        if used_tokens < ZONE_1M_D_MAX:
+            return ZoneInfo(zone="D", color="orange", label="Dump zone")
+        if used_tokens == ZONE_1M_D_MAX:
+            return ZoneInfo(zone="X", color="dark_red", label="Hard limit")
+        return ZoneInfo(zone="Z", color="gray", label="Dead zone")
+
+    # Standard models (< 500k context)
+    dump_zone_tokens = int(context_window_size * ZONE_STD_DUMP_ZONE)
+    warn_start = max(0, dump_zone_tokens - ZONE_STD_WARN_BUFFER)
+    hard_limit_tokens = int(context_window_size * ZONE_STD_HARD_LIMIT)
+
+    if used_tokens < warn_start:
+        return ZoneInfo(zone="P", color="green", label="Planning")
+    if used_tokens < dump_zone_tokens:
+        return ZoneInfo(zone="C", color="yellow", label="Code-only")
+    if used_tokens < hard_limit_tokens:
+        return ZoneInfo(zone="D", color="orange", label="Dump zone")
+    if used_tokens == hard_limit_tokens:
+        return ZoneInfo(zone="X", color="dark_red", label="Hard limit")
+    return ZoneInfo(zone="Z", color="gray", label="Dead zone")
 
 
 def get_mi_color(mi: float, utilization: float = 0.0) -> str:
