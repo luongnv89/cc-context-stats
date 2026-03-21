@@ -117,17 +117,17 @@ function getMIColor(mi, utilization, greenColor, yellowColor, redColor) {
  */
 function getContextZone(usedTokens, contextWindowSize) {
     if (contextWindowSize === 0) {
-        return { zone: 'P', colorName: 'green' };
+        return { zone: 'Plan', colorName: 'green' };
     }
 
     const isLarge = contextWindowSize >= LARGE_MODEL_THRESHOLD;
 
     if (isLarge) {
-        if (usedTokens < ZONE_1M_P_MAX) return { zone: 'P', colorName: 'green' };
-        if (usedTokens < ZONE_1M_C_MAX) return { zone: 'C', colorName: 'yellow' };
-        if (usedTokens < ZONE_1M_D_MAX) return { zone: 'D', colorName: 'orange' };
-        if (usedTokens < ZONE_1M_X_MAX) return { zone: 'X', colorName: 'dark_red' };
-        return { zone: 'Z', colorName: 'gray' };
+        if (usedTokens < ZONE_1M_P_MAX) return { zone: 'Plan', colorName: 'green' };
+        if (usedTokens < ZONE_1M_C_MAX) return { zone: 'Code', colorName: 'yellow' };
+        if (usedTokens < ZONE_1M_D_MAX) return { zone: 'Dump', colorName: 'orange' };
+        if (usedTokens < ZONE_1M_X_MAX) return { zone: 'ExDump', colorName: 'dark_red' };
+        return { zone: 'Dead', colorName: 'gray' };
     }
 
     // Standard models (< 500k context)
@@ -136,11 +136,11 @@ function getContextZone(usedTokens, contextWindowSize) {
     const hardLimitTokens = Math.floor(contextWindowSize * ZONE_STD_HARD_LIMIT);
     const deadZoneTokens = Math.floor(contextWindowSize * ZONE_STD_DEAD_ZONE);
 
-    if (usedTokens < warnStart) return { zone: 'P', colorName: 'green' };
-    if (usedTokens < dumpZoneTokens) return { zone: 'C', colorName: 'yellow' };
-    if (usedTokens < hardLimitTokens) return { zone: 'D', colorName: 'orange' };
-    if (usedTokens < deadZoneTokens) return { zone: 'X', colorName: 'dark_red' };
-    return { zone: 'Z', colorName: 'gray' };
+    if (usedTokens < warnStart) return { zone: 'Plan', colorName: 'green' };
+    if (usedTokens < dumpZoneTokens) return { zone: 'Code', colorName: 'yellow' };
+    if (usedTokens < hardLimitTokens) return { zone: 'Dump', colorName: 'orange' };
+    if (usedTokens < deadZoneTokens) return { zone: 'ExDump', colorName: 'dark_red' };
+    return { zone: 'Dead', colorName: 'gray' };
 }
 
 /**

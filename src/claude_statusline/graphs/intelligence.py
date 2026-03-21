@@ -9,12 +9,12 @@ Formula: MI(u) = max(0, 1 - u^beta)
 Where u = utilization ratio, beta is model-specific.
 Higher beta = quality retained longer (degradation happens later).
 
-Zone indicators (P/C/D/X/Z) provide a quick signal for session state:
-  P = Planning mode (green)   — safe to plan and code
-  C = Code-only mode (yellow) — avoid starting new plans
-  D = Dump zone (orange)      — quality declining, finish up
-  X = Hard limit (dark red)   — start a new session
-  Z = Dead zone (gray)        — nothing productive here
+Zone indicators provide a quick signal for session state:
+  Plan   = Planning mode (green)   — safe to plan and code
+  Code   = Code-only mode (yellow) — avoid starting new plans
+  Dump   = Dump zone (orange)      — quality declining, finish up
+  ExDump = Hard limit (dark red)   — start a new session
+  Dead   = Dead zone (gray)        — nothing productive here
 """
 
 from __future__ import annotations
@@ -60,7 +60,7 @@ MODEL_PROFILES: dict[str, float] = {
 class ZoneInfo:
     """Context zone indicator with color."""
 
-    zone: str      # "P", "C", "D", "X", or "Z"
+    zone: str      # "Plan", "Code", "Dump", "ExDump", or "Dead"
     color: str     # "green", "yellow", "orange", "dark_red", or "gray"
     label: str     # Human-readable label
 
@@ -164,20 +164,20 @@ def get_context_zone(
         ZoneInfo with zone letter, color name, and label
     """
     if context_window_size == 0:
-        return ZoneInfo(zone="P", color="green", label="Planning")
+        return ZoneInfo(zone="Plan", color="green", label="Planning")
 
     is_large_model = context_window_size >= LARGE_MODEL_THRESHOLD
 
     if is_large_model:
         if used_tokens < ZONE_1M_P_MAX:
-            return ZoneInfo(zone="P", color="green", label="Planning")
+            return ZoneInfo(zone="Plan", color="green", label="Planning")
         if used_tokens < ZONE_1M_C_MAX:
-            return ZoneInfo(zone="C", color="yellow", label="Code-only")
+            return ZoneInfo(zone="Code", color="yellow", label="Code-only")
         if used_tokens < ZONE_1M_D_MAX:
-            return ZoneInfo(zone="D", color="orange", label="Dump zone")
+            return ZoneInfo(zone="Dump", color="orange", label="Dump zone")
         if used_tokens < ZONE_1M_X_MAX:
-            return ZoneInfo(zone="X", color="dark_red", label="Hard limit")
-        return ZoneInfo(zone="Z", color="gray", label="Dead zone")
+            return ZoneInfo(zone="ExDump", color="dark_red", label="Hard limit")
+        return ZoneInfo(zone="Dead", color="gray", label="Dead zone")
 
     # Standard models (< 500k context)
     dump_zone_tokens = int(context_window_size * ZONE_STD_DUMP_ZONE)
@@ -186,14 +186,14 @@ def get_context_zone(
     dead_zone_tokens = int(context_window_size * ZONE_STD_DEAD_ZONE)
 
     if used_tokens < warn_start:
-        return ZoneInfo(zone="P", color="green", label="Planning")
+        return ZoneInfo(zone="Plan", color="green", label="Planning")
     if used_tokens < dump_zone_tokens:
-        return ZoneInfo(zone="C", color="yellow", label="Code-only")
+        return ZoneInfo(zone="Code", color="yellow", label="Code-only")
     if used_tokens < hard_limit_tokens:
-        return ZoneInfo(zone="D", color="orange", label="Dump zone")
+        return ZoneInfo(zone="Dump", color="orange", label="Dump zone")
     if used_tokens < dead_zone_tokens:
-        return ZoneInfo(zone="X", color="dark_red", label="Hard limit")
-    return ZoneInfo(zone="Z", color="gray", label="Dead zone")
+        return ZoneInfo(zone="ExDump", color="dark_red", label="Hard limit")
+    return ZoneInfo(zone="Dead", color="gray", label="Dead zone")
 
 
 def get_mi_color(mi: float, utilization: float = 0.0) -> str:

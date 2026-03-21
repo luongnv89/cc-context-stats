@@ -102,25 +102,25 @@ def get_mi_color(mi, utilization=0.0):
 
 
 def get_context_zone(used_tokens, context_window_size):
-    """Determine context zone indicator (P/C/D/X/Z) based on token usage.
+    """Determine context zone indicator based on token usage.
 
-    Returns (zone_letter, color_name) tuple.
+    Returns (zone_word, color_name) tuple.
     """
     if context_window_size == 0:
-        return ("P", "green")
+        return ("Plan", "green")
 
     is_large = context_window_size >= LARGE_MODEL_THRESHOLD
 
     if is_large:
         if used_tokens < ZONE_1M_P_MAX:
-            return ("P", "green")
+            return ("Plan", "green")
         if used_tokens < ZONE_1M_C_MAX:
-            return ("C", "yellow")
+            return ("Code", "yellow")
         if used_tokens < ZONE_1M_D_MAX:
-            return ("D", "orange")
+            return ("Dump", "orange")
         if used_tokens < ZONE_1M_X_MAX:
-            return ("X", "dark_red")
-        return ("Z", "gray")
+            return ("ExDump", "dark_red")
+        return ("Dead", "gray")
 
     dump_zone_tokens = int(context_window_size * ZONE_STD_DUMP_ZONE)
     warn_start = max(0, dump_zone_tokens - ZONE_STD_WARN_BUFFER)
@@ -128,14 +128,14 @@ def get_context_zone(used_tokens, context_window_size):
     dead_zone_tokens = int(context_window_size * ZONE_STD_DEAD_ZONE)
 
     if used_tokens < warn_start:
-        return ("P", "green")
+        return ("Plan", "green")
     if used_tokens < dump_zone_tokens:
-        return ("C", "yellow")
+        return ("Code", "yellow")
     if used_tokens < hard_limit_tokens:
-        return ("D", "orange")
+        return ("Dump", "orange")
     if used_tokens < dead_zone_tokens:
-        return ("X", "dark_red")
-    return ("Z", "gray")
+        return ("ExDump", "dark_red")
+    return ("Dead", "gray")
 
 
 def _zone_ansi_color(color_name):

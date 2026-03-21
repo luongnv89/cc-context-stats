@@ -281,31 +281,31 @@ class TestContextZone:
     def test_1m_planning_zone(self):
         """1M model, 50k used → P (green)."""
         zone = get_context_zone(50_000, 1_000_000)
-        assert zone.zone == "P"
+        assert zone.zone == "Plan"
         assert zone.color == "green"
 
     def test_1m_code_only_zone(self):
         """1M model, 85k used → C (yellow)."""
         zone = get_context_zone(85_000, 1_000_000)
-        assert zone.zone == "C"
+        assert zone.zone == "Code"
         assert zone.color == "yellow"
 
     def test_1m_dump_zone(self):
         """1M model, 150k used → D (orange)."""
         zone = get_context_zone(150_000, 1_000_000)
-        assert zone.zone == "D"
+        assert zone.zone == "Dump"
         assert zone.color == "orange"
 
     def test_1m_hard_limit(self):
         """1M model, 250k used → X (dark_red)."""
         zone = get_context_zone(250_000, 1_000_000)
-        assert zone.zone == "X"
+        assert zone.zone == "ExDump"
         assert zone.color == "dark_red"
 
     def test_1m_dead_zone(self):
         """1M model, 300k used → Z (gray)."""
         zone = get_context_zone(300_000, 1_000_000)
-        assert zone.zone == "Z"
+        assert zone.zone == "Dead"
         assert zone.color == "gray"
 
     # --- 1M boundary tests ---
@@ -313,64 +313,64 @@ class TestContextZone:
     def test_1m_p_c_boundary(self):
         """Boundary: exactly 70k → C (not P)."""
         zone = get_context_zone(70_000, 1_000_000)
-        assert zone.zone == "C"
+        assert zone.zone == "Code"
         zone_below = get_context_zone(69_999, 1_000_000)
-        assert zone_below.zone == "P"
+        assert zone_below.zone == "Plan"
 
     def test_1m_c_d_boundary(self):
         """Boundary: exactly 100k → D (not C)."""
         zone = get_context_zone(100_000, 1_000_000)
-        assert zone.zone == "D"
+        assert zone.zone == "Dump"
         zone_below = get_context_zone(99_999, 1_000_000)
-        assert zone_below.zone == "C"
+        assert zone_below.zone == "Code"
 
     def test_1m_d_x_boundary(self):
         """Boundary: exactly 250k → X."""
         zone = get_context_zone(250_000, 1_000_000)
-        assert zone.zone == "X"
+        assert zone.zone == "ExDump"
         zone_below = get_context_zone(249_999, 1_000_000)
-        assert zone_below.zone == "D"
+        assert zone_below.zone == "Dump"
 
     def test_1m_x_z_boundary(self):
         """Boundary: 275k → Z (past X). X is 250k–275k range."""
         zone = get_context_zone(275_000, 1_000_000)
-        assert zone.zone == "Z"
+        assert zone.zone == "Dead"
         zone_below = get_context_zone(274_999, 1_000_000)
-        assert zone_below.zone == "X"
+        assert zone_below.zone == "ExDump"
         # 250001 is now within the X range (not Z)
         zone_just_past_d = get_context_zone(250_001, 1_000_000)
-        assert zone_just_past_d.zone == "X"
+        assert zone_just_past_d.zone == "ExDump"
 
     # --- Standard model tests (< 500k context) ---
 
     def test_std_200k_planning_zone(self):
         """200k model, 20k used → P (green). dump_zone=80k, warn_start=50k."""
         zone = get_context_zone(20_000, 200_000)
-        assert zone.zone == "P"
+        assert zone.zone == "Plan"
         assert zone.color == "green"
 
     def test_std_200k_code_only_zone(self):
         """200k model, 60k used → C (yellow). Between 50k and 80k."""
         zone = get_context_zone(60_000, 200_000)
-        assert zone.zone == "C"
+        assert zone.zone == "Code"
         assert zone.color == "yellow"
 
     def test_std_200k_dump_zone(self):
         """200k model, 100k used (50%) → D (orange). Between 40% and 70%."""
         zone = get_context_zone(100_000, 200_000)
-        assert zone.zone == "D"
+        assert zone.zone == "Dump"
         assert zone.color == "orange"
 
     def test_std_200k_hard_limit(self):
         """200k model, 140k used (70%) → X (dark_red)."""
         zone = get_context_zone(140_000, 200_000)
-        assert zone.zone == "X"
+        assert zone.zone == "ExDump"
         assert zone.color == "dark_red"
 
     def test_std_200k_dead_zone(self):
         """200k model, 150k used (75%) → Z (gray)."""
         zone = get_context_zone(150_000, 200_000)
-        assert zone.zone == "Z"
+        assert zone.zone == "Dead"
         assert zone.color == "gray"
 
     # --- Guard clause ---
@@ -378,47 +378,47 @@ class TestContextZone:
     def test_zero_context_window(self):
         """context_window=0 → P (green)."""
         zone = get_context_zone(50_000, 0)
-        assert zone.zone == "P"
+        assert zone.zone == "Plan"
         assert zone.color == "green"
 
     # --- Use cases from issue ---
 
     def test_use_case_1(self):
         """UC1: 1M model, 50k used → P."""
-        assert get_context_zone(50_000, 1_000_000).zone == "P"
+        assert get_context_zone(50_000, 1_000_000).zone == "Plan"
 
     def test_use_case_2(self):
         """UC2: 1M model, 85k used → C."""
-        assert get_context_zone(85_000, 1_000_000).zone == "C"
+        assert get_context_zone(85_000, 1_000_000).zone == "Code"
 
     def test_use_case_3(self):
         """UC3: 1M model, 150k used → D."""
-        assert get_context_zone(150_000, 1_000_000).zone == "D"
+        assert get_context_zone(150_000, 1_000_000).zone == "Dump"
 
     def test_use_case_4(self):
         """UC4: 1M model, 250k used → X."""
-        assert get_context_zone(250_000, 1_000_000).zone == "X"
+        assert get_context_zone(250_000, 1_000_000).zone == "ExDump"
 
     def test_use_case_5(self):
         """UC5: 1M model, 300k used → Z."""
-        assert get_context_zone(300_000, 1_000_000).zone == "Z"
+        assert get_context_zone(300_000, 1_000_000).zone == "Dead"
 
     def test_use_case_6(self):
         """UC6: 200k model, 50% used → D."""
-        assert get_context_zone(100_000, 200_000).zone == "D"
+        assert get_context_zone(100_000, 200_000).zone == "Dump"
 
     def test_use_case_7(self):
         """UC7: 200k model, 75% used → Z."""
-        assert get_context_zone(150_000, 200_000).zone == "Z"
+        assert get_context_zone(150_000, 200_000).zone == "Dead"
 
     # --- Large model threshold ---
 
     def test_500k_context_is_large_model(self):
         """500k context window is treated as 1M-class."""
         zone = get_context_zone(50_000, 500_000)
-        assert zone.zone == "P"  # Uses 1M thresholds
+        assert zone.zone == "Plan"  # Uses 1M thresholds
 
     def test_499k_context_is_standard(self):
         """499k context window is treated as standard."""
         zone = get_context_zone(50_000, 499_000)
-        assert zone.zone == "P"  # Uses standard thresholds
+        assert zone.zone == "Plan"  # Uses standard thresholds
