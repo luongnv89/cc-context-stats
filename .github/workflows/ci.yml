@@ -480,6 +480,11 @@ jobs:
         run: |
           echo "=== Empty/zero context ==="
           ZERO_CTX='{"model":{"display_name":"Test"},"workspace":{"current_dir":"/tmp","project_dir":"/tmp"},"context_window":{"context_window_size":0,"current_usage":{"input_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}'
+          for script in statusline-full.sh statusline-git.sh statusline-minimal.sh; do
+            OUTPUT=$(echo "$ZERO_CTX" | ./scripts/"$script")
+            test -n "$OUTPUT" || { echo "✗ $script (zero ctx) produced empty output"; exit 1; }
+            echo "✓ $script handles zero context"
+          done
           OUTPUT=$(echo "$ZERO_CTX" | python3 ./scripts/statusline.py)
           test -n "$OUTPUT" || { echo "✗ statusline.py (zero ctx) produced empty output"; exit 1; }
           echo "✓ statusline.py handles zero context"
@@ -489,6 +494,11 @@ jobs:
 
           echo "=== High utilization ==="
           HIGH_USE='{"model":{"display_name":"Claude 3.5 Sonnet"},"workspace":{"current_dir":"/tmp","project_dir":"/tmp"},"context_window":{"context_window_size":200000,"current_usage":{"input_tokens":180000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}'
+          for script in statusline-full.sh statusline-git.sh statusline-minimal.sh; do
+            OUTPUT=$(echo "$HIGH_USE" | ./scripts/"$script")
+            test -n "$OUTPUT" || { echo "✗ $script (high use) produced empty output"; exit 1; }
+            echo "✓ $script handles high utilization"
+          done
           OUTPUT=$(echo "$HIGH_USE" | python3 ./scripts/statusline.py)
           test -n "$OUTPUT" || { echo "✗ statusline.py (high use) produced empty output"; exit 1; }
           echo "✓ statusline.py handles high utilization"
