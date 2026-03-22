@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.1] - 2026-03-22
+
+### Changed
+
+- **Unified context info and zone indicator colors** — Context info (free tokens / percentage) and zone indicator (Plan/Code/Dump/ExDump/Dead) now share the same traffic-light color, giving a unified at-a-glance signal of context health. Previously, context info used a 3-color MI-based scheme while the zone indicator used a 5-color traffic-light scheme (#28)
+
+### Fixed
+
+- **Zone screenshots in README** — Display zone screenshots one per line for better visibility
+
 ## [1.12.0] - 2026-03-22
 
 ### Added
