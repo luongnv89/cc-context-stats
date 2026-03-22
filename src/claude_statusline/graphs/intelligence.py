@@ -139,6 +139,16 @@ def calculate_intelligence(
 def get_context_zone(
     used_tokens: int,
     context_window_size: int,
+    *,
+    zone_1m_plan_max: int = 0,
+    zone_1m_code_max: int = 0,
+    zone_1m_dump_max: int = 0,
+    zone_1m_xdump_max: int = 0,
+    zone_std_dump_ratio: float = 0.0,
+    zone_std_warn_buffer: int = 0,
+    zone_std_hard_limit: float = 0.0,
+    zone_std_dead_ratio: float = 0.0,
+    large_model_threshold: int = 0,
 ) -> ZoneInfo:
     """Determine the context zone indicator based on token usage.
 
@@ -156,9 +166,21 @@ def get_context_zone(
       X: 70%–75% utilization
       Z: >= 75% utilization
 
+    All thresholds can be overridden via keyword arguments.
+    A value of 0 (or 0.0) means "use the module-level default".
+
     Args:
         used_tokens: Number of tokens currently used
         context_window_size: Total context window size in tokens
+        zone_1m_plan_max: Override for ZONE_1M_P_MAX
+        zone_1m_code_max: Override for ZONE_1M_C_MAX
+        zone_1m_dump_max: Override for ZONE_1M_D_MAX
+        zone_1m_xdump_max: Override for ZONE_1M_X_MAX
+        zone_std_dump_ratio: Override for ZONE_STD_DUMP_ZONE
+        zone_std_warn_buffer: Override for ZONE_STD_WARN_BUFFER
+        zone_std_hard_limit: Override for ZONE_STD_HARD_LIMIT
+        zone_std_dead_ratio: Override for ZONE_STD_DEAD_ZONE
+        large_model_threshold: Override for LARGE_MODEL_THRESHOLD
 
     Returns:
         ZoneInfo with zone letter, color name, and label
@@ -166,24 +188,36 @@ def get_context_zone(
     if context_window_size == 0:
         return ZoneInfo(zone="Plan", color="green", label="Planning")
 
-    is_large_model = context_window_size >= LARGE_MODEL_THRESHOLD
+    # Apply overrides (0 = use default)
+    lmt = large_model_threshold or LARGE_MODEL_THRESHOLD
+    is_large_model = context_window_size >= lmt
 
     if is_large_model:
-        if used_tokens < ZONE_1M_P_MAX:
+        p_max = zone_1m_plan_max or ZONE_1M_P_MAX
+        c_max = zone_1m_code_max or ZONE_1M_C_MAX
+        d_max = zone_1m_dump_max or ZONE_1M_D_MAX
+        x_max = zone_1m_xdump_max or ZONE_1M_X_MAX
+
+        if used_tokens < p_max:
             return ZoneInfo(zone="Plan", color="green", label="Planning")
-        if used_tokens < ZONE_1M_C_MAX:
+        if used_tokens < c_max:
             return ZoneInfo(zone="Code", color="yellow", label="Code-only")
-        if used_tokens < ZONE_1M_D_MAX:
+        if used_tokens < d_max:
             return ZoneInfo(zone="Dump", color="orange", label="Dump zone")
-        if used_tokens < ZONE_1M_X_MAX:
+        if used_tokens < x_max:
             return ZoneInfo(zone="ExDump", color="dark_red", label="Hard limit")
         return ZoneInfo(zone="Dead", color="gray", label="Dead zone")
 
-    # Standard models (< 500k context)
-    dump_zone_tokens = int(context_window_size * ZONE_STD_DUMP_ZONE)
-    warn_start = max(0, dump_zone_tokens - ZONE_STD_WARN_BUFFER)
-    hard_limit_tokens = int(context_window_size * ZONE_STD_HARD_LIMIT)
-    dead_zone_tokens = int(context_window_size * ZONE_STD_DEAD_ZONE)
+    # Standard models
+    dump_ratio = zone_std_dump_ratio or ZONE_STD_DUMP_ZONE
+    warn_buf = zone_std_warn_buffer or ZONE_STD_WARN_BUFFER
+    hard_lim = zone_std_hard_limit or ZONE_STD_HARD_LIMIT
+    dead_rat = zone_std_dead_ratio or ZONE_STD_DEAD_ZONE
+
+    dump_zone_tokens = int(context_window_size * dump_ratio)
+    warn_start = max(0, dump_zone_tokens - warn_buf)
+    hard_limit_tokens = int(context_window_size * hard_lim)
+    dead_zone_tokens = int(context_window_size * dead_rat)
 
     if used_tokens < warn_start:
         return ZoneInfo(zone="Plan", color="green", label="Planning")

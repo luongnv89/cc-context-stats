@@ -26,6 +26,23 @@ _COLOR_KEYS: dict[str, str] = {
     "color_separator": "separator",
 }
 
+# Zone threshold config keys (integer token counts)
+_ZONE_INT_KEYS: set[str] = {
+    "zone_1m_plan_max",
+    "zone_1m_code_max",
+    "zone_1m_dump_max",
+    "zone_1m_xdump_max",
+    "zone_std_warn_buffer",
+    "large_model_threshold",
+}
+
+# Zone threshold config keys (float ratios 0-1)
+_ZONE_FLOAT_KEYS: set[str] = {
+    "zone_std_dump_ratio",
+    "zone_std_hard_limit",
+    "zone_std_dead_ratio",
+}
+
 
 @dataclass
 class Config:
@@ -39,6 +56,17 @@ class Config:
     reduced_motion: bool = False
     show_mi: bool = False
     mi_curve_beta: float = 0.0  # 0 = use model-specific profile default
+
+    # Zone threshold overrides (0 = use defaults from intelligence.py)
+    zone_1m_plan_max: int = 0
+    zone_1m_code_max: int = 0
+    zone_1m_dump_max: int = 0
+    zone_1m_xdump_max: int = 0
+    zone_std_dump_ratio: float = 0.0
+    zone_std_warn_buffer: int = 0
+    zone_std_hard_limit: float = 0.0
+    zone_std_dead_ratio: float = 0.0
+    large_model_threshold: int = 0
 
     # Custom color overrides (slot_name -> ANSI code)
     color_overrides: dict[str, str] = field(default_factory=dict)
@@ -93,6 +121,19 @@ show_mi=false
 # MI curve beta override (0 = use model-specific profile)
 # Set to override the per-model default (e.g., 1.5 for moderate decay)
 # mi_curve_beta=0
+
+# Zone threshold overrides (0 = use defaults)
+# For 1M-class models (context >= 500k tokens):
+# zone_1m_plan_max=70000
+# zone_1m_code_max=100000
+# zone_1m_dump_max=250000
+# zone_1m_xdump_max=275000
+# For standard models (< 500k context), ratios 0-1:
+# zone_std_dump_ratio=0.40
+# zone_std_warn_buffer=30000
+# zone_std_hard_limit=0.70
+# zone_std_dead_ratio=0.75
+# large_model_threshold=500000
 
 # Custom colors - use named colors or hex (#rrggbb)
 # Available color slots: color_green, color_yellow, color_red,
@@ -153,6 +194,36 @@ show_mi=false
                         self.mi_curve_beta = float(raw_value)
                     except ValueError:
                         pass
+                elif key in _ZONE_INT_KEYS:
+                    try:
+                        v = int(raw_value)
+                        if v > 0:
+                            setattr(self, key, v)
+                        else:
+                            sys.stderr.write(
+                                f"[statusline] warning: {key} must be positive, "
+                                f"ignoring '{raw_value}'\n"
+                            )
+                    except ValueError:
+                        sys.stderr.write(
+                            f"[statusline] warning: invalid integer for {key}: "
+                            f"'{raw_value}'\n"
+                        )
+                elif key in _ZONE_FLOAT_KEYS:
+                    try:
+                        v = float(raw_value)
+                        if 0.0 < v < 1.0:
+                            setattr(self, key, v)
+                        else:
+                            sys.stderr.write(
+                                f"[statusline] warning: {key} must be between 0 and 1, "
+                                f"ignoring '{raw_value}'\n"
+                            )
+                    except ValueError:
+                        sys.stderr.write(
+                            f"[statusline] warning: invalid number for {key}: "
+                            f"'{raw_value}'\n"
+                        )
                 elif key in _COLOR_KEYS:
                     slot = _COLOR_KEYS[key]
                     ansi = parse_color(raw_value)
@@ -179,5 +250,14 @@ show_mi=false
             "reduced_motion": self.reduced_motion,
             "show_mi": self.show_mi,
             "mi_curve_beta": self.mi_curve_beta,
+            "zone_1m_plan_max": self.zone_1m_plan_max,
+            "zone_1m_code_max": self.zone_1m_code_max,
+            "zone_1m_dump_max": self.zone_1m_dump_max,
+            "zone_1m_xdump_max": self.zone_1m_xdump_max,
+            "zone_std_dump_ratio": self.zone_std_dump_ratio,
+            "zone_std_warn_buffer": self.zone_std_warn_buffer,
+            "zone_std_hard_limit": self.zone_std_hard_limit,
+            "zone_std_dead_ratio": self.zone_std_dead_ratio,
+            "large_model_threshold": self.large_model_threshold,
             "color_overrides": dict(self.color_overrides),
         }
