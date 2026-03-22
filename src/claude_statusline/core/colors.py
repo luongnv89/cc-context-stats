@@ -33,6 +33,8 @@ COLOR_NAMES: dict[str, str] = {
     "bright_magenta": "\033[0;95m",
     "bright_cyan": "\033[0;96m",
     "bright_white": "\033[0;97m",
+    "bold_white": "\033[1;97m",
+    "dim": "\033[2m",
 }
 
 _HEX_RE = re.compile(r"^#([0-9a-fA-F]{6})$")
@@ -110,6 +112,27 @@ class ColorManager:
     @property
     def red(self) -> str:
         return self._get("red", RED)
+
+    # Per-property color slots (fallback to base color if not overridden)
+    @property
+    def context_length(self) -> str:
+        return self._get("context_length", "\033[1;97m" if self.enabled else "")
+
+    @property
+    def project_name(self) -> str:
+        return self._get("project_name", CYAN if self.enabled else "")
+
+    @property
+    def branch_name(self) -> str:
+        return self._get("branch_name", GREEN if self.enabled else "")
+
+    @property
+    def mi_score(self) -> str:
+        return self._get("mi_score", YELLOW if self.enabled else "")
+
+    @property
+    def separator(self) -> str:
+        return self._get("separator", DIM if self.enabled else "")
 
     @property
     def bold(self) -> str:

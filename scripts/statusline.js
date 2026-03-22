@@ -219,6 +219,8 @@ const COLOR_NAMES = {
     bright_magenta: '\x1b[0;95m',
     bright_cyan: '\x1b[0;96m',
     bright_white: '\x1b[0;97m',
+    bold_white: '\x1b[1;97m',
+    dim: '\x1b[2m',
 };
 
 /**
@@ -247,6 +249,13 @@ const COLOR_CONFIG_KEYS = {
     color_blue: 'blue',
     color_magenta: 'magenta',
     color_cyan: 'cyan',
+    // Per-property color keys
+    color_context_length: 'context_length',
+    color_project_name: 'project_name',
+    color_branch_name: 'branch_name',
+    color_mi_score: 'mi_score',
+    color_zone: 'zone',
+    color_separator: 'separator',
 };
 
 /**
@@ -474,8 +483,15 @@ process.stdin.on('end', () => {
     const cMagenta = c.magenta || MAGENTA;
     const cCyan = c.cyan || CYAN;
 
-    // Git info (pass configurable colors)
-    const gitInfo = getGitInfo(projectDir, cMagenta, cCyan);
+    // Per-property color defaults (highlighted key info)
+    const cContextLength = c.context_length || '\x1b[1;97m'; // bold_white
+    const cProjectName = c.project_name || CYAN;
+    const cBranchName = c.branch_name || GREEN;
+    const cMIScore = c.mi_score || YELLOW;
+    const cSeparator = c.separator || DIM;
+
+    // Git info (use per-property branch color, fallback to green)
+    const gitInfo = getGitInfo(projectDir, cBranchName, cCyan);
 
     // Extract session_id once for reuse
     const sessionId = data.session_id;
@@ -535,11 +551,15 @@ process.stdin.on('end', () => {
         const ctxMI = computeMI(usedTokens, totalSize, modelId, miCurveBeta);
         const ctxColor = getMIColor(ctxMI.mi, ctxUtil, cGreen, cYellow, cRed);
 
-        contextInfo = ` | ${ctxColor}${freeDisplay} (${freePct.toFixed(1)}%)${RESET}`;
+        // Use per-property context_length color if configured, else MI-based color
+        const effectiveCtxColor = c.context_length || ctxColor;
+
+        contextInfo = ` | ${effectiveCtxColor}${freeDisplay} (${freePct.toFixed(1)}%)${RESET}`;
 
         // Always show zone indicator
         const zoneResult = getContextZone(usedTokens, totalSize);
-        const zoneAnsi = zoneAnsiColor(zoneResult.colorName);
+        // Use per-property zone color if configured, else dynamic zone color
+        const zoneAnsi = c.zone || zoneAnsiColor(zoneResult.colorName);
         zoneInfo = ` | ${zoneAnsi}${zoneResult.zone}${RESET}`;
 
         // Read previous entry if needed for delta OR MI
@@ -609,7 +629,7 @@ process.stdin.on('end', () => {
                     const deltaDisplay = tokenDetail
                         ? delta.toLocaleString('en-US')
                         : `${(delta / 1000).toFixed(1)}k`;
-                    deltaInfo = ` | ${DIM}+${deltaDisplay}${RESET}`;
+                    deltaInfo = ` | ${cSeparator}+${deltaDisplay}${RESET}`;
                 }
             }
 
@@ -618,7 +638,9 @@ process.stdin.on('end', () => {
                 const miResult = computeMI(usedTokens, totalSize, modelId, miCurveBeta);
                 const miUtil = totalSize > 0 ? usedTokens / totalSize : 0;
                 const miColor = getMIColor(miResult.mi, miUtil, cGreen, cYellow, cRed);
-                miInfo = ` | ${miColor}MI:${miResult.mi.toFixed(3)}${RESET}`;
+                // Use per-property mi_score color if configured, else MI-based color
+                const effectiveMIColor = c.mi_score || miColor;
+                miInfo = ` | ${effectiveMIColor}MI:${miResult.mi.toFixed(3)}${RESET}`;
             }
 
             // Only append if context usage changed (avoid duplicates from multiple refreshes)
@@ -656,11 +678,11 @@ process.stdin.on('end', () => {
 
     // Display session_id if enabled
     if (showSession && sessionId) {
-        sessionInfo = ` | ${DIM}${sessionId}${RESET}`;
+        sessionInfo = ` | ${cSeparator}${sessionId}${RESET}`;
     }
 
     // Output: [Model] dir | branch [n] | free (%) [+delta] [AC] session
-    const base = `${DIM}${model}${RESET} | ${cBlue}${dirName}${RESET}`;
+    const base = `${cSeparator}${model}${RESET} | ${cProjectName}${dirName}${RESET}`;
     const maxWidth = getTerminalWidth();
     const parts = [base, gitInfo, contextInfo, zoneInfo, miInfo, deltaInfo, sessionInfo];
     console.log(fitToWidth(parts, maxWidth));
