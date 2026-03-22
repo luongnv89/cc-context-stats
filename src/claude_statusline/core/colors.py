@@ -142,6 +142,10 @@ class ColorManager:
         return self._get("mi_score", YELLOW if self.enabled else "")
 
     @property
+    def zone(self) -> str:
+        return self._get("zone", "" if self.enabled else "")
+
+    @property
     def separator(self) -> str:
         return self._get("separator", DIM if self.enabled else "")
 

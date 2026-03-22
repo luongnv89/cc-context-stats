@@ -58,8 +58,7 @@ def main() -> None:
     # Git info (use per-property branch color if set, else fallback to magenta)
     branch_color = colors.branch_name
     # Build a color manager with branch_name mapped to magenta slot for git_info
-    from claude_statusline.core.colors import ColorManager as _CM
-    git_colors = _CM(enabled=True, overrides={**config.color_overrides, "magenta": branch_color})
+    git_colors = ColorManager(enabled=True, overrides={**config.color_overrides, "magenta": branch_color})
     git_info = get_git_info(project_dir, color_manager=git_colors)
 
     # Extract session_id once for reuse
