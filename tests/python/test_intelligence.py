@@ -422,3 +422,88 @@ class TestContextZone:
         """499k context window is treated as standard."""
         zone = get_context_zone(50_000, 499_000)
         assert zone.zone == "Plan"  # Uses standard thresholds
+
+
+class TestConfigurableZoneThresholds:
+    """Test configurable zone threshold overrides."""
+
+    # --- 1M model overrides ---
+
+    def test_1m_custom_plan_max(self):
+        """Custom zone_1m_plan_max shifts P→C boundary."""
+        # Default: 70k → Code. With plan_max=90k → still Plan.
+        zone = get_context_zone(80_000, 1_000_000, zone_1m_plan_max=90_000)
+        assert zone.zone == "Plan"
+        # Default would be Code
+        zone_default = get_context_zone(80_000, 1_000_000)
+        assert zone_default.zone == "Code"
+
+    def test_1m_custom_code_max(self):
+        """Custom zone_1m_code_max shifts C→D boundary."""
+        zone = get_context_zone(95_000, 1_000_000, zone_1m_code_max=80_000)
+        assert zone.zone == "Dump"
+        # Default would be Code
+        zone_default = get_context_zone(95_000, 1_000_000)
+        assert zone_default.zone == "Code"
+
+    def test_1m_custom_dump_max(self):
+        """Custom zone_1m_dump_max shifts D→X boundary."""
+        zone = get_context_zone(200_000, 1_000_000, zone_1m_dump_max=180_000)
+        assert zone.zone == "ExDump"
+        # Default would be Dump
+        zone_default = get_context_zone(200_000, 1_000_000)
+        assert zone_default.zone == "Dump"
+
+    def test_1m_custom_xdump_max(self):
+        """Custom zone_1m_xdump_max shifts X→Z boundary."""
+        zone = get_context_zone(260_000, 1_000_000, zone_1m_xdump_max=255_000)
+        assert zone.zone == "Dead"
+        # Default would be ExDump
+        zone_default = get_context_zone(260_000, 1_000_000)
+        assert zone_default.zone == "ExDump"
+
+    # --- Standard model overrides ---
+
+    def test_std_custom_dump_ratio(self):
+        """Custom zone_std_dump_ratio shifts dump zone start."""
+        # 200k model, 50% dump ratio → dump at 100k. With 0.30 → dump at 60k.
+        zone = get_context_zone(70_000, 200_000, zone_std_dump_ratio=0.30)
+        assert zone.zone == "Dump"
+        # Default 0.40 → 80k dump zone, warn_start=50k, 70k → Code
+        zone_default = get_context_zone(70_000, 200_000)
+        assert zone_default.zone == "Code"
+
+    def test_std_custom_hard_limit(self):
+        """Custom zone_std_hard_limit shifts hard limit."""
+        zone = get_context_zone(110_000, 200_000, zone_std_hard_limit=0.50)
+        assert zone.zone == "ExDump"
+        # Default 0.70 → 140k hard limit, 110k → Dump
+        zone_default = get_context_zone(110_000, 200_000)
+        assert zone_default.zone == "Dump"
+
+    def test_std_custom_dead_ratio(self):
+        """Custom zone_std_dead_ratio shifts dead zone start."""
+        # Default: dead at 75% (150k). With 0.72 → dead at 144k.
+        zone = get_context_zone(145_000, 200_000, zone_std_dead_ratio=0.72)
+        assert zone.zone == "Dead"
+        # Default: 145k is between hard_limit (140k) and dead (150k) → ExDump
+        zone_default = get_context_zone(145_000, 200_000)
+        assert zone_default.zone == "ExDump"
+
+    # --- Large model threshold override ---
+
+    def test_custom_large_model_threshold(self):
+        """Custom large_model_threshold changes which model set is used."""
+        # 400k context. Default threshold=500k → standard model.
+        # With threshold=300k → treated as 1M model.
+        zone = get_context_zone(50_000, 400_000, large_model_threshold=300_000)
+        assert zone.zone == "Plan"  # Uses 1M thresholds (< 70k)
+        zone2 = get_context_zone(80_000, 400_000, large_model_threshold=300_000)
+        assert zone2.zone == "Code"  # 1M: 70k–100k
+
+    # --- Zero override = use default ---
+
+    def test_zero_override_uses_default(self):
+        """Override of 0 falls back to module-level default."""
+        zone = get_context_zone(80_000, 1_000_000, zone_1m_plan_max=0)
+        assert zone.zone == "Code"  # Same as default (70k boundary)

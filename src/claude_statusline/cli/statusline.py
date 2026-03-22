@@ -103,7 +103,19 @@ def main() -> None:
         # Zone indicator — determines color for both context info and zone label
         from claude_statusline.graphs.intelligence import get_context_zone
 
-        zone_result = get_context_zone(used_tokens, total_size)
+        zone_result = get_context_zone(
+            used_tokens,
+            total_size,
+            zone_1m_plan_max=config.zone_1m_plan_max,
+            zone_1m_code_max=config.zone_1m_code_max,
+            zone_1m_dump_max=config.zone_1m_dump_max,
+            zone_1m_xdump_max=config.zone_1m_xdump_max,
+            zone_std_dump_ratio=config.zone_std_dump_ratio,
+            zone_std_warn_buffer=config.zone_std_warn_buffer,
+            zone_std_hard_limit=config.zone_std_hard_limit,
+            zone_std_dead_ratio=config.zone_std_dead_ratio,
+            large_model_threshold=config.large_model_threshold,
+        )
 
         # Traffic-light color map: green/yellow/orange/red/gray
         zone_color_map = {

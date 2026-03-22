@@ -141,6 +141,69 @@ describe('getContextZone', () => {
     });
 });
 
+// --- Configurable zone threshold tests ---
+
+describe('getContextZone with config overrides', () => {
+    // 1M model overrides
+    test('custom zone_1m_plan_max shifts P→C boundary', () => {
+        const zone = getContextZone(80000, 1000000, { zone_1m_plan_max: 90000 });
+        expect(zone.zone).toBe('Plan');
+        // Default would be Code
+        expect(getContextZone(80000, 1000000).zone).toBe('Code');
+    });
+
+    test('custom zone_1m_code_max shifts C→D boundary', () => {
+        const zone = getContextZone(95000, 1000000, { zone_1m_code_max: 80000 });
+        expect(zone.zone).toBe('Dump');
+        expect(getContextZone(95000, 1000000).zone).toBe('Code');
+    });
+
+    test('custom zone_1m_dump_max shifts D→X boundary', () => {
+        const zone = getContextZone(200000, 1000000, { zone_1m_dump_max: 180000 });
+        expect(zone.zone).toBe('ExDump');
+        expect(getContextZone(200000, 1000000).zone).toBe('Dump');
+    });
+
+    test('custom zone_1m_xdump_max shifts X→Z boundary', () => {
+        const zone = getContextZone(260000, 1000000, { zone_1m_xdump_max: 255000 });
+        expect(zone.zone).toBe('Dead');
+        expect(getContextZone(260000, 1000000).zone).toBe('ExDump');
+    });
+
+    // Standard model overrides
+    test('custom zone_std_dump_ratio shifts dump zone start', () => {
+        const zone = getContextZone(70000, 200000, { zone_std_dump_ratio: 0.30 });
+        expect(zone.zone).toBe('Dump');
+        expect(getContextZone(70000, 200000).zone).toBe('Code');
+    });
+
+    test('custom zone_std_hard_limit shifts hard limit', () => {
+        const zone = getContextZone(110000, 200000, { zone_std_hard_limit: 0.50 });
+        expect(zone.zone).toBe('ExDump');
+        expect(getContextZone(110000, 200000).zone).toBe('Dump');
+    });
+
+    test('custom zone_std_dead_ratio shifts dead zone start', () => {
+        // Default: dead at 75% (150k). With 0.72 → dead at 144k.
+        const zone = getContextZone(145000, 200000, { zone_std_dead_ratio: 0.72 });
+        expect(zone.zone).toBe('Dead');
+        // Default: 145k between hard_limit (140k) and dead (150k) → ExDump
+        expect(getContextZone(145000, 200000).zone).toBe('ExDump');
+    });
+
+    // Large model threshold override
+    test('custom large_model_threshold changes model classification', () => {
+        const zone = getContextZone(80000, 400000, { large_model_threshold: 300000 });
+        expect(zone.zone).toBe('Code'); // 1M thresholds: 70k-100k
+    });
+
+    // Zero override = use default
+    test('zero override uses default', () => {
+        const zone = getContextZone(80000, 1000000, { zone_1m_plan_max: 0 });
+        expect(zone.zone).toBe('Code'); // Same as default
+    });
+});
+
 describe('shared test vectors', () => {
     vectors.forEach((vec) => {
         test(vec.description, () => {

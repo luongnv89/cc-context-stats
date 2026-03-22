@@ -114,35 +114,49 @@ function getMIColor(mi, utilization, greenColor, yellowColor, redColor) {
 /**
  * Determine context zone indicator (P/C/D/X/Z) based on token usage.
  * Returns { zone, colorName }.
+ * zoneConfig is an optional object of threshold overrides (0 = use default).
  */
-function getContextZone(usedTokens, contextWindowSize) {
+function getContextZone(usedTokens, contextWindowSize, zoneConfig) {
     if (contextWindowSize === 0) {
         return { zone: 'Plan', colorName: 'green' };
     }
 
-    const isLarge = contextWindowSize >= LARGE_MODEL_THRESHOLD;
+    const zc = zoneConfig || {};
+
+    const lmt = zc.large_model_threshold || LARGE_MODEL_THRESHOLD;
+    const isLarge = contextWindowSize >= lmt;
 
     if (isLarge) {
-        if (usedTokens < ZONE_1M_P_MAX) {
+        const pMax = zc.zone_1m_plan_max || ZONE_1M_P_MAX;
+        const cMax = zc.zone_1m_code_max || ZONE_1M_C_MAX;
+        const dMax = zc.zone_1m_dump_max || ZONE_1M_D_MAX;
+        const xMax = zc.zone_1m_xdump_max || ZONE_1M_X_MAX;
+
+        if (usedTokens < pMax) {
             return { zone: 'Plan', colorName: 'green' };
         }
-        if (usedTokens < ZONE_1M_C_MAX) {
+        if (usedTokens < cMax) {
             return { zone: 'Code', colorName: 'yellow' };
         }
-        if (usedTokens < ZONE_1M_D_MAX) {
+        if (usedTokens < dMax) {
             return { zone: 'Dump', colorName: 'orange' };
         }
-        if (usedTokens < ZONE_1M_X_MAX) {
+        if (usedTokens < xMax) {
             return { zone: 'ExDump', colorName: 'dark_red' };
         }
         return { zone: 'Dead', colorName: 'gray' };
     }
 
-    // Standard models (< 500k context)
-    const dumpZoneTokens = Math.floor(contextWindowSize * ZONE_STD_DUMP_ZONE);
-    const warnStart = Math.max(0, dumpZoneTokens - ZONE_STD_WARN_BUFFER);
-    const hardLimitTokens = Math.floor(contextWindowSize * ZONE_STD_HARD_LIMIT);
-    const deadZoneTokens = Math.floor(contextWindowSize * ZONE_STD_DEAD_ZONE);
+    // Standard models
+    const dumpRatio = zc.zone_std_dump_ratio || ZONE_STD_DUMP_ZONE;
+    const warnBuf = zc.zone_std_warn_buffer || ZONE_STD_WARN_BUFFER;
+    const hardLim = zc.zone_std_hard_limit || ZONE_STD_HARD_LIMIT;
+    const deadRat = zc.zone_std_dead_ratio || ZONE_STD_DEAD_ZONE;
+
+    const dumpZoneTokens = Math.floor(contextWindowSize * dumpRatio);
+    const warnStart = Math.max(0, dumpZoneTokens - warnBuf);
+    const hardLimitTokens = Math.floor(contextWindowSize * hardLim);
+    const deadZoneTokens = Math.floor(contextWindowSize * deadRat);
 
     if (usedTokens < warnStart) {
         return { zone: 'Plan', colorName: 'green' };
@@ -284,6 +298,23 @@ const COLOR_CONFIG_KEYS = {
     color_separator: 'separator',
 };
 
+// Zone threshold config keys (integer token counts)
+const ZONE_INT_KEYS = new Set([
+    'zone_1m_plan_max',
+    'zone_1m_code_max',
+    'zone_1m_dump_max',
+    'zone_1m_xdump_max',
+    'zone_std_warn_buffer',
+    'large_model_threshold',
+]);
+
+// Zone threshold config keys (float ratios 0-1)
+const ZONE_FLOAT_KEYS = new Set([
+    'zone_std_dump_ratio',
+    'zone_std_hard_limit',
+    'zone_std_dead_ratio',
+]);
+
 /**
  * Return the visible width of a string after stripping ANSI escape sequences.
  */
@@ -393,6 +424,7 @@ function readConfig() {
         showMI: false,
         miCurveBeta: 0,
         colors: {},
+        zoneConfig: {},
     };
     const configPath = path.join(os.homedir(), '.claude', 'statusline.conf');
 
@@ -463,6 +495,24 @@ show_session=true
                 const ansi = parseColor(rawValue);
                 if (ansi) {
                     config.colors[COLOR_CONFIG_KEYS[keyTrimmed]] = ansi;
+                }
+            } else if (ZONE_INT_KEYS.has(keyTrimmed)) {
+                const v = parseInt(rawValue, 10);
+                if (!isNaN(v) && v > 0) {
+                    config.zoneConfig[keyTrimmed] = v;
+                } else {
+                    process.stderr.write(
+                        `[statusline] warning: ${keyTrimmed} must be a positive integer, ignoring '${rawValue}'\n`
+                    );
+                }
+            } else if (ZONE_FLOAT_KEYS.has(keyTrimmed)) {
+                const v = parseFloat(rawValue);
+                if (!isNaN(v) && v > 0 && v < 1) {
+                    config.zoneConfig[keyTrimmed] = v;
+                } else {
+                    process.stderr.write(
+                        `[statusline] warning: ${keyTrimmed} must be between 0 and 1, ignoring '${rawValue}'\n`
+                    );
                 }
             }
         }
@@ -572,7 +622,7 @@ process.stdin.on('end', () => {
             : `${(freeTokens / 1000).toFixed(1)}k`;
 
         // Zone indicator — determines color for both context info and zone label
-        const zoneResult = getContextZone(usedTokens, totalSize);
+        const zoneResult = getContextZone(usedTokens, totalSize, config.zoneConfig);
         const zoneAnsi = zoneAnsiColor(zoneResult.colorName);
 
         // Context info uses zone color (traffic-light), with per-property override

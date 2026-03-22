@@ -109,6 +109,39 @@ The session ID at the end helps:
 
 Double-click to select and copy. Set `show_session=false` to hide.
 
+## Zone Threshold Overrides
+
+Override the default zone indicator thresholds to customize when zone transitions occur.
+
+### 1M-Class Models (context >= 500k tokens)
+
+```bash
+# Token counts for 1M models
+zone_1m_plan_max=70000     # (default) Plan → Code boundary
+zone_1m_code_max=100000    # (default) Code → Dump boundary
+zone_1m_dump_max=250000    # (default) Dump → ExDump boundary
+zone_1m_xdump_max=275000   # (default) ExDump → Dead boundary
+```
+
+### Standard Models (< 500k context)
+
+```bash
+# Ratios (0-1) for standard models
+zone_std_dump_ratio=0.40   # (default) Dump zone starts at 40% utilization
+zone_std_warn_buffer=30000 # (default) Warn 30k tokens before dump zone
+zone_std_hard_limit=0.70   # (default) Hard limit at 70% utilization
+zone_std_dead_ratio=0.75   # (default) Dead zone starts at 75% utilization
+```
+
+### Model Classification
+
+```bash
+# Context windows >= this threshold use the 1M thresholds
+large_model_threshold=500000  # (default)
+```
+
+Invalid values (negative, non-numeric, ratios outside 0-1) are ignored with a warning to stderr, falling back to the defaults.
+
 ## Custom Colors
 
 ### Per-Property Colors

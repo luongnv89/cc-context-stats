@@ -101,31 +101,45 @@ def get_mi_color(mi, utilization=0.0):
     return GREEN
 
 
-def get_context_zone(used_tokens, context_window_size):
+def get_context_zone(used_tokens, context_window_size, zone_config=None):
     """Determine context zone indicator based on token usage.
 
     Returns (zone_word, color_name) tuple.
+    zone_config is an optional dict of threshold overrides (0 = use default).
     """
     if context_window_size == 0:
         return ("Plan", "green")
 
-    is_large = context_window_size >= LARGE_MODEL_THRESHOLD
+    zc = zone_config or {}
+
+    lmt = zc.get("large_model_threshold") or LARGE_MODEL_THRESHOLD
+    is_large = context_window_size >= lmt
 
     if is_large:
-        if used_tokens < ZONE_1M_P_MAX:
+        p_max = zc.get("zone_1m_plan_max") or ZONE_1M_P_MAX
+        c_max = zc.get("zone_1m_code_max") or ZONE_1M_C_MAX
+        d_max = zc.get("zone_1m_dump_max") or ZONE_1M_D_MAX
+        x_max = zc.get("zone_1m_xdump_max") or ZONE_1M_X_MAX
+
+        if used_tokens < p_max:
             return ("Plan", "green")
-        if used_tokens < ZONE_1M_C_MAX:
+        if used_tokens < c_max:
             return ("Code", "yellow")
-        if used_tokens < ZONE_1M_D_MAX:
+        if used_tokens < d_max:
             return ("Dump", "orange")
-        if used_tokens < ZONE_1M_X_MAX:
+        if used_tokens < x_max:
             return ("ExDump", "dark_red")
         return ("Dead", "gray")
 
-    dump_zone_tokens = int(context_window_size * ZONE_STD_DUMP_ZONE)
-    warn_start = max(0, dump_zone_tokens - ZONE_STD_WARN_BUFFER)
-    hard_limit_tokens = int(context_window_size * ZONE_STD_HARD_LIMIT)
-    dead_zone_tokens = int(context_window_size * ZONE_STD_DEAD_ZONE)
+    dump_ratio = zc.get("zone_std_dump_ratio") or ZONE_STD_DUMP_ZONE
+    warn_buf = zc.get("zone_std_warn_buffer") or ZONE_STD_WARN_BUFFER
+    hard_lim = zc.get("zone_std_hard_limit") or ZONE_STD_HARD_LIMIT
+    dead_rat = zc.get("zone_std_dead_ratio") or ZONE_STD_DEAD_ZONE
+
+    dump_zone_tokens = int(context_window_size * dump_ratio)
+    warn_start = max(0, dump_zone_tokens - warn_buf)
+    hard_limit_tokens = int(context_window_size * hard_lim)
+    dead_zone_tokens = int(context_window_size * dead_rat)
 
     if used_tokens < warn_start:
         return ("Plan", "green")
@@ -242,6 +256,23 @@ _COLOR_KEYS = {
     "color_separator": "separator",
 }
 
+# Zone threshold config keys (integer token counts)
+_ZONE_INT_KEYS = {
+    "zone_1m_plan_max",
+    "zone_1m_code_max",
+    "zone_1m_dump_max",
+    "zone_1m_xdump_max",
+    "zone_std_warn_buffer",
+    "large_model_threshold",
+}
+
+# Zone threshold config keys (float ratios 0-1)
+_ZONE_FLOAT_KEYS = {
+    "zone_std_dump_ratio",
+    "zone_std_hard_limit",
+    "zone_std_dead_ratio",
+}
+
 # Pattern to strip ANSI escape sequences
 _ANSI_RE = re.compile(r"\033\[[0-9;]*m")
 
@@ -347,6 +378,7 @@ def read_config():
         "show_mi": False,
         "mi_curve_beta": 0.0,
         "colors": {},
+        "zone_config": {},
     }
     config_path = os.path.expanduser("~/.claude/statusline.conf")
 
@@ -413,6 +445,34 @@ show_session=true
                     ansi = _parse_color(raw_value)
                     if ansi:
                         config["colors"][_COLOR_KEYS[key]] = ansi
+                elif key in _ZONE_INT_KEYS:
+                    try:
+                        v = int(raw_value)
+                        if v > 0:
+                            config["zone_config"][key] = v
+                        else:
+                            sys.stderr.write(
+                                f"[statusline] warning: {key} must be positive, "
+                                f"ignoring '{raw_value}'\n"
+                            )
+                    except ValueError:
+                        sys.stderr.write(
+                            f"[statusline] warning: invalid integer for {key}: '{raw_value}'\n"
+                        )
+                elif key in _ZONE_FLOAT_KEYS:
+                    try:
+                        v = float(raw_value)
+                        if 0.0 < v < 1.0:
+                            config["zone_config"][key] = v
+                        else:
+                            sys.stderr.write(
+                                f"[statusline] warning: {key} must be between 0 and 1, "
+                                f"ignoring '{raw_value}'\n"
+                            )
+                    except ValueError:
+                        sys.stderr.write(
+                            f"[statusline] warning: invalid number for {key}: '{raw_value}'\n"
+                        )
     except (OSError, UnicodeDecodeError) as e:
         sys.stderr.write(f"[statusline] warning: failed to read config: {e}\n")
     return config
@@ -512,7 +572,9 @@ def main():
             free_display = f"{free_tokens / 1000:.1f}k"
 
         # Zone indicator — determines color for both context info and zone label
-        zone_word, zone_color_name = get_context_zone(used_tokens, total_size)
+        zone_word, zone_color_name = get_context_zone(
+            used_tokens, total_size, config.get("zone_config")
+        )
         zone_ansi = _zone_ansi_color(zone_color_name)
 
         # Context info uses zone color (traffic-light), with per-property override
