@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-03-22
+
+### Added
+
+- **Per-property color support** — Override colors for individual statusline elements (`color_context_length`, `color_project_name`, `color_branch_name`, `color_mi_score`, `color_zone`, `color_separator`) with fallback chain: per-property key -> base color key -> built-in default (#23)
+- **5-state context zone indicators** — Plan/Code/Dump/ExDump/Dead zones for 1M-class models with absolute token thresholds; standard models use percentage-based thresholds (#21)
+- **Zone always visible** — Zone indicator now shows regardless of `show_mi` setting
+
+### Changed
+
+- **Statusline element reorder** — Context info (project, branch, tokens, zone, MI) now appears first with model name moved to lowest priority position; model name is truncated first when terminal is narrow (#25)
+- **Full-word zone indicators** — Changed from single-letter (P/C/D/X/Z) to full words (Plan/Code/Dump/ExDump/Dead) for clarity
+- **MI hidden by default** — `show_mi` defaults to `false`; enable with `show_mi=true` in config
+- **README customization guide** — Expanded README with detailed status line anatomy, color resolution diagram, per-element color control docs, and four example theme configurations (Tokyo Night, High Contrast, Minimal, Monochrome)
+
+### Fixed
+
+- **CI lint failures** — Resolved unused variable and missing curly brace lint errors across all implementations
+- **Backward-compatible color fallbacks** — Per-property color keys gracefully fall back to legacy base color keys
+- **Version badges** — Switched from badge.fury.io to shields.io for reliability
+
 ## [1.11.1] - 2026-03-15
 
 ### Fixed
