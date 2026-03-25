@@ -369,7 +369,7 @@ def get_git_info(project_dir, magenta=None, cyan=None):
 def read_config():
     """Read settings from config file"""
     config = {
-        "autocompact": True,
+        "autocompact": False,
         "token_detail": True,
         "show_delta": True,
         "show_session": True,
@@ -395,7 +395,7 @@ def read_config():
 
 # Autocompact setting — sync with Claude Code's /config
 # When true, 22.5% of the context window is reserved for the autocompact buffer.
-autocompact=true
+autocompact=false
 
 # Token display format
 # true  = exact count (e.g., 64,000)

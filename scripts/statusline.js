@@ -415,7 +415,7 @@ function getGitInfo(projectDir, magentaColor, cyanColor) {
 
 function readConfig() {
     const config = {
-        autocompact: true,
+        autocompact: false,
         tokenDetail: true,
         showDelta: true,
         showSession: true,
@@ -442,7 +442,7 @@ function readConfig() {
 
 # Autocompact setting — sync with Claude Code's /config
 # When true, 22.5% of the context window is reserved for the autocompact buffer.
-autocompact=true
+autocompact=false
 
 # Token display format
 # true  = exact count (e.g., 64,000)

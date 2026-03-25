@@ -66,6 +66,7 @@ packages = ["src/claude_statusline"]
 [tool.hatch.build.targets.sdist]
 include = [
     "/src",
+    "/examples",
     "/README.md",
     "/LICENSE",
 ]

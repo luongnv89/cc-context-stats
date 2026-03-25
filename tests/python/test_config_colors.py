@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from claude_statusline.core.config import Config, _DEFAULT_CONFIG_TEMPLATE
+from claude_statusline.core.config import Config, _load_default_config_template
 
 
 class TestConfigColorOverrides:
@@ -141,20 +141,38 @@ class TestConfigDefaultRoundTrip:
         assert config_file.read_text(encoding="utf-8") == custom_content
 
 
-class TestInlineTemplateSync:
-    """Ensure the inline _DEFAULT_CONFIG_TEMPLATE stays in sync with examples/statusline.conf."""
+class TestPackageDataTemplateSync:
+    """Ensure the package data config template stays in sync with examples/statusline.conf."""
 
-    def test_inline_template_matches_example_file(self):
-        """The inline template in config.py must match examples/statusline.conf exactly."""
+    def test_package_data_matches_example_file(self):
+        """data/statusline.conf.default must match examples/statusline.conf exactly."""
         repo_root = Path(__file__).resolve().parents[2]
         example_file = repo_root / "examples" / "statusline.conf"
         assert example_file.exists(), (
             f"examples/statusline.conf not found at {example_file}"
         )
+        package_data_file = (
+            repo_root / "src" / "claude_statusline" / "data" / "statusline.conf.default"
+        )
+        assert package_data_file.exists(), (
+            f"data/statusline.conf.default not found at {package_data_file}"
+        )
         example_content = example_file.read_text(encoding="utf-8")
-        assert _DEFAULT_CONFIG_TEMPLATE == example_content, (
-            "Inline _DEFAULT_CONFIG_TEMPLATE in config.py is out of sync with "
+        package_content = package_data_file.read_text(encoding="utf-8")
+        assert package_content == example_content, (
+            "data/statusline.conf.default is out of sync with "
             "examples/statusline.conf. Update one to match the other."
+        )
+
+    def test_load_default_config_template_returns_example_content(self):
+        """_load_default_config_template() should return the examples/statusline.conf content."""
+        repo_root = Path(__file__).resolve().parents[2]
+        example_file = repo_root / "examples" / "statusline.conf"
+        example_content = example_file.read_text(encoding="utf-8")
+        loaded = _load_default_config_template()
+        assert loaded == example_content, (
+            "_load_default_config_template() did not return the expected content "
+            "from data/statusline.conf.default."
         )
 
 
