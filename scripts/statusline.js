@@ -6,8 +6,8 @@
  * Configuration:
  * Create/edit ~/.claude/statusline.conf and set:
  *
- *   autocompact=true   (when autocompact is enabled in Claude Code - default)
- *   autocompact=false  (when you disable autocompact via /config in Claude Code)
+ *   autocompact=false  (when autocompact is disabled in Claude Code - default)
+ *   autocompact=true   (when you enable autocompact via /config in Claude Code)
  *
  *   token_detail=true  (show exact token count like 64,000 - default)
  *   token_detail=false (show abbreviated tokens like 64.0k)
