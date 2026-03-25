@@ -128,7 +128,8 @@ class Config:
         if not config._config_path.exists():
             config._create_default()
 
-        config._read_config()
+        if config._config_path.exists():
+            config._read_config()
         return config
 
     def _create_default(self) -> None:
