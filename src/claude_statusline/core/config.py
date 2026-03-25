@@ -183,7 +183,8 @@ mi_curve_beta=0
 # color_mi_score=yellow
 # color_zone=default
 # color_separator=dim
-"""
+""",
+                encoding="utf-8",
             )
         except OSError as e:
             sys.stderr.write(
@@ -193,7 +194,7 @@ mi_curve_beta=0
     def _read_config(self) -> None:
         """Read settings from config file."""
         try:
-            content = self._config_path.read_text()
+            content = self._config_path.read_text(encoding="utf-8")
             for line in content.splitlines():
                 line = line.strip()
                 if line.startswith("#") or "=" not in line:

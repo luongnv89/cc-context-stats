@@ -386,7 +386,7 @@ def read_config():
     if not os.path.exists(config_path):
         try:
             os.makedirs(os.path.dirname(config_path), exist_ok=True)
-            with open(config_path, "w") as f:
+            with open(config_path, "w", encoding="utf-8") as f:
                 f.write(
                     """# cc-context-stats — statusline configuration
 # Full reference: https://github.com/luongnv89/cc-context-stats/blob/main/docs/configuration.md
@@ -479,7 +479,7 @@ mi_curve_beta=0
         return config
 
     try:
-        with open(config_path) as f:
+        with open(config_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line.startswith("#") or "=" not in line:
