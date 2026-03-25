@@ -97,13 +97,25 @@ class TestConfigDefaultRoundTrip:
         # Second load reads the file back — must not raise
         config2 = Config.load(config_path=config_file)
 
-        # Both loads should produce identical default settings
+        # Both loads should produce identical settings (first load also
+        # reads back the generated template)
         assert config1.autocompact == config2.autocompact
         assert config1.token_detail == config2.token_detail
         assert config1.show_delta == config2.show_delta
         assert config1.show_session == config2.show_session
         assert config1.show_mi == config2.show_mi
         assert config1.color_overrides == config2.color_overrides
+
+    def test_default_config_matches_example(self, tmp_path):
+        """Verify _create_default() generates config aligned with examples/statusline.conf."""
+        config_file = tmp_path / "statusline.conf"
+        Config.load(config_path=config_file)
+        content = config_file.read_text(encoding="utf-8")
+
+        # Template must have autocompact=false as default (matching examples/statusline.conf)
+        assert "autocompact=false" in content, (
+            "Default config should set autocompact=false"
+        )
 
     def test_default_config_contains_expected_keys(self, tmp_path):
         """Verify the generated config has all documented settings."""
@@ -114,3 +126,14 @@ class TestConfigDefaultRoundTrip:
         for key in ("autocompact=", "token_detail=", "show_delta=",
                      "show_session=", "show_mi=", "mi_curve_beta="):
             assert key in content, f"Default config should contain '{key}'"
+
+    def test_existing_config_not_overwritten(self, tmp_path):
+        """Verify _create_default() does not overwrite an existing config file."""
+        config_file = tmp_path / "statusline.conf"
+        custom_content = "# custom config\nautocompact=true\nshow_mi=true\n"
+        config_file.write_text(custom_content, encoding="utf-8")
+
+        Config.load(config_path=config_file)
+
+        # File must still contain the original custom content
+        assert config_file.read_text(encoding="utf-8") == custom_content

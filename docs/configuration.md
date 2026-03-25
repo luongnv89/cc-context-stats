@@ -1,6 +1,14 @@
 # Configuration
 
-The configuration file `~/.claude/statusline.conf` is automatically created with default settings on first run.
+The configuration file `~/.claude/statusline.conf` is automatically created with default settings on first run. The auto-generated file is aligned with [`examples/statusline.conf`](../examples/statusline.conf), which serves as the canonical reference for all available settings.
+
+To start from the fully-documented example:
+
+```bash
+cp examples/statusline.conf ~/.claude/statusline.conf
+```
+
+If `~/.claude/statusline.conf` already exists, it is never overwritten by auto-generation.
 
 Windows location: `%USERPROFILE%\.claude\statusline.conf`
 

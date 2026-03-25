@@ -186,7 +186,10 @@ def _render_config(config: Config, colors: ColorManager) -> None:
             if v:
                 print(f"  {k}:")
                 for slot, ansi_code in v.items():
-                    print(f"    {slot}: {ansi_code}████{colors.reset}")
+                    if colors.enabled:
+                        print(f"    {slot}: {ansi_code}████{colors.reset}")
+                    else:
+                        print(f"    {slot}: (set)")
             continue
         print(f"  {k}: {v}")
     print()
