@@ -1,6 +1,8 @@
 """Tests for color configuration and config file I/O in Config."""
 
-from claude_statusline.core.config import Config
+from pathlib import Path
+
+from claude_statusline.core.config import Config, _load_default_config_template
 
 
 class TestConfigColorOverrides:
@@ -97,13 +99,25 @@ class TestConfigDefaultRoundTrip:
         # Second load reads the file back — must not raise
         config2 = Config.load(config_path=config_file)
 
-        # Both loads should produce identical default settings
+        # Both loads should produce identical settings (first load also
+        # reads back the generated template)
         assert config1.autocompact == config2.autocompact
         assert config1.token_detail == config2.token_detail
         assert config1.show_delta == config2.show_delta
         assert config1.show_session == config2.show_session
         assert config1.show_mi == config2.show_mi
         assert config1.color_overrides == config2.color_overrides
+
+    def test_default_config_matches_example(self, tmp_path):
+        """Verify _create_default() generates config aligned with examples/statusline.conf."""
+        config_file = tmp_path / "statusline.conf"
+        Config.load(config_path=config_file)
+        content = config_file.read_text(encoding="utf-8")
+
+        # Template must have autocompact=false as default (matching examples/statusline.conf)
+        assert "autocompact=false" in content, (
+            "Default config should set autocompact=false"
+        )
 
     def test_default_config_contains_expected_keys(self, tmp_path):
         """Verify the generated config has all documented settings."""
@@ -114,3 +128,80 @@ class TestConfigDefaultRoundTrip:
         for key in ("autocompact=", "token_detail=", "show_delta=",
                      "show_session=", "show_mi=", "mi_curve_beta="):
             assert key in content, f"Default config should contain '{key}'"
+
+    def test_existing_config_not_overwritten(self, tmp_path):
+        """Verify _create_default() does not overwrite an existing config file."""
+        config_file = tmp_path / "statusline.conf"
+        custom_content = "# custom config\nautocompact=true\nshow_mi=true\n"
+        config_file.write_text(custom_content, encoding="utf-8")
+
+        Config.load(config_path=config_file)
+
+        # File must still contain the original custom content
+        assert config_file.read_text(encoding="utf-8") == custom_content
+
+
+class TestPackageDataTemplateSync:
+    """Ensure the package data config template stays in sync with examples/statusline.conf."""
+
+    def test_package_data_matches_example_file(self):
+        """data/statusline.conf.default must match examples/statusline.conf exactly."""
+        repo_root = Path(__file__).resolve().parents[2]
+        example_file = repo_root / "examples" / "statusline.conf"
+        assert example_file.exists(), (
+            f"examples/statusline.conf not found at {example_file}"
+        )
+        package_data_file = (
+            repo_root / "src" / "claude_statusline" / "data" / "statusline.conf.default"
+        )
+        assert package_data_file.exists(), (
+            f"data/statusline.conf.default not found at {package_data_file}"
+        )
+        example_content = example_file.read_text(encoding="utf-8")
+        package_content = package_data_file.read_text(encoding="utf-8")
+        assert package_content == example_content, (
+            "data/statusline.conf.default is out of sync with "
+            "examples/statusline.conf. Update one to match the other."
+        )
+
+    def test_load_default_config_template_returns_example_content(self):
+        """_load_default_config_template() should return the examples/statusline.conf content."""
+        repo_root = Path(__file__).resolve().parents[2]
+        example_file = repo_root / "examples" / "statusline.conf"
+        example_content = example_file.read_text(encoding="utf-8")
+        loaded = _load_default_config_template()
+        assert loaded == example_content, (
+            "_load_default_config_template() did not return the expected content "
+            "from data/statusline.conf.default."
+        )
+
+
+class TestFirstLoadColorOverrides:
+    """Test that first-load (auto-generated config) applies color overrides."""
+
+    def test_first_load_applies_template_colors(self, tmp_path):
+        """First load creates default config and reads back color overrides from it."""
+        config_file = tmp_path / "statusline.conf"
+        # File does not exist yet -- first load triggers _create_default()
+        # then _read_config(), which should pick up colors from the template.
+        config = Config.load(config_path=config_file)
+        assert config_file.exists(), "Default config file should be created on first load"
+
+        # The default template sets color_green=#7dcfff, so the 'green' slot
+        # must be present in color_overrides after first load.
+        assert "green" in config.color_overrides, (
+            "First load should apply color_green from template"
+        )
+        # Verify it parsed the hex value (38;2;r;g;b format)
+        assert "38;2;" in config.color_overrides["green"], (
+            "color_green should be parsed as 24-bit ANSI from hex #7dcfff"
+        )
+
+    def test_first_load_color_overrides_match_second_load(self, tmp_path):
+        """Color overrides from first load must equal those from a second load."""
+        config_file = tmp_path / "statusline.conf"
+        config1 = Config.load(config_path=config_file)
+        config2 = Config.load(config_path=config_file)
+        assert config1.color_overrides == config2.color_overrides, (
+            "First and second loads should produce identical color_overrides"
+        )

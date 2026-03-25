@@ -91,7 +91,7 @@ graph LR
 
 ## Customization
 
-Every element in the status line can be individually colored and toggled. Configuration lives in `~/.claude/statusline.conf` (created automatically on first run).
+Every element in the status line can be individually colored and toggled. Configuration lives in `~/.claude/statusline.conf` (created automatically on first run). See [`examples/statusline.conf`](examples/statusline.conf) for the canonical reference with all parameters documented.
 
 ### Status Line Anatomy
 
@@ -333,6 +333,16 @@ Add to `~/.claude/settings.json`:
   }
 }
 ```
+
+**(Optional) Copy the example config for full customization:**
+
+A default config is created automatically on first run. To start from the fully-documented example instead, copy it before launching:
+
+```bash
+cp examples/statusline.conf ~/.claude/statusline.conf
+```
+
+See [`examples/statusline.conf`](examples/statusline.conf) for all available settings with detailed explanations.
 
 Restart Claude Code. MI score and context stats appear in your status bar immediately.
 
