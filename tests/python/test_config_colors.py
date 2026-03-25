@@ -1,4 +1,4 @@
-"""Tests for color configuration in Config."""
+"""Tests for color configuration and config file I/O in Config."""
 
 from claude_statusline.core.config import Config
 
@@ -76,3 +76,41 @@ class TestConfigColorOverrides:
         )
         config = Config.load(config_path=config_file)
         assert len(config.color_overrides) == 6
+
+
+class TestConfigDefaultRoundTrip:
+    """Tests that the default config template can be written and read back."""
+
+    def test_create_default_and_read_back(self, tmp_path):
+        """Verify _create_default() writes a file that Config.load() can re-read."""
+        config_file = tmp_path / "statusline.conf"
+        # First load triggers _create_default() because the file does not exist
+        config1 = Config.load(config_path=config_file)
+        assert config_file.exists(), "Default config file should have been created"
+
+        # Verify the file contains Unicode characters (em dash, box drawing)
+        content = config_file.read_text(encoding="utf-8")
+        assert "\u2014" in content or "\u2500" in content, (
+            "Template should contain Unicode characters (em dash or box drawing)"
+        )
+
+        # Second load reads the file back — must not raise
+        config2 = Config.load(config_path=config_file)
+
+        # Both loads should produce identical default settings
+        assert config1.autocompact == config2.autocompact
+        assert config1.token_detail == config2.token_detail
+        assert config1.show_delta == config2.show_delta
+        assert config1.show_session == config2.show_session
+        assert config1.show_mi == config2.show_mi
+        assert config1.color_overrides == config2.color_overrides
+
+    def test_default_config_contains_expected_keys(self, tmp_path):
+        """Verify the generated config has all documented settings."""
+        config_file = tmp_path / "statusline.conf"
+        Config.load(config_path=config_file)
+        content = config_file.read_text(encoding="utf-8")
+
+        for key in ("autocompact=", "token_detail=", "show_delta=",
+                     "show_session=", "show_mi=", "mi_curve_beta="):
+            assert key in content, f"Default config should contain '{key}'"
