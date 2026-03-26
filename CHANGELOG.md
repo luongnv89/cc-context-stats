@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.13.1] - 2026-03-26
+
+### Added
+
+- **Example statusline.conf** — Added `examples/statusline.conf` with full parameter reference and default values (#34, #35)
+
+### Fixed
+
+- **UTF-8 encoding for config file I/O** — Config file reads and writes now use explicit UTF-8 encoding, preventing encoding errors on systems with non-UTF-8 default locale (#34, #35)
+- **Simplified config setup** — Replaced auto-generated inline template with bundled `examples/statusline.conf`; uses `importlib.resources` for reliable resource access (#36, #37)
+- **Synced standalone script templates** — Standalone Python and Node.js scripts now share consistent first-run config behavior and autocompact default (#36, #37)
+- **Autocompact default set to false** — Example config and script headers now correctly default `autocompact=false` (#36, #37)
+
 ## [1.13.0] - 2026-03-23
 
 ### Added
