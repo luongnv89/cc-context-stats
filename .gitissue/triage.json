@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "updated": "2026-03-25T16:00:00Z",
+  "source": "/issue-triage",
+  "analyzed_count": 2,
+  "issues": [
+    {
+      "number": 34,
+      "title": "Update statusline.conf template to include all attributes with default values",
+      "type": "enhancement",
+      "priority": "P2",
+      "blocks": [],
+      "blocked_by": [],
+      "status": "ready",
+      "stale_days": null,
+      "labels": ["enhancement"],
+      "affected_files": [
+        "install.sh",
+        "src/claude_statusline/core/config.py",
+        "scripts/statusline.py",
+        "scripts/statusline.js",
+        "docs/configuration.md"
+      ],
+      "updated_at": "2026-03-25T15:35:43Z",
+      "potentially_fixed_by": null
+    },
+    {
+      "number": 10,
+      "title": "[Question] Does this project support use on the Windows platform?",
+      "type": "feature",
+      "priority": "P3",
+      "blocks": [],
+      "blocked_by": [],
+      "status": "stale",
+      "stale_days": 46,
+      "labels": [],
+      "affected_files": [],
+      "updated_at": "2026-02-07T23:08:31Z",
+      "potentially_fixed_by": null
+    }
+  ],
+  "summary": {
+    "parallel_groups": [[34, 10]],
+    "stale_count": 1,
+    "stale_threshold_days": 14,
+    "potentially_fixed_count": 0,
+    "suggested_order": [34, 10],
+    "circular_deps": []
+  },
+  "history": [
+    {
+      "time": "2026-03-25T16:00:00Z",
+      "source": "/issue-triage",
+      "changes": "Full re-triage (2 issues)"
+    }
+  ]
+}

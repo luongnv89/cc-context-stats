@@ -4,6 +4,8 @@
 #
 # Usage:
 #   context-stats.sh [session_id] [options]
+#   context-stats.sh export [session_id] [--output FILE]
+#   context-stats.sh explain
 #
 # Options:
 #   --type <cumulative|delta|both>  Graph type to display (default: both)
@@ -17,6 +19,8 @@
 #   context-stats.sh --type delta           # Only delta graph
 #   context-stats.sh --watch                # Real-time mode (2s refresh)
 #   context-stats.sh -w 5                   # Real-time mode (5s refresh)
+#   context-stats.sh export abc123 --output report.md
+#   echo '{...}' | context-stats.sh explain  # Diagnostic JSON dump
 
 # Note: This script is compatible with bash 3.2+ (macOS default)
 
@@ -72,6 +76,10 @@ USAGE:
 ARGUMENTS:
     session_id    Optional session ID. If not provided, uses the latest session.
 
+COMMANDS:
+    explain       Diagnostic dump of Claude Code's JSON context (pipe JSON to stdin)
+    export        Export session stats as a markdown report
+
 OPTIONS:
     --type <type>  Graph type to display:
                    - delta: Context growth per interaction (default)
@@ -110,6 +118,13 @@ EXAMPLES:
 
     # Output to file (no colors, single run)
     context-stats.sh --no-watch --no-color > output.txt
+
+    # Diagnostic dump (pipe Claude Code JSON context)
+    echo '{"model":{"display_name":"Opus"},...}' | context-stats.sh explain
+
+    # Export session stats as markdown
+    context-stats.sh export
+    context-stats.sh export abc123def --output report.md
 
 DATA SOURCE:
     Reads token history from ~/.claude/statusline/statusline.<session_id>.state
@@ -969,6 +984,23 @@ load_config() {
     fi
 }
 
+dispatch_python_subcommand() {
+    local subcommand=$1
+    shift
+
+    if command -v python3 >/dev/null 2>&1; then
+        python3 -m claude_statusline.cli.context_stats "$subcommand" "$@"
+        return $?
+    fi
+
+    if command -v python >/dev/null 2>&1; then
+        python -m claude_statusline.cli.context_stats "$subcommand" "$@"
+        return $?
+    fi
+
+    error_exit "Python 3 is required for '$subcommand'."
+}
+
 # Render graphs once
 render_once() {
     local state_file=$1
@@ -1104,6 +1136,16 @@ run_watch_mode() {
 }
 
 main() {
+    # Delegate non-graph subcommands to the Python CLI implementation.
+    case "${1:-}" in
+    explain|export)
+        local subcommand=$1
+        shift
+        dispatch_python_subcommand "$subcommand" "$@"
+        return $?
+        ;;
+    esac
+
     parse_args "$@"
     init_colors
     get_terminal_dimensions

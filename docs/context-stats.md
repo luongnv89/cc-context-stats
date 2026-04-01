@@ -154,3 +154,9 @@ OPTIONS:
     --no-color     Disable color output
     --help         Show help message
 ```
+
+The export report includes a summary table, timestamp-based Mermaid trend charts, a zone distribution pie chart, and a final context composition pie chart.
+Each chart includes a short explanation so the reader knows what to look for.
+The report begins with a copyable `context-stats export <session_id> --output report.md` command and an executive snapshot that folds the header metadata into one compact table so the report can be regenerated and scanned quickly.
+It also adds a Key Takeaways section and samples the cache activity line chart every 10 minutes when cache data is present.
+The charts use distinct colors and a manual legend because Mermaid xychart does not render a legend automatically.

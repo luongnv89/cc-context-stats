@@ -6,7 +6,13 @@ from pathlib import Path
 
 import pytest
 
-from claude_statusline.cli.export import _format_datetime, _format_duration, _generate_markdown, _usage_bar
+from claude_statusline.cli.export import (
+    _format_datetime,
+    _format_duration,
+    _generate_markdown,
+    _sample_entries_by_window,
+    _usage_bar,
+)
 from claude_statusline.core.config import Config
 from claude_statusline.core.state import StateEntry
 
@@ -85,6 +91,14 @@ class TestFormatHelpers:
         bar = _usage_bar(50)
         assert len(bar) == 20
 
+    def test_sample_entries_by_window_thins_dense_series(self):
+        entries = [_make_entry(timestamp=1710288000 + i * 60) for i in range(12)]
+
+        sampled = _sample_entries_by_window(entries, window_minutes=5)
+
+        assert len(sampled) == 4
+        assert all(":" in label for label, _ in sampled)
+
 
 class TestGenerateMarkdown:
     """Tests for markdown generation."""
@@ -101,6 +115,12 @@ class TestGenerateMarkdown:
         assert "test-session-id" in md
         assert "project" in md.lower()
         assert "claude-opus-4-6" in md
+        assert "## Generate" in md
+        assert "context-stats export test-session-id --output report.md" in md
+        assert "## Executive Snapshot" in md
+        assert "## Summary" in md
+        assert "Report span" in md
+        assert "Produced by" in md
 
     def test_summary_table(self):
         entries = [
@@ -110,7 +130,13 @@ class TestGenerateMarkdown:
         config = Config.load()
         md = _generate_markdown(entries, "test-id", config)
 
-        assert "## Summary" in md
+        assert "| Signal | Value | Why it matters |" in md
+        assert "**Session**" in md
+        assert "**Project**" in md
+        assert "**Model**" in md
+        assert "**Duration**" in md
+        assert "**Interactions**" in md
+        assert "**Generated**" in md
         assert "Context window" in md
         assert "200,000" in md
         assert "$0.10" in md
@@ -195,6 +221,77 @@ class TestGenerateMarkdown:
 
         assert "+250" in md
         assert "-45" in md
+
+    def test_mermaid_visual_summary_included(self):
+        entries = [
+            _make_entry(
+                timestamp=1710288000,
+                current_input=8_000,
+                cache_creation=1_000,
+                cache_read=2_000,
+                context_window=200_000,
+            ),
+            _make_entry(
+                timestamp=1710288060,
+                current_input=20_000,
+                cache_creation=2_000,
+                cache_read=3_000,
+                context_window=200_000,
+            ),
+            _make_entry(
+                timestamp=1710288120,
+                current_input=30_000,
+                cache_creation=4_000,
+                cache_read=5_000,
+                context_window=200_000,
+            ),
+        ]
+        config = Config.load()
+        md = _generate_markdown(entries, "test-id", config)
+
+        assert "## Visual Summary" in md
+        assert "xychart-beta" in md
+        assert "plotColorPalette" in md
+        assert "Context Used Over Time" in md
+        assert "Shows how much context was used" in md
+        assert 'x-axis ["' in md
+        assert "Cache Activity Trend" in md
+        assert "Shows how cache creation and cache reads evolved" in md
+        assert "Cache Created vs Cache Read Over Time" in md
+        assert "Legend: blue line" in md
+        assert "pie showData" in md
+        assert "Shows where the session spent most of its time" in md
+        assert "Interaction Distribution by Zone" in md
+        assert "Final Context Usage Breakdown" in md
+        assert "Shows what made up the last request" in md
+        assert "Planning" in md or "Code-only" in md
+
+    def test_key_takeaways_included(self):
+        entries = [
+            _make_entry(
+                timestamp=1710288000,
+                current_input=9_000,
+                cache_creation=1_500,
+                cache_read=500,
+                context_window=200_000,
+            ),
+            _make_entry(
+                timestamp=1710288060,
+                current_input=18_000,
+                cache_creation=2_000,
+                cache_read=1_000,
+                context_window=200_000,
+            ),
+        ]
+        config = Config.load()
+        md = _generate_markdown(entries, "test-id", config)
+
+        assert "## Key Takeaways" in md
+        assert "Final state" in md
+        assert "Growth" in md
+        assert "Largest jump" in md
+        assert "Dominant zone" in md
+        assert "Cache load" in md
 
 
 class TestExportCommand:
