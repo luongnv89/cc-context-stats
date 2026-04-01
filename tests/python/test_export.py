@@ -68,6 +68,9 @@ class TestFormatHelpers:
     def test_format_duration_hours(self):
         assert _format_duration(3661) == "1h 1m 1s"
 
+    def test_format_duration_negative_clamped(self):
+        assert _format_duration(-5) == "0s"
+
     def test_usage_bar_empty(self):
         bar = _usage_bar(0)
         assert "\u2591" in bar
@@ -250,10 +253,10 @@ class TestExportCommand:
         config = Config.load()
         md = _generate_markdown(entries, "fake-test-session", config)
         output_file = tmp_path / "report.md"
-        output_file.write_text(md)
+        output_file.write_text(md, encoding="utf-8")
 
         assert output_file.exists()
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
         assert "# Context Stats Report" in content
         assert "fake-test-session" in content
         assert "## Interaction Timeline" in content

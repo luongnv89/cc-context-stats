@@ -55,7 +55,7 @@ def _format_datetime(ts: int) -> str:
     """Format Unix timestamp as full datetime string."""
     try:
         return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
-    except (ValueError, OSError):
+    except (ValueError, OSError, OverflowError):
         return str(ts)
 
 
@@ -63,12 +63,13 @@ def _format_time(ts: int) -> str:
     """Format Unix timestamp as time-only string."""
     try:
         return datetime.fromtimestamp(ts).strftime("%H:%M:%S")
-    except (ValueError, OSError):
+    except (ValueError, OSError, OverflowError):
         return str(ts)
 
 
 def _format_duration(seconds: int) -> str:
     """Format duration in seconds."""
+    seconds = max(0, seconds)
     hours = seconds // 3600
     minutes = (seconds % 3600) // 60
     secs = seconds % 60
@@ -125,7 +126,7 @@ def _generate_markdown(entries: list, session_id: str, config: Config) -> str:
     lines.append(f"**Session:** `{session_id}`")
     lines.append(f"**Project:** {project_name}")
     lines.append(f"**Model:** {last.model_id or 'Unknown'}")
-    lines.append(f"**Duration:** {_format_duration(duration)} ({start_time} \u2192 {end_time})")
+    lines.append(f"**Duration:** {_format_duration(duration)} ({start_time} -> {end_time})")
     lines.append(f"**Interactions:** {len(entries)}")
     lines.append(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by cc-context-stats v{__version__}")
     lines.append("")
@@ -279,7 +280,7 @@ def run_export(argv: list[str]) -> None:
     session_id = args.session_id
     if not session_id:
         name = file_path.stem  # statusline.{session_id}
-        session_id = name.replace("statusline.", "")
+        session_id = name[11:] if name.startswith("statusline.") else name
 
     # Generate markdown
     markdown = _generate_markdown(entries, session_id, config)
