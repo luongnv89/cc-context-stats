@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-04-02
+
+### Added
+
+- **Context report example and CLI coverage** — Added `context-stats-export-output.md` as a full export example and added bash coverage for `context-stats` subcommands
+
+### Changed
+
+- **Export report structure** — Refined exported Markdown with a `Generate` block, `Executive Snapshot`, key takeaways, chart explanations, timestamp-based chart axes, and clearer cache activity visuals
+- **README landing page** — Reworked the README around context zones, next-action guidance, live monitoring screenshots, export report examples, and installation/configuration flow
+
 ## [1.14.0] - 2026-04-01
 
 ### Added

@@ -722,7 +722,7 @@ process.stdin.on('end', () => {
     try {
         data = JSON.parse(input);
     } catch {
-        console.log('[Claude] ~');
+        process.stdout.write('[Claude] ~\n');
         return;
     }
 

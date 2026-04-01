@@ -671,7 +671,7 @@ def main():
     try:
         data = json.load(sys.stdin)
     except json.JSONDecodeError:
-        print("[Claude] ~")
+        sys.stdout.write("[Claude] ~\n")
         return
 
     # Extract data
