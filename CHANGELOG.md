@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.15.1] - 2026-04-02
+
+### Fixed
+
+- **Auto-install Python package** — Installation script now automatically installs or upgrades the `cc-context-stats` Python package to match the shell script version. Previously, only the bash script was installed, causing `context-stats export` and other Python subcommands to fail when invoked from outside the repo (#47)
+- **Version validation for Python package** — Added version checks in `context-stats.sh` that detect if the Python package is missing or stale, displaying clear error messages and upgrade instructions (#47)
+- **Circular package dependency** — Removed self-referential dependency from `package.json` that violated npm package semantics (#47)
+- **Bash test for Python version checks** — Fixed integration test that validates Python version detection logic (#47)
+- **Version mismatch error icon** — Corrected error message icon from `⚠` to `✗` for consistency with other error messages (#47)
+
 ## [1.15.0] - 2026-04-02
 
 ### Added
