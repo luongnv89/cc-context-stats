@@ -150,6 +150,7 @@ OPTIONS:
                    - cumulative: Total context usage over time
                    - io: Input/output tokens over time
                    - cache: Cache creation/read tokens over time
+                            Includes a Cache TTL countdown (5m) based on last cache write
                    - mi: Model Intelligence over time
                    - both: Show cumulative and delta graphs
                    - all: Show all graphs including I/O, cache, and MI
