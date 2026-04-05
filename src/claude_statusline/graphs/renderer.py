@@ -377,7 +377,7 @@ class GraphRenderer:
                 f"  {self.colors.cyan}{'Cache Read:':<20}{self.colors.reset} "
                 f"{format_tokens(last.cache_read, self.token_detail)}"
             )
-        if graph_type == "cache":
+        if graph_type in ("cache", "all"):
             # Show cache TTL countdown after cache stats
             last_cache_ts = None
             for entry in reversed(entries):
