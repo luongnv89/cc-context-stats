@@ -367,6 +367,15 @@ class GraphRenderer:
             f"  {self.colors.magenta}{'Output Tokens:':<20}{self.colors.reset} "
             f"{format_tokens(last.current_output_tokens, self.token_detail)}"
         )
+        if last.cache_creation > 0 or last.cache_read > 0:
+            self._emit(
+                f"  {self.colors.red}{'Cache Creation:':<20}{self.colors.reset} "
+                f"{format_tokens(last.cache_creation, self.token_detail)}"
+            )
+            self._emit(
+                f"  {self.colors.cyan}{'Cache Read:':<20}{self.colors.reset} "
+                f"{format_tokens(last.cache_read, self.token_detail)}"
+            )
         if last.lines_added > 0 or last.lines_removed > 0:
             self._emit(
                 f"  {self.colors.dim}{'Lines Changed:':<20}{self.colors.reset} "
