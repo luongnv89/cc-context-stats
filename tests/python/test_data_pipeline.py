@@ -35,7 +35,7 @@ def _make_entry(**kwargs) -> StateEntry:
     return StateEntry(**defaults)
 
 
-def _render_summary_output(entries, deltas=None):
+def _render_summary_output(entries, deltas=None, graph_type=None):
     """Render summary and return buffered output as string."""
     renderer = GraphRenderer(
         colors=ColorManager(enabled=False),
@@ -47,7 +47,9 @@ def _render_summary_output(entries, deltas=None):
         ),
     )
     renderer.begin_buffering()
-    renderer.render_summary(entries, deltas if deltas is not None else [])
+    renderer.render_summary(
+        entries, deltas if deltas is not None else [], graph_type=graph_type
+    )
     return renderer.get_buffer()
 
 
@@ -542,3 +544,66 @@ class TestCacheGraphRendering:
         output = _render_summary_output(entries)
         assert "Cache Creation:" not in output
         assert "Cache Read:" not in output
+
+
+# ---------------------------------------------------------------------------
+# Class 8: Cache TTL Countdown
+# ---------------------------------------------------------------------------
+
+
+class TestCacheTTL:
+    """Tests for cache TTL countdown in summary when graph_type='cache'."""
+
+    def test_ttl_shows_countdown_when_fresh(self):
+        """TTL shows remaining time when cache write is recent."""
+        import time
+
+        now = int(time.time())
+        entries = [_make_entry(timestamp=now - 30, cache_creation=5000)]
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(time, "time", lambda: float(now))
+            output = _render_summary_output(entries, graph_type="cache")
+        assert "Cache TTL:" in output
+        assert "4m 30s" in output
+
+    def test_ttl_shows_expired_when_stale(self):
+        """TTL shows 'expired' when cache write is older than 5 minutes."""
+        import time
+
+        now = int(time.time())
+        entries = [_make_entry(timestamp=now - 600, cache_creation=5000)]
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(time, "time", lambda: float(now))
+            output = _render_summary_output(entries, graph_type="cache")
+        assert "Cache TTL:" in output
+        assert "expired" in output
+
+    def test_ttl_absent_when_no_cache_writes(self):
+        """TTL line not shown when no entries have cache_creation > 0."""
+        entries = [_make_entry(cache_creation=0, cache_read=5000)]
+        output = _render_summary_output(entries, graph_type="cache")
+        assert "Cache TTL:" not in output
+
+    def test_total_cost_always_shown(self):
+        """Total Cost is shown regardless of graph_type."""
+        entries = [_make_entry(cost_usd=0.05)]
+        output_cumulative = _render_summary_output(entries, graph_type="cumulative")
+        assert "Total Cost:" in output_cumulative
+        output_cache = _render_summary_output(entries, graph_type="cache")
+        assert "Total Cost:" in output_cache
+
+    def test_ttl_uses_last_cache_write_entry(self):
+        """TTL is based on the most recent entry with cache_creation > 0."""
+        import time
+
+        now = int(time.time())
+        entries = [
+            _make_entry(timestamp=now - 240, cache_creation=5000),
+            _make_entry(timestamp=now - 10, cache_creation=0),
+        ]
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(time, "time", lambda: float(now))
+            output = _render_summary_output(entries, graph_type="cache")
+        assert "Cache TTL:" in output
+        assert "1m" in output
+        assert "expired" not in output
