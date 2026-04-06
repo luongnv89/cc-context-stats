@@ -181,6 +181,29 @@ class TestCacheWarmOn:
         with pytest.raises(SystemExit):
             cmd_cache_warm_on("sess", "badval", colors)
 
+    def test_no_fork_platform_exits(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.setattr("claude_statusline.cli.cache_warm._STATE_DIR", tmp_path)
+        colors = _mock_colors()
+
+        # Simulate a platform without os.fork (e.g. Windows) by hiding the attribute
+        monkeypatch.delattr(os, "fork", raising=False)
+        with pytest.raises(SystemExit) as exc:
+            cmd_cache_warm_on("sess", "10m", colors)
+        assert exc.value.code == 1
+        err = capsys.readouterr().err
+        assert "unix" in err.lower() or "fork" in err.lower()
+
+    def test_fork_oserror_exits(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.setattr("claude_statusline.cli.cache_warm._STATE_DIR", tmp_path)
+        colors = _mock_colors()
+
+        with patch("os.fork", side_effect=OSError("resource limit")):
+            with pytest.raises(SystemExit) as exc:
+                cmd_cache_warm_on("sess", "10m", colors)
+        assert exc.value.code == 1
+        err = capsys.readouterr().err
+        assert "fork" in err.lower()
+
     def test_already_active_refreshes(self, tmp_path, monkeypatch, capsys):
         monkeypatch.setattr("claude_statusline.cli.cache_warm._STATE_DIR", tmp_path)
         colors = _mock_colors()

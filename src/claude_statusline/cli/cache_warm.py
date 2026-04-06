@@ -170,6 +170,7 @@ def cmd_cache_warm_on(session_id: str, duration_str: str | None, colors: object)
 
     # Check if already active
     active, remaining = is_cache_warm_active(session_id)
+    old_state = load_warm_state(session_id) if active else None
     if active:
         mins = remaining // 60
         secs = remaining % 60
@@ -178,28 +179,38 @@ def cmd_cache_warm_on(session_id: str, duration_str: str | None, colors: object)
             f"{c.dim}Time remaining: {mins}m {secs}s — use 'cache-warm off' to stop early "
             f"or run 'cache-warm on' again to refresh the duration.{c.reset}"
         )
-        # Refresh: stop existing, start fresh
-        cmd_cache_warm_off(session_id, colors, silent=True)
 
     now = int(time.time())
     expiry = now + duration
 
     # Fork a background process for the heartbeat loop
-    try:
-        pid = os.fork()
-    except AttributeError:
-        # Windows / environments without fork — not supported
+    if not hasattr(os, "fork"):
         sys.stderr.write(
             "Error: cache-warm requires a Unix-like OS (fork not available).\n"
         )
         sys.exit(1)
 
+    # Set SIGCHLD to SIG_IGN before fork so the kernel auto-reaps the child (no zombie).
+    # Restore the original handler in the parent afterwards to avoid breaking subprocess calls.
+    old_sigchld = signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+    try:
+        pid = os.fork()
+    except OSError as e:
+        signal.signal(signal.SIGCHLD, old_sigchld)
+        sys.stderr.write(f"Error: fork failed: {e}\n")
+        sys.exit(1)
+
     if pid == 0:
         # Child process — run heartbeat loop and exit
-        _run_heartbeat_loop(session_id, expiry, DEFAULT_INTERVAL)
+        try:
+            _run_heartbeat_loop(session_id, expiry, DEFAULT_INTERVAL)
+        except Exception:
+            pass
         os._exit(0)
     else:
-        # Parent process — persist state and report
+        # Parent process — restore SIGCHLD handler, persist state, stop old process
+        signal.signal(signal.SIGCHLD, old_sigchld)
+        # Persist state first (avoids race window when refreshing)
         _save_warm_state(
             session_id,
             {
@@ -209,6 +220,19 @@ def cmd_cache_warm_on(session_id: str, duration_str: str | None, colors: object)
                 "interval": DEFAULT_INTERVAL,
             },
         )
+        # Terminate old process only after new state is persisted
+        if old_state:
+            old_pid = old_state.get("pid", 0)
+            if old_pid and _is_process_alive(old_pid):
+                try:
+                    os.kill(old_pid, signal.SIGTERM)
+                except OSError:
+                    pass
+            heartbeat_file = _STATE_DIR / f"cache-warm.{session_id}.heartbeat"
+            try:
+                heartbeat_file.unlink(missing_ok=True)
+            except OSError:
+                pass
         mins = duration // 60
         remaining_fmt = f"{mins}m" if duration % 60 == 0 else f"{mins}m {duration % 60}s"
         print(

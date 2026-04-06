@@ -417,10 +417,11 @@ def render_once(
             )
 
     # Summary and footer
-    from claude_statusline.cli.cache_warm import is_cache_warm_active
+    from claude_statusline.cli.cache_warm import _warm_state_path, is_cache_warm_active
 
     session_id = state_file.session_id or ""
-    cache_warm_status = is_cache_warm_active(session_id) if session_id else None
+    # Only show cache-warm status when a state file exists for this session
+    cache_warm_status = is_cache_warm_active(session_id) if session_id and _warm_state_path(session_id).exists() else None
     renderer.render_summary(
         entries, deltas, mi_score=mi_score, graph_type=graph_type,
         cache_warm_status=cache_warm_status,
