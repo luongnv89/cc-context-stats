@@ -24,13 +24,12 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 if [ -t 1 ]; then
     RED='\033[0;31m'
     GREEN='\033[0;32m'
-    YELLOW='\033[0;33m'
     BLUE='\033[0;34m'
     BOLD='\033[1m'
     DIM='\033[2m'
     RESET='\033[0m'
 else
-    RED='' GREEN='' YELLOW='' BLUE='' BOLD='' DIM='' RESET=''
+    RED='' GREEN='' BLUE='' BOLD='' DIM='' RESET=''
 fi
 
 PASS=0
@@ -195,9 +194,6 @@ run_python_e2e() {
         fail "pip3/pip not found in PATH — skipping Python tests"
         return
     fi
-    local pip_bin
-    pip_bin=$(command -v pip3 || command -v pip)
-
     # Create a temporary virtualenv for a clean install
     local venv_dir
     venv_dir=$(mktemp -d)
@@ -300,7 +296,7 @@ run_bash_e2e() {
             fi
             local output exit_code
             output=$(echo "$STATUSLINE_TEST_JSON" | $clean_env_prefix bash "$script_path" 2>/dev/null) && exit_code=$? || exit_code=$?
-            if [ $exit_code -eq 0 ] && [ -n "$output" ]; then
+            if [ "$exit_code" -eq 0 ] && [ -n "$output" ]; then
                 pass "$script processes JSON in clean environment"
             else
                 fail "$script failed in clean environment (exit=$exit_code)"
@@ -313,7 +309,7 @@ run_bash_e2e() {
     if [ -f "$cs_script" ] && [ -x "$cs_script" ]; then
         local exit_code
         $clean_env_prefix bash "$cs_script" --help >/dev/null 2>&1 && exit_code=$? || exit_code=$?
-        if [ $exit_code -eq 0 ]; then
+        if [ "$exit_code" -eq 0 ]; then
             pass "context-stats.sh --help exits 0 in clean environment"
         else
             fail "context-stats.sh --help failed in clean environment (exit=$exit_code)"
