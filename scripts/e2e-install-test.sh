@@ -104,7 +104,7 @@ run_nodejs_e2e() {
 
     info "Installing from $PROJECT_ROOT via npm pack..."
     local pack_file
-    pack_file=$(cd "$PROJECT_ROOT" && npm pack --quiet 2>/dev/null | tail -1)
+    pack_file=$(cd "$PROJECT_ROOT" && npm pack --quiet 2>/dev/null | tail -1) || true
     if [ -z "$pack_file" ]; then
         fail "npm pack failed — cannot perform clean Node.js install test"
         return
@@ -118,11 +118,11 @@ run_nodejs_e2e() {
     # shellcheck disable=SC2064
     trap "rm -rf '$install_dir' '$pack_path'" EXIT
 
-    (cd "$install_dir" && npm install --quiet "$pack_path" 2>/dev/null)
-    local npm_exit=$?
+    (cd "$install_dir" && npm install --quiet "$pack_path" 2>/dev/null) \
+        && npm_exit=0 || npm_exit=$?
     rm -f "$pack_path"
 
-    if [ $npm_exit -ne 0 ]; then
+    if [ "$npm_exit" -ne 0 ]; then
         fail "npm install failed (exit=$npm_exit)"
         rm -rf "$install_dir"
         return
