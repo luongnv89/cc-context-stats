@@ -2,7 +2,7 @@
 
 ## Problem
 
-When running `context-stats export <session_id>` from outside the project directory, users would get:
+When running `context-stats <session_id> export` from outside the project directory, users would get:
 
 ```
 python3.14 -m claude_statusline.cli.context_stats: error: unrecognized arguments: <session_id>
@@ -67,11 +67,11 @@ Updated VERSION in `scripts/context-stats.sh` from 1.11.1 to 1.15.1 to match `py
 **For new installations:**
 - Users run `curl ... | bash` and get both the bash script AND the Python package automatically
 - No additional steps required
-- `context-stats export` works immediately
+- `context-stats <session_id> export` works immediately
 
 **For existing users:**
 - If they upgrade and run the installer again, the Python package is automatically upgraded
-- If they try to use `context-stats export` without the package, they see a clear error message with installation instructions
+- If they try to use `context-stats <session_id> export` without the package, they see a clear error message with installation instructions
 - Version mismatches are caught and the user is informed
 
 ## Testing
@@ -83,7 +83,7 @@ All tests pass:
 
 Verified scenarios:
 - ✓ Fresh installation from curl includes Python package
-- ✓ `context-stats export <session_id>` works from any directory
+- ✓ `context-stats <session_id> export` works from any directory
 - ✓ Missing package shows helpful error message
 - ✓ Version mismatch warning is displayed
 - ✓ All existing functionality still works

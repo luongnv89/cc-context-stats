@@ -138,7 +138,7 @@ Each image shows a different slice of the same session:
 Export a session when you want the timeline, charts, and summary in one Markdown file.
 
 ```bash
-context-stats export <session_id> --output report.md
+context-stats <session_id> export --output report.md
 ```
 
 The report starts with the command that produced it, then folds the headline facts into an executive snapshot.
@@ -159,7 +159,7 @@ Example output:
 
 ## Generate
 
-    context-stats export 8bb55603-45b8-4bdf-aa04-d51366610b1a --output report.md
+    context-stats 8bb55603-45b8-4bdf-aa04-d51366610b1a export --output report.md
 
 ## Executive Snapshot
 | Signal | Value | Why it matters |

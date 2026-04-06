@@ -14,41 +14,39 @@ Context Stats tracks your context usage and warns you as performance degrades:
 
 ## Usage
 
+The CLI uses an explicit action-based pattern: `context-stats <session_id> <action> [options]`
+
 By default, `context-stats` runs in live monitoring mode:
 
 ```bash
 # Live monitoring (default, refreshes every 2s)
-context-stats
+context-stats <session_id> graph
 
 # Custom refresh interval
-context-stats -w 5
+context-stats <session_id> graph -w 5
 
 # Show once and exit
-context-stats --no-watch
-
-# Show specific session
-context-stats <session_id>
+context-stats <session_id> graph --no-watch
 ```
 
 ### Graph Types
 
 ```bash
-context-stats --type delta       # Context growth per interaction (default)
-context-stats --type cumulative  # Total context usage over time
-context-stats --type both        # Show both graphs
-context-stats --type io          # Input/output token breakdown
-context-stats --type cache       # Cache creation/read tokens over time
-context-stats --type mi          # Model Intelligence over time
-context-stats --type all         # Show all graphs including I/O, cache, and MI
+context-stats <session_id> graph --type delta       # Context growth per interaction (default)
+context-stats <session_id> graph --type cumulative  # Total context usage over time
+context-stats <session_id> graph --type both        # Show both graphs
+context-stats <session_id> graph --type io          # Input/output token breakdown
+context-stats <session_id> graph --type cache       # Cache creation/read tokens over time
+context-stats <session_id> graph --type mi          # Model Intelligence over time
+context-stats <session_id> graph --type all         # Show all graphs including I/O, cache, and MI
 ```
 
 ### Diagnostic Dump
 
-The `explain` command shows how cc-context-stats interprets Claude Code's JSON context. Pipe any session JSON to stdin:
+The `explain` action shows how cc-context-stats interprets Claude Code's JSON context. Pipe any session JSON to stdin:
 
 ```bash
 echo '{"model":{"display_name":"Opus"},...}' | context-stats explain
-echo '{"model":{"display_name":"Opus"},...}' | context-stats explain --no-color
 ```
 
 Output includes model info, workspace, context window breakdown with derived values (free tokens, autocompact buffer), cost, session metadata, vim/agent extensions, active config, and raw JSON.
@@ -125,7 +123,7 @@ Features:
 To disable watch mode and show graphs once:
 
 ```bash
-context-stats --no-watch
+context-stats <session_id> graph --no-watch
 ```
 
 ## Data Source
@@ -135,16 +133,18 @@ Reads from `~/.claude/statusline/statusline.<session_id>.state` files, automatic
 ## CLI Reference
 
 ```
-context-stats [session_id] [options]
+context-stats <session_id> <action> [options]
 
 ARGUMENTS:
-    session_id    Optional session ID. If not provided, uses the latest session.
+    session_id    Required. The session ID to operate on.
+    action        Required. The action to perform: graph, export, or explain.
 
-COMMANDS:
+ACTIONS:
+    graph         Show live ASCII graphs of context usage
     export        Export session stats as a markdown report
-                   context-stats export [session_id] [--output FILE]
+    explain       Diagnostic dump of Claude Code's JSON context (reads from stdin)
 
-OPTIONS:
+GRAPH OPTIONS:
     --type <type>  Graph type to display:
                    - delta: Context growth per interaction (default)
                    - cumulative: Total context usage over time
@@ -156,12 +156,25 @@ OPTIONS:
                    - all: Show all graphs including I/O, cache, and MI
     -w [interval]  Set refresh interval in seconds (default: 2)
     --no-watch     Show graphs once and exit (disable live monitoring)
+
+EXPORT OPTIONS:
+    --output FILE  Output file path (default: context-stats-<session>.md)
+
+GLOBAL OPTIONS:
     --no-color     Disable color output
     --help         Show help message
+    --version, -V  Show version and exit
+
+EXAMPLES:
+    context-stats abc123def graph
+    context-stats abc123def graph --type cumulative
+    context-stats abc123def graph -w 5
+    context-stats abc123def export --output report.md
+    echo '{"model":...}' | context-stats explain
 ```
 
 The export report includes a summary table, timestamp-based Mermaid trend charts, a zone distribution pie chart, and a final context composition pie chart.
 Each chart includes a short explanation so the reader knows what to look for.
-The report begins with a copyable `context-stats export <session_id> --output report.md` command and an executive snapshot that folds the header metadata into one compact table so the report can be regenerated and scanned quickly.
+The report begins with a copyable `context-stats <session_id> export --output report.md` command and an executive snapshot that folds the header metadata into one compact table so the report can be regenerated and scanned quickly.
 It also adds a Key Takeaways section and samples the cache activity line chart every 10 minutes when cache data is present.
 The charts use distinct colors and a manual legend because Mermaid xychart does not render a legend automatically.
