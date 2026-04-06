@@ -151,7 +151,7 @@ class TestCacheWarmOn:
 
         fake_pid = 42000
 
-        with patch("os.fork", return_value=fake_pid):
+        with patch("os.fork", return_value=fake_pid, create=True):
             cmd_cache_warm_on("sess", "10m", colors)
 
         out = capsys.readouterr().out
@@ -166,7 +166,7 @@ class TestCacheWarmOn:
         monkeypatch.setattr("claude_statusline.cli.cache_warm._STATE_DIR", tmp_path)
         colors = _mock_colors()
 
-        with patch("os.fork", return_value=99):
+        with patch("os.fork", return_value=99, create=True):
             cmd_cache_warm_on("sess", None, colors)
 
         state = load_warm_state("sess")
@@ -197,7 +197,7 @@ class TestCacheWarmOn:
         monkeypatch.setattr("claude_statusline.cli.cache_warm._STATE_DIR", tmp_path)
         colors = _mock_colors()
 
-        with patch("os.fork", side_effect=OSError("resource limit")):
+        with patch("os.fork", side_effect=OSError("resource limit"), create=True):
             with pytest.raises(SystemExit) as exc:
                 cmd_cache_warm_on("sess", "10m", colors)
         assert exc.value.code == 1
@@ -211,7 +211,7 @@ class TestCacheWarmOn:
         own_pid = os.getpid()
         _save_warm_state("sess", {"pid": own_pid, "expiry_time": future, "interval": 240})
 
-        with patch("os.fork", return_value=55), \
+        with patch("os.fork", return_value=55, create=True), \
              patch("os.kill"):  # suppress signal to own pid during off step
             cmd_cache_warm_on("sess", "5m", colors)
 

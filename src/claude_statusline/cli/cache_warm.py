@@ -192,11 +192,14 @@ def cmd_cache_warm_on(session_id: str, duration_str: str | None, colors: object)
 
     # Set SIGCHLD to SIG_IGN before fork so the kernel auto-reaps the child (no zombie).
     # Restore the original handler in the parent afterwards to avoid breaking subprocess calls.
-    old_sigchld = signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+    # signal.SIGCHLD only exists on Unix; guard for portability in test environments.
+    _has_sigchld = hasattr(signal, "SIGCHLD")
+    old_sigchld = signal.signal(signal.SIGCHLD, signal.SIG_IGN) if _has_sigchld else None
     try:
         pid = os.fork()
     except OSError as e:
-        signal.signal(signal.SIGCHLD, old_sigchld)
+        if _has_sigchld:
+            signal.signal(signal.SIGCHLD, old_sigchld)
         sys.stderr.write(f"Error: fork failed: {e}\n")
         sys.exit(1)
 
@@ -209,7 +212,8 @@ def cmd_cache_warm_on(session_id: str, duration_str: str | None, colors: object)
         os._exit(0)
     else:
         # Parent process — restore SIGCHLD handler, persist state, stop old process
-        signal.signal(signal.SIGCHLD, old_sigchld)
+        if _has_sigchld:
+            signal.signal(signal.SIGCHLD, old_sigchld)
         # Persist state first (avoids race window when refreshing)
         _save_warm_state(
             session_id,
