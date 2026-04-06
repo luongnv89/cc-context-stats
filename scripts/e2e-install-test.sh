@@ -52,12 +52,10 @@ assert_cmd_ok() {
     shift
     local output exit_code
     output=$("$@" 2>/dev/null) && exit_code=$? || exit_code=$?
-    if [ $exit_code -eq 0 ] && [ -n "$output" ]; then
+    if [ "$exit_code" -eq 0 ] && [ -n "$output" ]; then
         pass "$label"
-        return 0
     else
         fail "$label (exit=$exit_code, output='${output:0:80}')"
-        return 1
     fi
 }
 
@@ -67,27 +65,24 @@ assert_exits_ok() {
     shift
     local exit_code
     "$@" >/dev/null 2>&1 && exit_code=$? || exit_code=$?
-    if [ $exit_code -eq 0 ]; then
+    if [ "$exit_code" -eq 0 ]; then
         pass "$label"
-        return 0
     else
         fail "$label (exit=$exit_code)"
-        return 1
     fi
 }
 
-# Pipe JSON through a command and assert exit 0 with non-empty output
+# Pipe JSON through a command and assert exit 0 with non-empty output.
+# Usage: assert_statusline_ok "label" cmd [args...]
 assert_statusline_ok() {
     local label="$1"
-    local cmd="$2"
+    shift
     local output exit_code
-    output=$(echo "$STATUSLINE_TEST_JSON" | eval "$cmd" 2>/dev/null) && exit_code=$? || exit_code=$?
-    if [ $exit_code -eq 0 ] && [ -n "$output" ]; then
+    output=$(echo "$STATUSLINE_TEST_JSON" | "$@" 2>/dev/null) && exit_code=$? || exit_code=$?
+    if [ "$exit_code" -eq 0 ] && [ -n "$output" ]; then
         pass "$label"
-        return 0
     else
         fail "$label (exit=$exit_code, output='${output:0:80}')"
-        return 1
     fi
 }
 
@@ -107,18 +102,9 @@ run_nodejs_e2e() {
     fi
     info "node $(node --version), npm $(npm --version)"
 
-    local tmpdir
-    tmpdir=$(mktemp -d)
-    # shellcheck disable=SC2064
-    trap "rm -rf '$tmpdir'" EXIT
-
-    # Copy package files for a local install
-    cp "$PROJECT_ROOT/package.json" "$tmpdir/"
-    cp -r "$PROJECT_ROOT/scripts" "$tmpdir/scripts"
-
     info "Installing from $PROJECT_ROOT via npm pack..."
     local pack_file
-    pack_file=$(cd "$PROJECT_ROOT" && npm pack --quiet 2>/dev/null)
+    pack_file=$(cd "$PROJECT_ROOT" && npm pack --quiet 2>/dev/null | tail -1)
     if [ -z "$pack_file" ]; then
         fail "npm pack failed — cannot perform clean Node.js install test"
         return
@@ -161,7 +147,7 @@ run_nodejs_e2e() {
     fi
 
     # Assert: statusline.js accepts JSON and produces output
-    assert_statusline_ok "statusline.js processes JSON input" "node '$statusline_js'"
+    assert_statusline_ok "statusline.js processes JSON input" node "$statusline_js"
 
     # Assert: context-stats --help exits 0
     local context_stats_sh="$install_dir/node_modules/cc-context-stats/scripts/context-stats.sh"
@@ -236,7 +222,7 @@ run_python_e2e() {
     fi
 
     # Assert: claude-statusline accepts JSON and produces output
-    assert_statusline_ok "claude-statusline processes JSON input" "'$venv_bin/claude-statusline'"
+    assert_statusline_ok "claude-statusline processes JSON input" "$venv_bin/claude-statusline"
 
     # Assert: context-stats --help exits 0 with output
     assert_cmd_ok "context-stats --help exits 0 with output" "$venv_bin/context-stats" --help
@@ -244,7 +230,7 @@ run_python_e2e() {
     # Assert: standalone statusline.py processes JSON
     local statusline_py="$PROJECT_ROOT/scripts/statusline.py"
     if [ -f "$statusline_py" ]; then
-        assert_statusline_ok "scripts/statusline.py processes JSON input" "'$venv_python' '$statusline_py'"
+        assert_statusline_ok "scripts/statusline.py processes JSON input" "$venv_python" "$statusline_py"
     else
         info "scripts/statusline.py not found — skipping standalone script test"
     fi
