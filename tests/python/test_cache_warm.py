@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -11,6 +12,10 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+# Tests that simulate os.fork() behavior are Unix-only — on Windows the
+# cmd_cache_warm_on function exits before reaching the fork code path.
+unix_only = pytest.mark.skipif(sys.platform == "win32", reason="os.fork not available on Windows")
 
 from claude_statusline.cli.cache_warm import (
     _clear_warm_state,
@@ -145,6 +150,7 @@ class TestIsCacheWarmActive:
 # ---------------------------------------------------------------------------
 
 class TestCacheWarmOn:
+    @unix_only
     def test_starts_heartbeat_and_saves_state(self, tmp_path, monkeypatch, capsys):
         monkeypatch.setattr("claude_statusline.cli.cache_warm._STATE_DIR", tmp_path)
         colors = _mock_colors()
@@ -162,6 +168,7 @@ class TestCacheWarmOn:
         assert state["pid"] == fake_pid
         assert state["expiry_time"] > int(time.time())
 
+    @unix_only
     def test_default_duration_is_30m(self, tmp_path, monkeypatch):
         monkeypatch.setattr("claude_statusline.cli.cache_warm._STATE_DIR", tmp_path)
         colors = _mock_colors()
@@ -193,6 +200,7 @@ class TestCacheWarmOn:
         err = capsys.readouterr().err
         assert "unix" in err.lower() or "fork" in err.lower()
 
+    @unix_only
     def test_fork_oserror_exits(self, tmp_path, monkeypatch, capsys):
         monkeypatch.setattr("claude_statusline.cli.cache_warm._STATE_DIR", tmp_path)
         colors = _mock_colors()
@@ -204,6 +212,7 @@ class TestCacheWarmOn:
         err = capsys.readouterr().err
         assert "fork" in err.lower()
 
+    @unix_only
     def test_already_active_refreshes(self, tmp_path, monkeypatch, capsys):
         monkeypatch.setattr("claude_statusline.cli.cache_warm._STATE_DIR", tmp_path)
         colors = _mock_colors()
