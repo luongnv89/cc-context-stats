@@ -5,7 +5,6 @@ Displays ASCII graphs of token consumption over time.
 
 Usage:
     context-stats [session_id] [action] [options]
-    context-stats [action] [session_id] [options]
 
 Actions:
     graph    Live ASCII graphs of context usage (default)
@@ -52,7 +51,6 @@ def show_help() -> None:
 
 USAGE:
     context-stats [session_id] [action] [options]
-    context-stats [action] [session_id] [options]
     context-stats [options]
 
 ARGUMENTS:
@@ -90,27 +88,22 @@ NOTE:
 EXAMPLES:
     # Live monitoring (default, refreshes every 2s)
     context-stats
-    context-stats graph
-
-    # Live monitoring for a specific session
     context-stats abc123def
-    context-stats abc123def graph
 
     # Live monitoring with custom interval
     context-stats -w 5
-    context-stats graph -w 5
+    context-stats abc123def -w 5
 
     # Show graphs once and exit
     context-stats --no-watch
-    context-stats graph --no-watch
+    context-stats abc123def --no-watch
 
     # Show only cumulative graph
     context-stats --type cumulative
-    context-stats graph --type cumulative
+    context-stats abc123def --type cumulative
 
     # Export session stats as markdown
     context-stats export
-    context-stats export abc123def --output report.md
     context-stats abc123def export --output report.md
 
     # Diagnostic dump (pipe Claude Code JSON context)
@@ -132,14 +125,14 @@ _KNOWN_ACTIONS = {"graph", "export", "explain"}
 def _normalize_argv(argv: list[str]) -> tuple[str, str | None, list[str]]:
     """Determine action, session_id, and remaining args from raw argv.
 
-    Supports these calling patterns (all equivalent where applicable):
+    Supports these calling patterns:
       context-stats [options]                     -> action=graph, session=None
       context-stats <session_id> [options]        -> action=graph, session=<session_id>
-      context-stats graph [session_id] [options]  -> action=graph, session=optional
-      context-stats export [session_id] [options] -> action=export, session=optional
-      context-stats explain [options]             -> action=explain, session=None
       context-stats <session_id> graph [options]  -> action=graph, session=<session_id>
       context-stats <session_id> export [options] -> action=export, session=<session_id>
+      context-stats export [options]              -> action=export, session=None
+      context-stats <session_id> explain [options]-> action=explain, session=<session_id>
+      context-stats explain [options]             -> action=explain, session=None
 
     Args:
         argv: sys.argv[1:] (arguments after the program name).
@@ -149,7 +142,6 @@ def _normalize_argv(argv: list[str]) -> tuple[str, str | None, list[str]]:
     """
     # Strip out global flags so they don't interfere with positional detection
     positionals = [a for a in argv if not a.startswith("-")]
-    flags = [a for a in argv if a.startswith("-")]
 
     action = "graph"
     session_id: str | None = None
@@ -159,31 +151,24 @@ def _normalize_argv(argv: list[str]) -> tuple[str, str | None, list[str]]:
         return action, session_id, remaining
 
     first = positionals[0]
+
+    # If first positional is a known action, treat it as action with no session_id
     if first in _KNOWN_ACTIONS:
-        # Pattern: context-stats <action> [session_id] [options]
         action = first
-        remaining = [a for a in argv if a != first or flags.count(a) > 0]
-        # Remove the action from remaining once
-        if first in remaining:
-            remaining = remaining[:]
-            remaining.remove(first)
-        # Check if there's a session_id after the action
-        second_positionals = [a for a in remaining if not a.startswith("-")]
-        if second_positionals:
-            session_id = second_positionals[0]
-            remaining = [a for a in remaining if a != session_id or a.startswith("-")]
-            if session_id in remaining:
-                remaining = remaining[:]
-                remaining.remove(session_id)
-    else:
-        # Pattern: context-stats <session_id> [action] [options]
-        session_id = first
         remaining = remaining[:]
         remaining.remove(first)
-        second_positionals = [a for a in remaining if not a.startswith("-")]
-        if second_positionals and second_positionals[0] in _KNOWN_ACTIONS:
-            action = second_positionals[0]
-            remaining.remove(action)
+        return action, session_id, remaining
+
+    # Otherwise, first positional is session_id
+    session_id = first
+    remaining = remaining[:]
+    remaining.remove(first)
+
+    # Check if the next positional is an action
+    second_positionals = [a for a in remaining if not a.startswith("-")]
+    if second_positionals and second_positionals[0] in _KNOWN_ACTIONS:
+        action = second_positionals[0]
+        remaining.remove(action)
 
     return action, session_id, remaining
 
