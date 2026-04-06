@@ -3,7 +3,7 @@
 ## Generate
 
 ```bash
-context-stats export 6e551372-2428-4ed6-9346-ec3b605952ff --output report.md
+context-stats 6e551372-2428-4ed6-9346-ec3b605952ff export --output report.md
 ```
 
 ## Executive Snapshot

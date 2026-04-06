@@ -135,16 +135,18 @@ Reads from `~/.claude/statusline/statusline.<session_id>.state` files, automatic
 ## CLI Reference
 
 ```
-context-stats [session_id] [options]
+context-stats <session_id> <action> [options]
 
 ARGUMENTS:
-    session_id    Optional session ID. If not provided, uses the latest session.
+    session_id    Required. The session ID to operate on.
+    action        Required. The action to perform: graph, export, or explain.
 
-COMMANDS:
+ACTIONS:
+    graph         Show live ASCII graphs of context usage
     export        Export session stats as a markdown report
-                   context-stats export [session_id] [--output FILE]
+    explain       Diagnostic dump of Claude Code's JSON context (reads from stdin)
 
-OPTIONS:
+GRAPH OPTIONS:
     --type <type>  Graph type to display:
                    - delta: Context growth per interaction (default)
                    - cumulative: Total context usage over time
@@ -156,12 +158,25 @@ OPTIONS:
                    - all: Show all graphs including I/O, cache, and MI
     -w [interval]  Set refresh interval in seconds (default: 2)
     --no-watch     Show graphs once and exit (disable live monitoring)
+
+EXPORT OPTIONS:
+    --output FILE  Output file path (default: context-stats-<session>.md)
+
+GLOBAL OPTIONS:
     --no-color     Disable color output
     --help         Show help message
+    --version, -V  Show version and exit
+
+EXAMPLES:
+    context-stats abc123def graph
+    context-stats abc123def graph --type cumulative
+    context-stats abc123def graph -w 5
+    context-stats abc123def export --output report.md
+    echo '{"model":...}' | context-stats explain
 ```
 
 The export report includes a summary table, timestamp-based Mermaid trend charts, a zone distribution pie chart, and a final context composition pie chart.
 Each chart includes a short explanation so the reader knows what to look for.
-The report begins with a copyable `context-stats export <session_id> --output report.md` command and an executive snapshot that folds the header metadata into one compact table so the report can be regenerated and scanned quickly.
+The report begins with a copyable `context-stats <session_id> export --output report.md` command and an executive snapshot that folds the header metadata into one compact table so the report can be regenerated and scanned quickly.
 It also adds a Key Takeaways section and samples the cache activity line chart every 10 minutes when cache data is present.
 The charts use distinct colors and a manual legend because Mermaid xychart does not render a legend automatically.
