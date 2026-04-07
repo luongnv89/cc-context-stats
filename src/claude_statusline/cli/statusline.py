@@ -58,7 +58,9 @@ def main() -> None:
     # Git info (use per-property branch color if set, else fallback to magenta)
     branch_color = colors.branch_name
     # Build a color manager with branch_name mapped to magenta slot for git_info
-    git_colors = ColorManager(enabled=True, overrides={**config.color_overrides, "magenta": branch_color})
+    git_colors = ColorManager(
+        enabled=True, overrides={**config.color_overrides, "magenta": branch_color}
+    )
     git_info = get_git_info(project_dir, color_manager=git_colors)
 
     # Extract session_id once for reuse
@@ -181,9 +183,7 @@ def main() -> None:
                     get_mi_color,
                 )
 
-                mi_score = calculate_intelligence(
-                    entry, total_size, model_id, config.mi_curve_beta
-                )
+                mi_score = calculate_intelligence(entry, total_size, model_id, config.mi_curve_beta)
                 mi_color_name = get_mi_color(mi_score.mi, mi_score.utilization)
                 mi_color = getattr(colors, mi_color_name)
                 # Use per-property mi_score color if configured, else MI-based color

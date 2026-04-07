@@ -395,8 +395,7 @@ class GraphRenderer:
                 if ttl_remaining > 0:
                     ttl_text = format_duration(ttl_remaining, precise=True)
                     self._emit(
-                        f"  {self.colors.yellow}{'Cache TTL:':<20}"
-                        f"{self.colors.reset} {ttl_text}"
+                        f"  {self.colors.yellow}{'Cache TTL:':<20}{self.colors.reset} {ttl_text}"
                     )
                 else:
                     self._emit(
@@ -430,9 +429,7 @@ class GraphRenderer:
                     f"active ({warm_time} remaining)"
                 )
             else:
-                self._emit(
-                    f"  {self.colors.dim}{'Cache Warm:':<20}{self.colors.reset} inactive"
-                )
+                self._emit(f"  {self.colors.dim}{'Cache Warm:':<20}{self.colors.reset} inactive")
         self._emit()
 
     def render_footer(self, version: str = "1.6.1", commit_hash: str = "dev") -> None:

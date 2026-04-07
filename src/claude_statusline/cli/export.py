@@ -10,8 +10,8 @@ markdown file with per-interaction token usage, MI scores, and trends.
 from __future__ import annotations
 
 import argparse
-from collections import Counter
 import sys
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
@@ -45,7 +45,8 @@ def _parse_export_args(argv: list[str]) -> argparse.Namespace:
         help="Session ID (default: latest session)",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         default=None,
         help="Output file path (default: context-stats-<session>.md)",
     )
@@ -104,7 +105,9 @@ def _format_chart_timestamp(ts: int) -> str:
         return str(ts)
 
 
-def _sample_entries_by_window(entries: list, window_minutes: int = 5, max_points: int = 12) -> list[tuple[str, object]]:
+def _sample_entries_by_window(
+    entries: list, window_minutes: int = 5, max_points: int = 12
+) -> list[tuple[str, object]]:
     """Downsample entries so Mermaid charts stay readable on long sessions.
 
     Keep at most one point per time window, then trim again if the chart is
@@ -114,7 +117,9 @@ def _sample_entries_by_window(entries: list, window_minutes: int = 5, max_points
         return []
 
     window_seconds = max(1, window_minutes) * 60
-    sampled: list[tuple[str, object]] = [(_format_chart_timestamp(entries[0].timestamp), entries[0])]
+    sampled: list[tuple[str, object]] = [
+        (_format_chart_timestamp(entries[0].timestamp), entries[0])
+    ]
     last_kept_ts = entries[0].timestamp
 
     for entry in entries[1:-1]:
@@ -184,7 +189,9 @@ def _generate_mermaid_trend_chart(entries: list, context_window: int) -> list[st
 
 def _generate_mermaid_zone_chart(entries: list, context_window: int) -> list[str]:
     """Generate a Mermaid pie chart showing how often each zone appears."""
-    zone_counts = Counter(get_context_zone(entry.current_used_tokens, context_window).label for entry in entries)
+    zone_counts = Counter(
+        get_context_zone(entry.current_used_tokens, context_window).label for entry in entries
+    )
 
     lines = [
         "### Zone Distribution",
@@ -263,7 +270,15 @@ def _generate_mermaid_cache_chart(entries: list) -> list[str]:
     ]
 
 
-def _generate_key_takeaways(entries: list, last_entry, ctx_window: int, final_used: int, final_pct: float, zone_label: str, duration: int) -> list[str]:
+def _generate_key_takeaways(
+    entries: list,
+    last_entry,
+    ctx_window: int,
+    final_used: int,
+    final_pct: float,
+    zone_label: str,
+    duration: int,
+) -> list[str]:
     """Generate a compact bullet list of the main insights from the session."""
     prev_used = 0
     max_delta = 0
@@ -276,7 +291,9 @@ def _generate_key_takeaways(entries: list, last_entry, ctx_window: int, final_us
             max_delta_idx = i
         prev_used = ctx_used
 
-    zones = Counter(get_context_zone(entry.current_used_tokens, ctx_window).label for entry in entries)
+    zones = Counter(
+        get_context_zone(entry.current_used_tokens, ctx_window).label for entry in entries
+    )
     dominant_zone, dominant_zone_count = zones.most_common(1)[0]
     cache_total = last_entry.cache_creation + last_entry.cache_read
     cache_ratio = (cache_total / final_used * 100) if final_used > 0 else 0
@@ -295,14 +312,30 @@ def _generate_key_takeaways(entries: list, last_entry, ctx_window: int, final_us
             f"- **Cache load:** {format_tokens(cache_total)} tokens in cache activity ({cache_ratio:.1f}% of the final used context)."
         )
         if last_entry.cache_creation >= last_entry.cache_read:
-            takeaways.append("- **Cache pattern:** more cache creation than cache reads, so the session leaned toward new cache material.")
+            takeaways.append(
+                "- **Cache pattern:** more cache creation than cache reads, so the session leaned toward new cache material."
+            )
         else:
-            takeaways.append("- **Cache pattern:** cache reads outweighed creation, so the session reused prior work heavily.")
+            takeaways.append(
+                "- **Cache pattern:** cache reads outweighed creation, so the session reused prior work heavily."
+            )
 
     return takeaways
 
 
-def _generate_exec_snapshot(session_id: str, project_name: str, last_entry, ctx_window: int, final_used: int, final_pct: float, zone_label: str, duration: int, start_time: str, end_time: str, interactions: int) -> list[str]:
+def _generate_exec_snapshot(
+    session_id: str,
+    project_name: str,
+    last_entry,
+    ctx_window: int,
+    final_used: int,
+    final_pct: float,
+    zone_label: str,
+    duration: int,
+    start_time: str,
+    end_time: str,
+    interactions: int,
+) -> list[str]:
     """Generate a compact executive snapshot for the top of the report."""
     cache_total = last_entry.cache_creation + last_entry.cache_read
     cache_pct = (cache_total / final_used * 100) if final_used > 0 else 0
@@ -324,7 +357,9 @@ def _generate_exec_snapshot(session_id: str, project_name: str, last_entry, ctx_
     ]
 
     if cache_total > 0:
-        lines.append(f"| **Cache activity** | **{format_tokens(cache_total)}** ({cache_pct:.1f}%) | Explains how much of the final context is cache-related. |")
+        lines.append(
+            f"| **Cache activity** | **{format_tokens(cache_total)}** ({cache_pct:.1f}%) | Explains how much of the final context is cache-related. |"
+        )
 
     lines.append("")
     return lines
@@ -356,7 +391,7 @@ def _generate_markdown(entries: list, session_id: str, config: Config) -> str:
     else:
         project_name = "Unknown"
 
-    lines.append(f"# Context Stats Report")
+    lines.append("# Context Stats Report")
     lines.append("")
 
     ctx_window = last.context_window_size
@@ -373,15 +408,27 @@ def _generate_markdown(entries: list, session_id: str, config: Config) -> str:
     lines.append("```")
     lines.append("")
 
-    exec_snapshot = _generate_exec_snapshot(session_id, project_name, last, ctx_window, final_used, final_pct, zone.label, duration, start_time, end_time, len(entries))
+    exec_snapshot = _generate_exec_snapshot(
+        session_id,
+        project_name,
+        last,
+        ctx_window,
+        final_used,
+        final_pct,
+        zone.label,
+        duration,
+        start_time,
+        end_time,
+        len(entries),
+    )
     lines.extend(exec_snapshot)
 
     # --- Summary ---
     lines.append("## Summary")
     lines.append("")
 
-    lines.append(f"| Metric | Value |")
-    lines.append(f"|--------|-------|")
+    lines.append("| Metric | Value |")
+    lines.append("|--------|-------|")
     lines.append(f"| Context window | {format_tokens(ctx_window)} tokens |")
     lines.append(f"| Final usage | {format_tokens(final_used)} ({final_pct:.1f}%) |")
     lines.append(f"| Total input tokens | {format_tokens(last.total_input_tokens)} |")
@@ -405,7 +452,11 @@ def _generate_markdown(entries: list, session_id: str, config: Config) -> str:
     # --- Key Takeaways ---
     lines.append("## Key Takeaways")
     lines.append("")
-    lines.extend(_generate_key_takeaways(entries, last, ctx_window, final_used, final_pct, zone.label, duration))
+    lines.extend(
+        _generate_key_takeaways(
+            entries, last, ctx_window, final_used, final_pct, zone.label, duration
+        )
+    )
     lines.append("")
 
     # --- Mermaid Visual Summary ---
@@ -427,7 +478,9 @@ def _generate_markdown(entries: list, session_id: str, config: Config) -> str:
     for i, entry in enumerate(entries, 1):
         time_str = _format_time(entry.timestamp)
         ctx_used = entry.current_used_tokens
-        ctx_pct = (ctx_used / entry.context_window_size * 100) if entry.context_window_size > 0 else 0
+        ctx_pct = (
+            (ctx_used / entry.context_window_size * 100) if entry.context_window_size > 0 else 0
+        )
         mi_score = calculate_intelligence(entry, entry.context_window_size, entry.model_id, beta)
         zone_info = get_context_zone(ctx_used, entry.context_window_size)
 
@@ -461,9 +514,13 @@ def _generate_markdown(entries: list, session_id: str, config: Config) -> str:
 
     lines.append(f"- **Starting context:** {format_tokens(entries[0].current_used_tokens)} tokens")
     lines.append(f"- **Final context:** {format_tokens(last.current_used_tokens)} tokens")
-    lines.append(f"- **Total growth:** {format_tokens(last.current_used_tokens - entries[0].current_used_tokens)} tokens")
+    lines.append(
+        f"- **Total growth:** {format_tokens(last.current_used_tokens - entries[0].current_used_tokens)} tokens"
+    )
     if max_delta > 0 and max_delta_idx < len(entries):
-        lines.append(f"- **Largest single jump:** {format_tokens(max_delta)} tokens (interaction #{max_delta_idx + 1})")
+        lines.append(
+            f"- **Largest single jump:** {format_tokens(max_delta)} tokens (interaction #{max_delta_idx + 1})"
+        )
     lines.append("")
 
     # --- Token Breakdown ---
@@ -485,7 +542,9 @@ def _generate_markdown(entries: list, session_id: str, config: Config) -> str:
 
     # --- Footer ---
     lines.append("---")
-    lines.append(f"*Generated by [cc-context-stats](https://github.com/luongnv89/cc-context-stats) v{__version__}*")
+    lines.append(
+        f"*Generated by [cc-context-stats](https://github.com/luongnv89/cc-context-stats) v{__version__}*"
+    )
     lines.append("")
 
     return "\n".join(lines)

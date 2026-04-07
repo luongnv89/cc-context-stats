@@ -47,9 +47,7 @@ def _render_summary_output(entries, deltas=None, graph_type=None):
         ),
     )
     renderer.begin_buffering()
-    renderer.render_summary(
-        entries, deltas if deltas is not None else [], graph_type=graph_type
-    )
+    renderer.render_summary(entries, deltas if deltas is not None else [], graph_type=graph_type)
     return renderer.get_buffer()
 
 
@@ -205,15 +203,11 @@ class TestStateEntryProperties:
         assert entry.total_tokens == 83500
 
     def test_current_used_tokens(self):
-        entry = _make_entry(
-            current_input_tokens=50000, cache_creation=10000, cache_read=20000
-        )
+        entry = _make_entry(current_input_tokens=50000, cache_creation=10000, cache_read=20000)
         assert entry.current_used_tokens == 80000
 
     def test_current_used_tokens_all_zero(self):
-        entry = _make_entry(
-            current_input_tokens=0, cache_creation=0, cache_read=0
-        )
+        entry = _make_entry(current_input_tokens=0, cache_creation=0, cache_read=0)
         assert entry.current_used_tokens == 0
 
 
@@ -359,10 +353,14 @@ class TestZoneThresholds:
     """
 
     def test_zero_usage_smart_zone(self):
-        entries = [_make_entry(
-            current_input_tokens=0, cache_creation=0, cache_read=0,
-            context_window_size=200000,
-        )]
+        entries = [
+            _make_entry(
+                current_input_tokens=0,
+                cache_creation=0,
+                cache_read=0,
+                context_window_size=200000,
+            )
+        ]
         output = _render_summary_output(entries)
         assert "SMART ZONE" in output
         assert "DUMB ZONE" not in output
@@ -370,20 +368,28 @@ class TestZoneThresholds:
 
     def test_usage_39_pct_smart_zone(self):
         # current_used=78000, remaining=122000, remaining%=61, usage%=39
-        entries = [_make_entry(
-            current_input_tokens=78000, cache_creation=0, cache_read=0,
-            context_window_size=200000,
-        )]
+        entries = [
+            _make_entry(
+                current_input_tokens=78000,
+                cache_creation=0,
+                cache_read=0,
+                context_window_size=200000,
+            )
+        ]
         output = _render_summary_output(entries)
         assert "SMART ZONE" in output
         assert "DUMB ZONE" not in output
 
     def test_usage_40_pct_dumb_zone(self):
         # current_used=78001, remaining=121999, remaining%=60, usage%=40
-        entries = [_make_entry(
-            current_input_tokens=78001, cache_creation=0, cache_read=0,
-            context_window_size=200000,
-        )]
+        entries = [
+            _make_entry(
+                current_input_tokens=78001,
+                cache_creation=0,
+                cache_read=0,
+                context_window_size=200000,
+            )
+        ]
         output = _render_summary_output(entries)
         assert "DUMB ZONE" in output
         assert "SMART ZONE" not in output
@@ -391,48 +397,68 @@ class TestZoneThresholds:
 
     def test_usage_79_pct_dumb_zone(self):
         # current_used=158000, remaining=42000, remaining%=21, usage%=79
-        entries = [_make_entry(
-            current_input_tokens=158000, cache_creation=0, cache_read=0,
-            context_window_size=200000,
-        )]
+        entries = [
+            _make_entry(
+                current_input_tokens=158000,
+                cache_creation=0,
+                cache_read=0,
+                context_window_size=200000,
+            )
+        ]
         output = _render_summary_output(entries)
         assert "DUMB ZONE" in output
         assert "WRAP UP ZONE" not in output
 
     def test_usage_80_pct_wrap_up_zone(self):
         # current_used=158001, remaining=41999, remaining%=20, usage%=80
-        entries = [_make_entry(
-            current_input_tokens=158001, cache_creation=0, cache_read=0,
-            context_window_size=200000,
-        )]
+        entries = [
+            _make_entry(
+                current_input_tokens=158001,
+                cache_creation=0,
+                cache_read=0,
+                context_window_size=200000,
+            )
+        ]
         output = _render_summary_output(entries)
         assert "WRAP UP ZONE" in output
         assert "DUMB ZONE" not in output
 
     def test_usage_100_pct_wrap_up_zone(self):
-        entries = [_make_entry(
-            current_input_tokens=200000, cache_creation=0, cache_read=0,
-            context_window_size=200000,
-        )]
+        entries = [
+            _make_entry(
+                current_input_tokens=200000,
+                cache_creation=0,
+                cache_read=0,
+                context_window_size=200000,
+            )
+        ]
         output = _render_summary_output(entries)
         assert "WRAP UP ZONE" in output
 
     def test_usage_exceeds_context_window(self):
         """Remaining clamped to 0 when usage exceeds window."""
-        entries = [_make_entry(
-            current_input_tokens=250000, cache_creation=0, cache_read=0,
-            context_window_size=200000,
-        )]
+        entries = [
+            _make_entry(
+                current_input_tokens=250000,
+                cache_creation=0,
+                cache_read=0,
+                context_window_size=200000,
+            )
+        ]
         output = _render_summary_output(entries)
         assert "WRAP UP ZONE" in output
 
     def test_cache_tokens_contribute_to_usage(self):
         """cache_creation + cache_read push usage past 40% boundary."""
         # current_used = 40000 + 20000 + 18001 = 78001 → usage=40% → Dumb Zone
-        entries = [_make_entry(
-            current_input_tokens=40000, cache_creation=20000, cache_read=18001,
-            context_window_size=200000,
-        )]
+        entries = [
+            _make_entry(
+                current_input_tokens=40000,
+                cache_creation=20000,
+                cache_read=18001,
+                context_window_size=200000,
+            )
+        ]
         output = _render_summary_output(entries)
         assert "DUMB ZONE" in output
         assert "SMART ZONE" not in output

@@ -13,9 +13,6 @@ import pytest
 
 from claude_statusline.core.state import StateEntry
 from claude_statusline.graphs.intelligence import (
-    MI_GREEN_THRESHOLD,
-    MI_YELLOW_THRESHOLD,
-    MODEL_PROFILES,
     calculate_context_pressure,
     calculate_intelligence,
 )
@@ -98,8 +95,7 @@ class TestMIFormulaMonotonicity:
             mi = calculate_context_pressure(u, beta=beta)
             if prev_mi is not None:
                 assert mi <= prev_mi, (
-                    f"MI not monotonic at {pct}% with beta={beta}: "
-                    f"{mi:.4f} > {prev_mi:.4f}"
+                    f"MI not monotonic at {pct}% with beta={beta}: {mi:.4f} > {prev_mi:.4f}"
                 )
             prev_mi = mi
 
@@ -146,8 +142,7 @@ class TestPerModelMonotonicity:
 
             if prev_mi is not None:
                 assert score.mi <= prev_mi + 1e-9, (
-                    f"MI increased at {pct}% for {model_family}: "
-                    f"{score.mi:.6f} > {prev_mi:.6f}"
+                    f"MI increased at {pct}% for {model_family}: {score.mi:.6f} > {prev_mi:.6f}"
                 )
             prev_mi = score.mi
 
@@ -179,9 +174,7 @@ class TestMIFineGrained:
             u = pct / 100.0
             mi = calculate_context_pressure(u)
             if prev_mi is not None:
-                assert mi <= prev_mi + 1e-9, (
-                    f"MI increased at {pct}%: {mi:.6f} > {prev_mi:.6f}"
-                )
+                assert mi <= prev_mi + 1e-9, f"MI increased at {pct}%: {mi:.6f} > {prev_mi:.6f}"
             prev_mi = mi
 
 

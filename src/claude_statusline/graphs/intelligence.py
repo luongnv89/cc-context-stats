@@ -28,31 +28,31 @@ MI_GREEN_THRESHOLD = 0.90
 MI_YELLOW_THRESHOLD = 0.80
 # Context utilization zones (used as fallback for color decisions)
 MI_CONTEXT_YELLOW_THRESHOLD = 0.40  # 40% context used
-MI_CONTEXT_RED_THRESHOLD = 0.80     # 80% context used
+MI_CONTEXT_RED_THRESHOLD = 0.80  # 80% context used
 
 # 1M model detection threshold (context windows >= 500k are treated as 1M-class)
 LARGE_MODEL_THRESHOLD = 500_000
 
 # Zone thresholds for 1M models (token counts)
-ZONE_1M_P_MAX = 70_000    # P zone: < 70k used
-ZONE_1M_C_MAX = 100_000   # C zone: 70k–100k used
-ZONE_1M_D_MAX = 250_000   # D zone: 100k–250k used
-ZONE_1M_X_MAX = 275_000   # X zone: 250k–275k used; Z zone: >= 275k
+ZONE_1M_P_MAX = 70_000  # P zone: < 70k used
+ZONE_1M_C_MAX = 100_000  # C zone: 70k–100k used
+ZONE_1M_D_MAX = 250_000  # D zone: 100k–250k used
+ZONE_1M_X_MAX = 275_000  # X zone: 250k–275k used; Z zone: >= 275k
 
 # Zone thresholds for standard models (< 1M) — expressed as utilization ratios
-ZONE_STD_DUMP_ZONE = 0.40    # dump zone starts at 40%
+ZONE_STD_DUMP_ZONE = 0.40  # dump zone starts at 40%
 ZONE_STD_WARN_BUFFER = 30_000  # warn 30k tokens before dump zone
-ZONE_STD_HARD_LIMIT = 0.70   # hard limit at 70%
-ZONE_STD_DEAD_ZONE = 0.75    # dead zone starts at 75%
+ZONE_STD_HARD_LIMIT = 0.70  # hard limit at 70%
+ZONE_STD_DEAD_ZONE = 0.75  # dead zone starts at 75%
 
 # Per-model degradation profiles calibrated from MRCR v2 8-needle benchmark
 # beta controls curve shape: higher = quality retained longer
 # All models drop from 1.0 to 0.0, but at different rates
 MODEL_PROFILES: dict[str, float] = {
-    "opus": 1.8,    # retains quality longest, steep drop near end
+    "opus": 1.8,  # retains quality longest, steep drop near end
     "sonnet": 1.5,  # moderate degradation
-    "haiku": 1.2,   # degrades earliest
-    "default": 1.5, # same as sonnet
+    "haiku": 1.2,  # degrades earliest
+    "default": 1.5,  # same as sonnet
 }
 
 
@@ -60,9 +60,9 @@ MODEL_PROFILES: dict[str, float] = {
 class ZoneInfo:
     """Context zone indicator with color."""
 
-    zone: str      # "Plan", "Code", "Dump", "ExDump", or "Dead"
-    color: str     # "green", "yellow", "orange", "dark_red", or "gray"
-    label: str     # Human-readable label
+    zone: str  # "Plan", "Code", "Dump", "ExDump", or "Dead"
+    color: str  # "green", "yellow", "orange", "dark_red", or "gray"
+    label: str  # Human-readable label
 
 
 @dataclass

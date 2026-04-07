@@ -34,7 +34,8 @@ def _parse_report_args(argv: list[str]) -> argparse.Namespace:
         description="Generate comprehensive token usage analytics",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         default=None,
         help="Output file path (default: context-stats-report-<timestamp>.md)",
     )
@@ -96,7 +97,9 @@ def generate_report(projects_stats: list) -> str:
 
     lines.append("## Grand Totals")
     lines.append("")
-    lines.append(f"- **Total Tokens**: {format_tokens(total_input + total_output + total_cache_creation + total_cache_read)}")
+    lines.append(
+        f"- **Total Tokens**: {format_tokens(total_input + total_output + total_cache_creation + total_cache_read)}"
+    )
     lines.append(f"  - Input: {format_tokens(total_input)}")
     lines.append(f"  - Output: {format_tokens(total_output)}")
     lines.append(f"  - Cache Creation: {format_tokens(total_cache_creation)}")
@@ -141,7 +144,9 @@ def generate_report(projects_stats: list) -> str:
                 lines.append(f"- **{session.session_id[:8]}...** ({session.model_id})")
                 lines.append(f"  - Tokens: {tokens} | Cost: ${session.cost_usd:.2f}")
                 lines.append(f"  - Duration: {duration} | Started: {start}")
-                lines.append(f"  - Details: {format_tokens(session.total_input_tokens)} input, {format_tokens(session.total_output_tokens)} output, {format_tokens(session.total_cache_creation)} cache_create, {format_tokens(session.total_cache_read)} cache_read")
+                lines.append(
+                    f"  - Details: {format_tokens(session.total_input_tokens)} input, {format_tokens(session.total_output_tokens)} output, {format_tokens(session.total_cache_creation)} cache_create, {format_tokens(session.total_cache_read)} cache_read"
+                )
 
             lines.append("")
 

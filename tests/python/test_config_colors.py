@@ -115,9 +115,7 @@ class TestConfigDefaultRoundTrip:
         content = config_file.read_text(encoding="utf-8")
 
         # Template must have autocompact=false as default (matching examples/statusline.conf)
-        assert "autocompact=false" in content, (
-            "Default config should set autocompact=false"
-        )
+        assert "autocompact=false" in content, "Default config should set autocompact=false"
 
     def test_default_config_contains_expected_keys(self, tmp_path):
         """Verify the generated config has all documented settings."""
@@ -125,8 +123,14 @@ class TestConfigDefaultRoundTrip:
         Config.load(config_path=config_file)
         content = config_file.read_text(encoding="utf-8")
 
-        for key in ("autocompact=", "token_detail=", "show_delta=",
-                     "show_session=", "show_mi=", "mi_curve_beta="):
+        for key in (
+            "autocompact=",
+            "token_detail=",
+            "show_delta=",
+            "show_session=",
+            "show_mi=",
+            "mi_curve_beta=",
+        ):
             assert key in content, f"Default config should contain '{key}'"
 
     def test_existing_config_not_overwritten(self, tmp_path):
@@ -148,9 +152,7 @@ class TestPackageDataTemplateSync:
         """data/statusline.conf.default must match examples/statusline.conf exactly."""
         repo_root = Path(__file__).resolve().parents[2]
         example_file = repo_root / "examples" / "statusline.conf"
-        assert example_file.exists(), (
-            f"examples/statusline.conf not found at {example_file}"
-        )
+        assert example_file.exists(), f"examples/statusline.conf not found at {example_file}"
         package_data_file = (
             repo_root / "src" / "claude_statusline" / "data" / "statusline.conf.default"
         )

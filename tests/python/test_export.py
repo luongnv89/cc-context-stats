@@ -4,8 +4,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 from claude_statusline.cli.export import (
     _format_datetime,
     _format_duration,
@@ -153,7 +151,11 @@ class TestGenerateMarkdown:
         assert "## Interaction Timeline" in md
         assert "| # | Time |" in md
         # Should have 3 rows in the timeline (8 columns per row)
-        lines = [l for l in md.split("\n") if l.startswith("| ") and l[2:3].isdigit() and l.count("|") >= 8]
+        lines = [
+            l
+            for l in md.split("\n")
+            if l.startswith("| ") and l[2:3].isdigit() and l.count("|") >= 8
+        ]
         assert len(lines) == 3
 
     def test_context_growth_section(self):

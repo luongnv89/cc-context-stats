@@ -261,8 +261,7 @@ class TestSharedVectors:
             )
 
             assert score.mi == pytest.approx(exp["mi"], abs=0.01), (
-                f"MI mismatch for '{vec['description']}': "
-                f"got {score.mi:.4f}, expected {exp['mi']}"
+                f"MI mismatch for '{vec['description']}': got {score.mi:.4f}, expected {exp['mi']}"
             )
             assert score.utilization == pytest.approx(exp["utilization"], abs=0.01), (
                 f"Utilization mismatch for '{vec['description']}': "

@@ -20,7 +20,7 @@ from pathlib import Path
 
 # Default heartbeat settings
 DEFAULT_DURATION = 30 * 60  # 30 minutes
-DEFAULT_INTERVAL = 4 * 60   # 4 minutes (under 5-min cache TTL)
+DEFAULT_INTERVAL = 4 * 60  # 4 minutes (under 5-min cache TTL)
 
 # State file path template: ~/.claude/statusline/cache-warm.<session_id>.json
 _STATE_DIR = Path.home() / ".claude" / "statusline"
@@ -184,9 +184,7 @@ def cmd_cache_warm_on(session_id: str, duration_str: str | None, colors: object)
 
     # Fork a background process for the heartbeat loop
     if not hasattr(os, "fork"):
-        sys.stderr.write(
-            "Error: cache-warm requires a Unix-like OS (fork not available).\n"
-        )
+        sys.stderr.write("Error: cache-warm requires a Unix-like OS (fork not available).\n")
         sys.exit(1)
 
     # Set SIGCHLD to SIG_IGN before fork so the kernel auto-reaps the child (no zombie).
@@ -311,7 +309,6 @@ def run_cache_warm(session_id: str, argv: list[str], colors: object) -> None:
 
     else:
         sys.stderr.write(
-            f"Error: Unknown cache-warm subcommand '{subcmd}'. "
-            "Use 'on [duration]' or 'off'.\n"
+            f"Error: Unknown cache-warm subcommand '{subcmd}'. Use 'on [duration]' or 'off'.\n"
         )
         sys.exit(1)

@@ -181,7 +181,9 @@ def _normalize_argv(argv: list[str]) -> tuple[str, str, list[str]]:
     action = positionals[1]
 
     if action not in _KNOWN_ACTIONS:
-        sys.stderr.write(f"Error: Unknown action '{action}'. Valid actions: {', '.join(sorted(_KNOWN_ACTIONS))}\n")
+        sys.stderr.write(
+            f"Error: Unknown action '{action}'. Valid actions: {', '.join(sorted(_KNOWN_ACTIONS))}\n"
+        )
         sys.exit(1)
 
     # Build remaining args: remove session_id and action from argv
@@ -207,8 +209,12 @@ def _build_graph_parser() -> argparse.ArgumentParser:
         help="Graph type (default: delta)",
     )
     parser.add_argument(
-        "--watch", "-w",
-        nargs="?", const=2, type=int, default=2,
+        "--watch",
+        "-w",
+        nargs="?",
+        const=2,
+        type=int,
+        default=2,
         help="Refresh interval in seconds (default: 2)",
     )
     parser.add_argument(
@@ -222,7 +228,8 @@ def _build_graph_parser() -> argparse.ArgumentParser:
         help="Disable color output",
     )
     parser.add_argument(
-        "--help", "-h",
+        "--help",
+        "-h",
         action="store_true",
         help="Show help for graph action",
     )
@@ -409,9 +416,7 @@ def render_once(
             mi_scores = []
             for entry in entries:
                 ctx_window = entry.context_window_size
-                score = calculate_intelligence(
-                    entry, ctx_window, entry.model_id, beta
-                )
+                score = calculate_intelligence(entry, ctx_window, entry.model_id, beta)
                 mi_scores.append(score)
 
             mi_score = mi_scores[-1]
@@ -428,18 +433,23 @@ def render_once(
         else:
             # Only compute MI for last entry (for summary display)
             last = entries[-1]
-            mi_score = calculate_intelligence(
-                last, last.context_window_size, last.model_id, beta
-            )
+            mi_score = calculate_intelligence(last, last.context_window_size, last.model_id, beta)
 
     # Summary and footer
     from claude_statusline.cli.cache_warm import _warm_state_path, is_cache_warm_active
 
     session_id = state_file.session_id or ""
     # Only show cache-warm status when a state file exists for this session
-    cache_warm_status = is_cache_warm_active(session_id) if session_id and _warm_state_path(session_id).exists() else None
+    cache_warm_status = (
+        is_cache_warm_active(session_id)
+        if session_id and _warm_state_path(session_id).exists()
+        else None
+    )
     renderer.render_summary(
-        entries, deltas, mi_score=mi_score, graph_type=graph_type,
+        entries,
+        deltas,
+        mi_score=mi_score,
+        graph_type=graph_type,
         cache_warm_status=cache_warm_status,
     )
     renderer.render_footer(__version__)

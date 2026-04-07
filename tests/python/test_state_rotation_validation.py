@@ -8,7 +8,6 @@ import pytest
 
 from claude_statusline.core.state import StateFile, _validate_session_id
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -215,7 +214,13 @@ class TestCliSessionIdRejection:
 
     def test_cli_rejects_path_traversal(self):
         result = subprocess.run(
-            [sys.executable, "-m", "claude_statusline.cli.context_stats", "../../etc/passwd", "graph"],
+            [
+                sys.executable,
+                "-m",
+                "claude_statusline.cli.context_stats",
+                "../../etc/passwd",
+                "graph",
+            ],
             capture_output=True,
             text=True,
         )
