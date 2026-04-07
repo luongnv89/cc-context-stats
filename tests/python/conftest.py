@@ -36,7 +36,12 @@ def pytest_sessionfinish(session, exitstatus):
             stats = terminal.stats
             n_failed = len(stats.get("failed", []))
             n_error = len(stats.get("error", []))
+            sys.stderr.write(
+                f"[conftest] exitstatus={exitstatus} testsfailed={session.testsfailed} "
+                f"n_failed={n_failed} n_error={n_error} collected={session.testscollected}\n"
+            )
             if n_failed == 0 and n_error == 0 and session.testscollected > 0:
+                sys.stderr.write("[conftest] Forcing exit code 0 on Windows\n")
                 session.exitstatus = 0
 
 # Get the project root directory
