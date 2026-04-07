@@ -1,25 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 72" width="360" height="72">
-  <!-- Black version for light backgrounds — no background rectangle -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 72" width="320" height="72">
+  <!-- Black version — no background, for use on light backgrounds -->
 
-  <!-- Mark: MI degradation curve (descending) -->
-  <g transform="translate(8, 4)">
-    <path d="M 10 14 C 14 14, 18 15, 22 17 C 26 19, 30 24, 34 30 C 38 36, 42 43, 46 47 C 50 51, 52 52, 54 53"
-          stroke="#1A1A1A" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M 10 18 C 14 18, 18 19, 22 21 C 26 23, 30 28, 34 34 C 38 40, 42 47, 46 51 C 50 54, 52 55, 54 56"
-          stroke="#1A1A1A" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.25"/>
-    <circle cx="34" cy="30" r="3.5" fill="#1A1A1A"/>
-    <circle cx="34" cy="30" r="6" fill="#1A1A1A" opacity="0.12"/>
-    <circle cx="10" cy="14" r="2" fill="#1A1A1A" opacity="0.5"/>
-    <line x1="10" y1="56" x2="54" y2="56" stroke="#1A1A1A" stroke-width="1" stroke-linecap="round" opacity="0.25"/>
+  <!-- Mark -->
+  <g transform="translate(4, 4)">
+    <!-- Origin dot -->
+    <circle cx="14" cy="50" r="3" fill="#0F172A"/>
+    <circle cx="14" cy="50" r="5.5" fill="#0F172A" opacity="0.10"/>
+
+    <!-- Arc 1 — Live -->
+    <path d="M 14 50 C 14 38, 24 28, 36 28"
+          stroke="#0F172A" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+    <!-- Arc 2 — Session -->
+    <path d="M 14 50 C 14 30, 28 14, 46 14"
+          stroke="#0F172A" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.65"/>
+
+    <!-- Arc 3 — Report -->
+    <path d="M 14 50 C 14 22, 34 6, 56 6"
+          stroke="#0F172A" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.4"/>
+
+    <!-- Terminal dots -->
+    <circle cx="36" cy="28" r="2" fill="#0F172A" opacity="0.5"/>
+    <circle cx="46" cy="14" r="2" fill="#0F172A" opacity="0.35"/>
+    <circle cx="56" cy="6" r="2" fill="#0F172A" opacity="0.25"/>
   </g>
 
   <!-- Divider -->
-  <line x1="76" y1="16" x2="76" y2="56" stroke="#1A1A1A" stroke-width="1" opacity="0.2"/>
+  <line x1="80" y1="16" x2="80" y2="56" stroke="#0F172A" stroke-width="1" opacity="0.2"/>
 
   <!-- Wordmark -->
-  <text x="90" y="35" font-family="'SF Mono', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace" font-size="22" font-weight="700" fill="#1A1A1A" letter-spacing="-0.3">cc-context</text>
-  <text x="90" y="55" font-family="'SF Mono', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace" font-size="15" font-weight="500" fill="#1A1A1A" letter-spacing="3" opacity="0.6">stats</text>
-
-  <!-- Right accent bar -->
-  <rect x="348" y="20" width="2" height="32" rx="1" fill="#1A1A1A" opacity="0.35"/>
+  <text x="94" y="38" font-family="'Inter', 'SF Pro Display', system-ui, sans-serif" font-size="20" font-weight="700" fill="#0F172A" letter-spacing="-0.5">Context</text>
+  <text x="94" y="58" font-family="'Inter', 'SF Pro Display', system-ui, sans-serif" font-size="13" font-weight="500" fill="#0F172A" letter-spacing="3.5" opacity="0.6">STATS</text>
 </svg>
