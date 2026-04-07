@@ -1,16 +1,16 @@
 <div align="center">
-  <img src="assets/logo/logo-full.svg" alt="cc-context-stats" width="320"/>
+  <img src="assets/logo/logo-full.svg" alt="context-stats" width="320"/>
 
   <h1>Know your context zone. Act before Claude degrades.</h1>
 
-[![PyPI version](https://img.shields.io/pypi/v/cc-context-stats)](https://pypi.org/project/cc-context-stats/)
-[![PyPI Downloads](https://img.shields.io/pypi/dm/cc-context-stats)](https://pypi.org/project/cc-context-stats/)
+[![PyPI version](https://img.shields.io/pypi/v/context-stats)](https://pypi.org/project/context-stats/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/context-stats)](https://pypi.org/project/context-stats/)
 [![GitHub stars](https://img.shields.io/github/stars/luongnv89/cc-context-stats)](https://github.com/luongnv89/cc-context-stats)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Real-time context window monitoring for Claude Code. Five zones tell you exactly what to do next — keep coding, finish up, export your session, or restart.
 
-[**Get Started →**](#installation-and-configuration)
+[**Get Started →**](#installation)
 </div>
 
 ---
@@ -19,19 +19,21 @@ Real-time context window monitoring for Claude Code. Five zones tell you exactly
 
 ```mermaid
 graph LR
-    A["Claude Code session"] --> B["Status line script"]
+    A["Claude Code session"] --> B["Python statusline script"]
     B --> C["Context zone + MI score"]
     B --> D["Local CSV state file"]
     D --> E["Live graph dashboard"]
-    D --> F["Markdown export report"]
-    E --> G["Delta · Cumulative · Cache · MI · I/O"]
-    F --> H["Snapshot · Takeaways · Timeline · Charts"]
+    D --> F["Session export report"]
+    D --> G["Cross-project analytics"]
+    E --> H["Delta · Cumulative · Cache · MI · I/O"]
+    F --> I["Snapshot · Takeaways · Timeline · Charts"]
+    G --> J["Cost · Tokens · Patterns · Sessions"]
 ```
 
-1. Claude Code pipes session JSON to the status line script on every refresh.
+1. Claude Code pipes session JSON to the Python statusline script on every refresh.
 2. The script computes zone, Model Intelligence (MI) score, and displays a compact status line.
-3. The CLI reads the local state file for live charts and exportable session reports.
-4. Everything stays local in `~/.claude/statusline/`.
+3. The CLI reads local state files for live charts, session reports, and cross-project analytics.
+4. Everything stays local — `~/.claude/statusline/` for session state, `~/.claude/projects/` for analytics.
 
 ---
 
@@ -80,7 +82,7 @@ When the terminal is narrow, lower-priority elements drop off in order — the p
 |:---:|:---:|
 | ![Green statusline](images/1.10/statusline-green.png) | ![Yellow statusline](images/1.10/1.10-statusline.png) |
 
-### Rich Customization
+### Customization
 
 Every element has its own color key. Override per-property or set hex values:
 
@@ -97,7 +99,7 @@ show_delta=true
 token_detail=true
 ```
 
-Full palette: 18 named colors + any `#rrggbb` hex. Per-property colors override base color slots; base slots override built-in defaults. Copy the annotated example to get started:
+Full palette: 18 named colors + any `#rrggbb` hex. Copy the annotated example to get started:
 
 ```bash
 cp examples/statusline.conf ~/.claude/statusline.conf
@@ -153,19 +155,37 @@ Auto-refreshes every 2 seconds (flicker-free). Pass `-w 5` to slow it down or `-
 
 ---
 
-## Cache Keep-Warm
+## Cross-Project Analytics
 
-Claude's prompt cache has a ~5 minute TTL. A background heartbeat prevents expensive cache misses during pauses.
+Aggregate token usage and cost across **all** Claude Code projects and sessions:
 
 ```bash
-# Start keep-warm for 30 minutes
-context-stats <session_id> cache-warm on 30m
-
-# Stop it
-context-stats <session_id> cache-warm off
+context-stats report                     # Full analytics report (all time)
+context-stats report --since-days 30     # Last 30 days only
+context-stats report --output report.md  # Write to specific file
 ```
 
-Heartbeats fire every 4 minutes (under the 5-min TTL). Runs as a detached background process on Unix, subprocess fallback on Windows. State tracked in `~/.claude/statusline/cache-warm.<session_id>.json`.
+The report breaks down every token dollar spent across projects, models, and sessions:
+
+```markdown
+## Grand Totals
+
+- Total Tokens: 128,254,398
+  - Input: 19,574,606 · Output: 46,329,340
+  - Cache Creation: 1,835,113 · Cache Read: 60,515,339
+- Total Cost: $6,292.64
+- Total Sessions: 751 across 59 projects
+```
+
+| Section | What you learn |
+|---|---|
+| Grand Totals | Total spend, token breakdown (input/output/cache), session count |
+| Per-project breakdown | Which projects consume the most tokens and cost the most |
+| Top sessions | Heaviest sessions per project — identify costly workflows |
+| Cache efficiency | Cache read vs. cache creation ratio — high read ratio means good reuse |
+| Token composition | How much of your spend is output (expensive) vs. cache reads (cheap) |
+
+Cache reads cost ~10x less than input tokens. The report makes cache efficiency visible so you can optimize session structure.
 
 ---
 
@@ -179,7 +199,6 @@ context-stats <session_id> export --output report.md
 
 | Section | Contents |
 |---|---|
-| Generate | Copyable command to regenerate this report |
 | Executive Snapshot | Model, project, duration, interactions, final zone, cache activity |
 | Summary | Window size, token totals, cost, final MI |
 | Key Takeaways | Short read of what changed |
@@ -205,18 +224,34 @@ See the full example in [`context-stats-export-output.md`](context-stats-export-
 
 ---
 
-## Installation and Configuration
+## Cache Keep-Warm
 
-### Python (pip) — recommended
+Claude's prompt cache has a ~5 minute TTL. A background heartbeat prevents expensive cache misses during pauses.
 
 ```bash
-pip install cc-context-stats
+context-stats <session_id> cache-warm on 30m
 ```
 
-### Python (uv)
+```bash
+context-stats <session_id> cache-warm off
+```
+
+Heartbeats fire every 4 minutes (under the 5-min TTL). Runs as a detached background process on Unix, subprocess fallback on Windows.
+
+---
+
+## Installation
+
+### pip
 
 ```bash
-uv pip install cc-context-stats
+pip install context-stats
+```
+
+### uv
+
+```bash
+uv pip install context-stats
 ```
 
 ### Claude Code setup
@@ -232,7 +267,7 @@ Add to your Claude Code settings:
 }
 ```
 
-Restart Claude Code. The status line and dashboard both read the same local state files.
+Restart Claude Code. The status line, graph dashboard, session export, and analytics report all read the same local state files.
 
 ---
 
@@ -242,17 +277,17 @@ Restart Claude Code. The status line and dashboard both read the same local stat
 Yes. MIT licensed, zero external dependencies.
 
 **Does it send my data anywhere?**
-No. Session data stays local in `~/.claude/statusline/`.
+No. Session data stays local in `~/.claude/statusline/`. Analytics read from `~/.claude/projects/`.
 
 **What runtimes does it support?**
-Python 3. Install via `pip install cc-context-stats`.
+Python 3 only. Install via `pip install context-stats`.
 
 ---
 
 ## Get Started
 
 ```bash
-pip install cc-context-stats
+pip install context-stats
 ```
 
 [Read the docs](docs/installation.md) · [View export example](context-stats-export-output.md) · MIT Licensed
@@ -262,7 +297,7 @@ pip install cc-context-stats
 <details>
 <summary><strong>Documentation</strong></summary>
 
-- [Installation Guide](docs/installation.md) - Platform-specific setup (shell, pip)
+- [Installation Guide](docs/installation.md) - Platform-specific setup
 - [Context Stats Guide](docs/context-stats.md) - Detailed CLI usage guide
 - [Configuration Options](docs/configuration.md) - All settings explained
 - [Available Scripts](docs/scripts.md) - Script variants and features
@@ -290,7 +325,7 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 
 Context Stats hooks into Claude Code's status line feature to track token usage across sessions. The Python statusline script writes state data to local CSV files, which the `context-stats` CLI reads to render live graphs. Data is stored locally in `~/.claude/statusline/` and never sent anywhere.
 
-The statusline is implemented in Python. Claude Code invokes the statusline script via stdin JSON pipe — the script reads JSON from stdin and writes formatted text to stdout.
+Claude Code invokes the statusline script via stdin JSON pipe — the script reads JSON from stdin and writes formatted text to stdout. The `report` subcommand reads Claude Code's own project logs from `~/.claude/projects/` to aggregate cross-session analytics.
 
 </details>
 
@@ -304,7 +339,7 @@ pip uninstall cc-statusline
 ```
 
 ```bash
-pip install cc-context-stats
+pip install context-stats
 ```
 
 The `claude-statusline` command still works. The main change is `token-graph` is now `context-stats`.

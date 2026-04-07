@@ -45,3 +45,6 @@ blogs/
 openspec
 .claude
 repo-insights.md
+coverage/
+context-stats-report-*.md
+.gstack/

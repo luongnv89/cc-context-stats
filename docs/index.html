@@ -16,18 +16,25 @@
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="assets/logo/favicon.svg" />
 
+
   <style>
     /* ── Reset & Base ──────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ── Dark theme — luongnv.com palette ──────────────── */
     :root {
-      --bg:          #0F172A;
-      --bg-card:     #1E293B;
-      --bg-subtle:   #162032;
-      --border:      #334155;
-      --text:        #E2E8F0;
-      --text-muted:  #94A3B8;
-      --green:       #10B981;
+      --bg:          #0a0a0a;
+      --bg-card:     #111111;
+      --bg-subtle:   #1a1a1a;
+      --border:      #262626;
+      --border-hover:#404040;
+      --text:        #fafafa;
+      --text-muted:  #a1a1a1;
+      --accent:      #00ff41;
+      --accent-hover:#00cc33;
+      --accent-glow: rgba(0,255,65,0.15);
+
+      --green:       #00ff41;
       --cyan:        #06B6D4;
       --indigo:      #818CF8;
       --yellow:      #F59E0B;
@@ -92,7 +99,7 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(15,23,42,0.92);
+      background: rgba(10,10,10,0.92);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
     }
@@ -130,7 +137,7 @@
 
     .nav-cta {
       background: var(--green);
-      color: #0F172A !important;
+      color: var(--bg) !important;
       padding: 8px 18px;
       border-radius: 8px;
       font-weight: 700 !important;
@@ -212,7 +219,7 @@
       align-items: center;
       gap: 8px;
       background: var(--green);
-      color: #0F172A;
+      color: var(--bg);
       padding: 14px 28px;
       border-radius: 10px;
       font-weight: 700;
@@ -252,19 +259,18 @@
     }
 
     .terminal {
-      background: #0A1628;
+      background: var(--bg-subtle);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       overflow: hidden;
       box-shadow: var(--shadow), 0 0 80px rgba(16,185,129,0.06);
     }
-
     .terminal-bar {
       display: flex;
       align-items: center;
       gap: 8px;
       padding: 12px 16px;
-      background: #162032;
+      background: var(--bg-subtle);
       border-bottom: 1px solid var(--border);
     }
     .terminal-dot {
@@ -472,21 +478,115 @@
       flex-shrink: 0;
     }
 
+    /* ── STATUSLINE PREVIEW ─────────────────────────────── */
+    #statusline-preview { background: var(--bg-subtle); }
+
+    .sl-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 48px;
+    }
+
+    .sl-zone-block {
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .sl-zone-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .sl-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .sl-terminal {
+      background: var(--bg-subtle);
+      padding: 14px 20px;
+      font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+
+    .sl-bar {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .sl-seg { white-space: nowrap; }
+
     /* ── HOW IT WORKS ──────────────────────────────────── */
     .steps {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
       margin-top: 48px;
-      position: relative;
+      max-width: 820px;
+    }
+
+    .step-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--border);
+      font-size: 20px;
+      height: 28px;
+      margin-left: 40px; /* align with step-num center (44px/2 - border) */
     }
 
     .step {
-      text-align: center;
-      padding: 32px 24px;
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 20px;
+      align-items: start;
+      text-align: left;
+      padding: 28px 32px;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
+    }
+
+    .step-body { }
+
+    .step h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .step p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 0;
+    }
+
+    .step code {
+      display: block;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--cyan);
+      margin-top: 10px;
+      text-align: left;
     }
 
     .step-num {
@@ -527,6 +627,66 @@
       text-align: left;
     }
 
+    /* ── OUTPUT EXAMPLES ──────────────────────────────── */
+    #examples { background: var(--bg); }
+
+    .examples-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 0;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.2s, border-color 0.2s;
+      margin-bottom: -1px;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+    .tab-btn.active.green { color: var(--green); border-bottom-color: var(--green); }
+    .tab-btn.active.indigo { color: var(--indigo); border-bottom-color: var(--indigo); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .example-terminal {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .example-terminal-body {
+      padding: 20px 24px;
+      font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.65;
+      overflow-x: auto;
+    }
+
+    .t-border { color: #4B5563; }
+    .t-h1 { color: var(--cyan); font-weight: 700; }
+    .t-h2 { color: var(--indigo); font-weight: 700; }
+    .t-key { color: var(--text-muted); }
+    .t-val { color: var(--text); }
+    .t-money { color: var(--green); font-weight: 700; }
+    .t-bar-g { color: var(--green); }
+    .t-bar-y { color: var(--yellow); }
+    .t-bar-o { color: var(--orange); }
+    .t-bar-r { color: var(--red); }
+    .t-bar-d { color: #4B5563; }
+
     /* ── SCREENSHOTS ───────────────────────────────────── */
     .screenshots-grid {
       display: grid;
@@ -554,63 +714,6 @@
       text-align: center;
       border-top: 1px solid var(--border);
     }
-
-    /* ── MI SECTION ────────────────────────────────────── */
-    #mi { background: var(--bg-subtle); }
-
-    .mi-explainer {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 48px;
-      align-items: center;
-      margin-top: 48px;
-    }
-
-    @media (max-width: 768px) {
-      .mi-explainer { grid-template-columns: 1fr; }
-    }
-
-    .mi-formula {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      font-family: monospace;
-      font-size: 15px;
-    }
-
-    .mi-formula .formula-line {
-      margin-bottom: 8px;
-      color: var(--text);
-    }
-    .mi-formula .formula-line .fn { color: var(--cyan); }
-    .mi-formula .formula-line .param { color: var(--green); }
-    .mi-formula .formula-line .comment { color: var(--text-muted); font-size: 12px; }
-
-    .mi-bars {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .mi-bar-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .mi-bar-label { width: 60px; font-size: 13px; font-weight: 700; }
-    .mi-bar-track {
-      flex: 1;
-      height: 8px;
-      background: var(--bg-card);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-    .mi-bar-fill {
-      height: 100%;
-      border-radius: 999px;
-      transition: width 1.5s ease;
-    }
-    .mi-bar-val { width: 44px; text-align: right; font-size: 13px; font-family: monospace; }
 
     /* ── FAQ ───────────────────────────────────────────── */
     .faq-list {
@@ -757,9 +860,10 @@
     <ul class="nav-links">
       <li><a href="#features">Features</a></li>
       <li><a href="#how-it-works">Install</a></li>
+      <li><a href="#examples">Examples</a></li>
       <li><a href="#zones">Zones</a></li>
-      <li><a href="#mi">MI Score</a></li>
-      <li><a href="#faq">FAQ</a></li>
+      <li><a href="#statusline-preview">Statusline</a></li>
+<li><a href="#faq">FAQ</a></li>
       <li><a href="https://github.com/luongnv89/context-stats" class="nav-cta">GitHub</a></li>
     </ul>
   </div>
@@ -840,16 +944,20 @@
 <div class="container">
   <div class="stats-bar">
     <div class="stat-item">
+      <div class="stat-num" id="stat-stars">—</div>
+      <div class="stat-label">GitHub stars</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="stat-forks">—</div>
+      <div class="stat-label">Forks</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="stat-downloads">—</div>
+      <div class="stat-label">PyPI downloads</div>
+    </div>
+    <div class="stat-item">
       <div class="stat-num">0</div>
-      <div class="stat-label">External dependencies</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num">3</div>
-      <div class="stat-label">Analytics levels</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num">5</div>
-      <div class="stat-label">Context zones</div>
+      <div class="stat-label">Dependencies</div>
     </div>
     <div class="stat-item">
       <div class="stat-num">MIT</div>
@@ -857,6 +965,35 @@
     </div>
   </div>
 </div>
+
+<script>
+(function() {
+  function fmt(n) {
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return String(n);
+  }
+  // GitHub stars + forks
+  fetch('https://api.github.com/repos/luongnv89/context-stats')
+    .then(r => r.json())
+    .then(d => {
+      const s = document.getElementById('stat-stars');
+      const f = document.getElementById('stat-forks');
+      if (s && d.stargazers_count !== undefined) s.textContent = fmt(d.stargazers_count);
+      if (f && d.forks_count !== undefined) f.textContent = fmt(d.forks_count);
+    })
+    .catch(() => {});
+  // PyPI total downloads (last month via pypistats)
+  fetch('https://pypistats.org/api/packages/context-stats/recent')
+    .then(r => r.json())
+    .then(d => {
+      const el = document.getElementById('stat-downloads');
+      if (el && d.data && d.data.last_month !== undefined) {
+        el.textContent = fmt(d.data.last_month) + '/mo';
+      }
+    })
+    .catch(() => {});
+})();
+</script>
 
 <!-- ── PROBLEM ───────────────────────────────────────────────── -->
 <section id="problem">
@@ -994,6 +1131,203 @@
   </div>
 </section>
 
+<!-- ── OUTPUT EXAMPLES ───────────────────────────────────────── -->
+<section id="examples">
+  <div class="container">
+    <span class="section-label">Real Output</span>
+    <h2>What you actually see<br/>in the terminal.</h2>
+    <p class="lead">Three commands — each level of analytics, shown in full.</p>
+
+    <div class="examples-tabs">
+      <button class="tab-btn active green" onclick="switchTab(event,'tab-graph')">context-stats graph</button>
+      <button class="tab-btn" onclick="switchTab(event,'tab-export')">context-stats export</button>
+      <button class="tab-btn" onclick="switchTab(event,'tab-report')">context-stats report</button>
+    </div>
+
+    <!-- Graph tab -->
+    <div id="tab-graph" class="tab-panel active">
+      <div class="example-terminal">
+        <div class="example-terminal-body">
+<div><span class="t-prompt">$ </span><span class="t-cmd">context-stats graph --type all</span></div>
+<br/>
+<div class="t-h1">  Context Stats (my-project • abc-1234)</div>
+<br/>
+<div class="t-muted">  Context usage — last 14 interactions</div>
+<div><span class="t-bar-g">  ▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░  </span><span class="t-key">88,000 free </span><span class="t-muted">(44.0%)</span></div>
+<br/>
+<div class="t-border">  ╔══ Session: abc-1234 ═════════════════════╗</div>
+<div class="t-border">  ║ <span class="t-key">Model:    </span><span class="t-cyan">Claude Opus 4.6</span>              <span class="t-border">║</span></div>
+<div class="t-border">  ║ <span class="t-key">Zone:     </span><span class="t-yellow">◆ Code-only</span>                  <span class="t-border">║</span></div>
+<div class="t-border">  ║ <span class="t-key">MI:       </span><span class="t-yellow">0.712</span>  (context pressure)     <span class="t-border">║</span></div>
+<div class="t-border">  ║ <span class="t-key">Delta:    </span><span class="t-cyan">+3,140</span> tokens this step       <span class="t-border">║</span></div>
+<div class="t-border">  ║ <span class="t-key">Cost:     </span><span class="t-money">$0.2847</span>                       <span class="t-border">║</span></div>
+<div class="t-border">  ╚══════════════════════════════════════════╝</div>
+<br/>
+<div class="t-h2">  Context Growth Per Interaction</div>
+<div class="t-muted">  Max: 8,420  Min: 0  Points: 14</div>
+<br/>
+<div class="t-muted">  8,420 │                                   <span class="t-bar-r">●</span></div>
+<div class="t-muted">        │                          <span class="t-bar-o">●</span>        <span class="t-bar-r">▒</span></div>
+<div class="t-muted">        │             <span class="t-bar-y">●</span>    <span class="t-bar-y">●</span>  <span class="t-bar-o">▒</span>        <span class="t-bar-r">░</span></div>
+<div class="t-muted">        │     <span class="t-bar-g">●</span>       <span class="t-bar-y">▒</span>    <span class="t-bar-y">▒</span>  <span class="t-bar-o">░</span>  <span class="t-bar-o">●</span>   <span class="t-bar-r">░</span></div>
+<div class="t-muted">  2,810 │ <span class="t-bar-g">●</span>   <span class="t-bar-g">▒</span>   <span class="t-bar-g">●</span>  <span class="t-bar-y">░</span>    <span class="t-bar-y">░</span>  <span class="t-bar-o">░</span>  <span class="t-bar-o">▒</span>   <span class="t-bar-r">░</span> <span class="t-bar-o">●</span></div>
+<div class="t-muted">      0 │<span class="t-bar-g">●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●</span></div>
+<div class="t-muted">        └──────────────────────────────────────────</div>
+<div class="t-muted">         10:12             11:08          12:30</div>
+<br/>
+<div class="t-h2">  Model Intelligence (MI) Over Time</div>
+<div class="t-muted">  Calibrated against MRCR v2 8-needle benchmark</div>
+<br/>
+<div class="t-muted">   1.00 │<span class="t-bar-g">●●</span></div>
+<div class="t-muted">   0.90 │  <span class="t-bar-g">●●●</span></div>
+<div class="t-muted">   0.80 │     <span class="t-bar-g">●●●</span></div>
+<div class="t-muted">   0.70 │        <span class="t-bar-y">●●●</span></div>
+<div class="t-muted">   0.60 │           <span class="t-bar-y">●●</span></div>
+<div class="t-muted">   0.50 │             <span class="t-bar-o">●</span></div>
+<div class="t-muted">        └──────────────────────────────────────────</div>
+<div class="t-muted">         step 1                          step 14</div>
+<br/>
+<div class="t-h2">  Cache Activity</div>
+<div class="t-muted">  Creation ░  Read ▓</div>
+<br/>
+<div class="t-muted">   3│ <span class="t-cyan">░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span></div>
+<div class="t-muted">   2│ <span class="t-cyan">░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span></div>
+<div class="t-muted">   1│ <span class="t-cyan">░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export tab -->
+    <div id="tab-export" class="tab-panel">
+      <div class="example-terminal">
+        <div class="example-terminal-body">
+<div><span class="t-prompt">$ </span><span class="t-cmd">context-stats export abc-1234</span></div>
+<div class="t-green">  Exported → session-abc-1234-2026-04-07.md</div>
+<br/>
+<div class="t-h1">  # Session Export — abc-1234</div>
+<div class="t-muted">  Generated: 2026-04-07 12:30:15  |  context-stats v1.18.0</div>
+<br/>
+<div class="t-h2">  ## Executive Summary</div>
+<br/>
+<div class="t-muted">  | Metric              | Value                  |</div>
+<div class="t-muted">  |---------------------|------------------------|</div>
+<div><span class="t-key">  | Model               | </span><span class="t-cyan">Claude Opus 4.6</span>         |</div>
+<div><span class="t-key">  | Duration            | </span><span class="t-val">2h 18m 03s</span>              |</div>
+<div><span class="t-key">  | Interactions        | </span><span class="t-val">14</span>                      |</div>
+<div><span class="t-key">  | Peak Context Used   | </span><span class="t-orange">112,000 / 200,000 (56%)</span> |</div>
+<div><span class="t-key">  | Final MI Score      | </span><span class="t-yellow">0.712</span>                   |</div>
+<div><span class="t-key">  | Total Cost          | </span><span class="t-money">$0.2847</span>                 |</div>
+<div><span class="t-key">  | Cache Hit Ratio     | </span><span class="t-green">63.4%</span>                   |</div>
+<div><span class="t-key">  | Git Branch          | </span><span class="t-indigo">feat/landing-page</span>       |</div>
+<div><span class="t-key">  | Lines Changed       | </span><span class="t-val">+284 / -41</span>              |</div>
+<br/>
+<div class="t-h2">  ## Interaction Timeline</div>
+<br/>
+<div class="t-muted">  | Step | Time  | Context Used | Free    | MI    | Delta   | Zone        |</div>
+<div class="t-muted">  |------|-------|--------------|---------|-------|---------|-------------|</div>
+<div><span class="t-muted">  |  1   | 10:12 | </span><span class="t-green"> 18,240</span><span class="t-muted">       | 181,760 | </span><span class="t-green">0.982</span><span class="t-muted"> |  +18,240 | </span><span class="t-green">Planning</span><span class="t-muted">   |</span></div>
+<div><span class="t-muted">  |  2   | 10:24 | </span><span class="t-green"> 24,610</span><span class="t-muted">       | 175,390 | </span><span class="t-green">0.971</span><span class="t-muted"> |   +6,370 | </span><span class="t-green">Planning</span><span class="t-muted">   |</span></div>
+<div><span class="t-muted">  |  5   | 10:58 | </span><span class="t-green"> 61,340</span><span class="t-muted">       | 138,660 | </span><span class="t-green">0.894</span><span class="t-muted"> |   +8,100 | </span><span class="t-green">Planning</span><span class="t-muted">   |</span></div>
+<div><span class="t-muted">  |  8   | 11:22 | </span><span class="t-yellow"> 84,920</span><span class="t-muted">       | 115,080 | </span><span class="t-yellow">0.812</span><span class="t-muted"> |   +5,280 | </span><span class="t-yellow">Code-only</span><span class="t-muted">  |</span></div>
+<div><span class="t-muted">  | 11   | 11:51 | </span><span class="t-yellow"> 99,480</span><span class="t-muted">       | 100,520 | </span><span class="t-yellow">0.764</span><span class="t-muted"> |   +4,100 | </span><span class="t-yellow">Code-only</span><span class="t-muted">  |</span></div>
+<div><span class="t-muted">  | 14   | 12:30 | </span><span class="t-orange">112,000</span><span class="t-muted">       |  88,000 | </span><span class="t-yellow">0.712</span><span class="t-muted"> |   +3,140 | </span><span class="t-yellow">Code-only</span><span class="t-muted">  |</span></div>
+<br/>
+<div class="t-h2">  ## Cache Analysis</div>
+<br/>
+<div><span class="t-key">  Cache creation tokens: </span><span class="t-val">28,400</span></div>
+<div><span class="t-key">  Cache read tokens:     </span><span class="t-green">49,120</span>  <span class="t-muted">(63.4% hit rate)</span></div>
+<div><span class="t-key">  Cache savings:         </span><span class="t-money">~$0.087</span>  <span class="t-muted">(vs. uncached)</span></div>
+<br/>
+<div class="t-muted">  ```mermaid</div>
+<div class="t-muted">  pie title Cache Efficiency</div>
+<div class="t-muted">      "Cache Hit" : 63.4</div>
+<div class="t-muted">      "Fresh tokens" : 36.6</div>
+<div class="t-muted">  ```</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report tab -->
+    <div id="tab-report" class="tab-panel">
+      <div class="example-terminal">
+        <div class="example-terminal-body">
+<div><span class="t-prompt">$ </span><span class="t-cmd">context-stats report --since-days 30</span></div>
+<div class="t-green">  Analyzing 312 sessions across 18 projects...</div>
+<br/>
+<div class="t-h1">  # Token Usage Analytics Report</div>
+<div class="t-muted">  Generated: 2026-04-07 12:00:00  |  context-stats v1.18.0</div>
+<br/>
+<div class="t-h2">  ## Executive Summary (last 30 days)</div>
+<br/>
+<div class="t-muted">  | Metric                  | Value                         |</div>
+<div class="t-muted">  |-------------------------|-------------------------------|</div>
+<div><span class="t-key">  | Total Spend             | </span><span class="t-money">$1,842.35</span>                      |</div>
+<div><span class="t-key">  | Total Sessions          | </span><span class="t-val">312</span>                            |</div>
+<div><span class="t-key">  | Projects Analyzed       | </span><span class="t-val">18</span>                             |</div>
+<div><span class="t-key">  | Cache Hit Ratio         | </span><span class="t-green">41.2%</span>                          |</div>
+<div><span class="t-key">  | Avg Session Cost        | </span><span class="t-val">$5.90</span>                          |</div>
+<div><span class="t-key">  | Avg Session Duration    | </span><span class="t-val">3h 22m 14s</span>                     |</div>
+<div><span class="t-key">  | Most Expensive Session  | </span><span class="t-orange">a3f9c12d… ($87.40, 4.7%)</span>      |</div>
+<div><span class="t-key">  | Most Expensive Project  | </span><span class="t-orange">project-alpha ($412.80, 22.4%)</span> |</div>
+<br/>
+<div class="t-h2">  ## Model Usage</div>
+<br/>
+<div class="t-muted">  | Model  | Sessions | Cost       | % Total |</div>
+<div class="t-muted">  |--------|----------|------------|---------|</div>
+<div><span class="t-muted">  | </span><span class="t-indigo">opus  </span><span class="t-muted">  | 241      | </span><span class="t-money">$1,512.30</span><span class="t-muted">  | 82.1%   |</span></div>
+<div><span class="t-muted">  | </span><span class="t-cyan">sonnet</span><span class="t-muted">  | 42       | </span><span class="t-money">$218.75</span><span class="t-muted">    | 11.9%   |</span></div>
+<div><span class="t-muted">  | </span><span class="t-yellow">haiku </span><span class="t-muted">  | 29       | </span><span class="t-money">$111.30</span><span class="t-muted">    | 6.0%    |</span></div>
+<br/>
+<div class="t-h2">  ## Weekly Spend Trend</div>
+<br/>
+<div><span class="t-muted">  W10 </span><span class="t-bar-g">███████████</span><span class="t-muted">          $284.50 (48 sessions)</span></div>
+<div><span class="t-muted">  W11 </span><span class="t-bar-y">████████████████</span><span class="t-muted">     $412.80 (74 sessions)</span></div>
+<div><span class="t-muted">  W12 </span><span class="t-bar-y">█████████████</span><span class="t-muted">        $348.20 (68 sessions)</span></div>
+<div><span class="t-muted">  W13 </span><span class="t-bar-o">████████████████████</span><span class="t-muted"> $489.60 (82 sessions) ← peak</span></div>
+<div><span class="t-muted">  W14 </span><span class="t-bar-g">████████</span><span class="t-muted">             $218.75 (31 sessions)</span></div>
+<div><span class="t-muted">  W15 </span><span class="t-bar-g">███</span><span class="t-muted">                  $88.50  (9 sessions)</span></div>
+<br/>
+<div class="t-h2">  ## Top Projects by Cost</div>
+<br/>
+<div class="t-muted">  | # | Project         | Sessions | Cost      | Cache %  | Dominant |</div>
+<div class="t-muted">  |---|-----------------|----------|-----------|----------|----------|</div>
+<div><span class="t-muted">  | 1 | project-alpha   | 28       | </span><span class="t-red">$412.80</span><span class="t-muted">   | </span><span class="t-orange">12.0%</span><span class="t-muted">    | opus     |</span></div>
+<div><span class="t-muted">  | 2 | project-beta    | 41       | </span><span class="t-orange">$318.44</span><span class="t-muted">   | </span><span class="t-yellow">44.1%</span><span class="t-muted">    | opus     |</span></div>
+<div><span class="t-muted">  | 3 | project-gamma   | 35       | </span><span class="t-orange">$264.17</span><span class="t-muted">   | </span><span class="t-yellow">38.4%</span><span class="t-muted">    | opus     |</span></div>
+<div><span class="t-muted">  | 4 | project-delta   | 27       | </span><span class="t-yellow">$198.53</span><span class="t-muted">   | </span><span class="t-green">49.2%</span><span class="t-muted">    | opus     |</span></div>
+<div><span class="t-muted">  | 5 | project-epsilon | 22       | </span><span class="t-yellow">$187.62</span><span class="t-muted">   | </span><span class="t-yellow">31.0%</span><span class="t-muted">    | opus     |</span></div>
+<br/>
+<div class="t-h2">  ## Activity by Day of Week</div>
+<br/>
+<div><span class="t-key">  Mon </span><span class="t-bar-g">############</span><span class="t-muted">........  52 sessions</span></div>
+<div><span class="t-key">  Tue </span><span class="t-bar-g">##################</span><span class="t-muted">...  68 sessions</span></div>
+<div><span class="t-key">  Wed </span><span class="t-bar-g">####################</span><span class="t-muted">  71 sessions ← busiest</span></div>
+<div><span class="t-key">  Thu </span><span class="t-bar-g">############</span><span class="t-muted">........  48 sessions</span></div>
+<div><span class="t-key">  Fri </span><span class="t-bar-g">###############</span><span class="t-muted">.....  55 sessions</span></div>
+<div><span class="t-key">  Sat </span><span class="t-bar-d">######</span><span class="t-muted">..............  22 sessions</span></div>
+<div><span class="t-key">  Sun </span><span class="t-bar-d">#######</span><span class="t-muted">.............  26 sessions</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+function switchTab(e, panelId) {
+  const section = e.target.closest('section');
+  section.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active','green');
+    b.style.borderBottomColor = 'transparent';
+    b.style.color = '';
+  });
+  section.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  e.target.classList.add('active');
+  if (panelId === 'tab-graph') { e.target.classList.add('green'); }
+  else if (panelId === 'tab-report') { e.target.style.color = 'var(--indigo)'; e.target.style.borderBottomColor = 'var(--indigo)'; }
+  document.getElementById(panelId).classList.add('active');
+}
+</script>
+
 <!-- ── SCREENSHOTS ────────────────────────────────────────────── -->
 <section id="screenshots">
   <div class="container">
@@ -1066,6 +1400,98 @@
   </div>
 </section>
 
+<!-- ── STATUSLINE PREVIEW ─────────────────────────────────────── -->
+<section id="statusline-preview">
+  <div class="container">
+    <div style="text-align:center;">
+      <span class="section-label">Statusline Preview</span>
+      <h2>What you see at every context zone.</h2>
+      <p class="lead" style="margin: 0 auto 0;">The statusline updates live after each prompt. Here's exactly what it shows across all five zones.</p>
+    </div>
+
+    <!-- Thresholds from src/claude_statusline/graphs/intelligence.py (200k standard model):
+         dump_zone  = 200k × 0.40 = 80,000 used
+         warn_start = 80,000 − 30,000 = 50,000 used  ← Plan/Code boundary
+         hard_limit = 200k × 0.70 = 140,000 used     ← Dump/ExDump boundary
+         dead_zone  = 200k × 0.75 = 150,000 used     ← ExDump/Dead boundary
+         Plan:   used < 50,000          (< 25%)
+         Code:   50,000 ≤ used < 80,000 (25–40%)
+         Dump:   80,000 ≤ used < 140,000 (40–70%)
+         ExDump: 140,000 ≤ used < 150,000 (70–75%)
+         Dead:   used ≥ 150,000          (≥ 75%)
+    -->
+
+    <div class="sl-grid">
+
+      <!-- Plan: used < 50,000 on 200k model -->
+      <div class="sl-zone-block">
+        <div class="sl-zone-label">
+          <span class="sl-dot" style="background:#10B981;box-shadow:0 0 6px #10B981;"></span>
+          <span style="color:#10B981;">Plan</span>
+          <span style="color:var(--text-muted);font-weight:400;margin-left:auto;">used &lt; 50,000 &nbsp;·&nbsp; &lt; 25% used</span>
+        </div>
+        <div class="sl-terminal">
+          <span style="color:#06B6D4;">my-project</span><span style="color:var(--text-muted);"> | </span><span style="color:#C084FC;">main [2]</span><span style="color:var(--text-muted);"> | </span><span style="color:#10B981;">32,480 (16.2%)</span><span style="color:var(--text-muted);"> | </span><span style="color:#10B981;">Plan</span><span style="color:var(--text-muted);"> | Opus 4.6 (200k context) | </span><span style="color:#475569;">76f0c6e5-47e1-4656-9ffe-59ba12005967</span>
+          <div style="margin-top:8px;color:var(--text-muted);font-size:11px;">→ Plenty of room. Keep planning and coding freely.</div>
+        </div>
+      </div>
+
+      <!-- Code: 50,000 ≤ used < 80,000 on 200k model -->
+      <div class="sl-zone-block">
+        <div class="sl-zone-label">
+          <span class="sl-dot" style="background:#F59E0B;box-shadow:0 0 6px #F59E0B;"></span>
+          <span style="color:#F59E0B;">Code</span>
+          <span style="color:var(--text-muted);font-weight:400;margin-left:auto;">50,000 ≤ used &lt; 80,000 &nbsp;·&nbsp; 25–40% used</span>
+        </div>
+        <div class="sl-terminal">
+          <span style="color:#06B6D4;">my-project</span><span style="color:var(--text-muted);"> | </span><span style="color:#C084FC;">feat/new-ui [5]</span><span style="color:var(--text-muted);"> | </span><span style="color:#F59E0B;">65,210 (32.6%)</span><span style="color:var(--text-muted);"> | </span><span style="color:#F59E0B;">Code</span><span style="color:var(--text-muted);"> | </span><span style="color:#06B6D4;">+494</span><span style="color:var(--text-muted);"> | Opus 4.6 (200k context) | </span><span style="color:#475569;">e43c4908-3374-46e5-b8e4-73ab96e42d0f</span>
+          <div style="margin-top:8px;color:var(--text-muted);font-size:11px;">→ Context tightening. Finish current task, skip exploration.</div>
+        </div>
+      </div>
+
+      <!-- Dump: 80,000 ≤ used < 140,000 on 200k model -->
+      <div class="sl-zone-block">
+        <div class="sl-zone-label">
+          <span class="sl-dot" style="background:#F97316;box-shadow:0 0 6px #F97316;"></span>
+          <span style="color:#F97316;">Dump</span>
+          <span style="color:var(--text-muted);font-weight:400;margin-left:auto;">80,000 ≤ used &lt; 140,000 &nbsp;·&nbsp; 40–70% used</span>
+        </div>
+        <div class="sl-terminal">
+          <span style="color:#06B6D4;">my-project</span><span style="color:var(--text-muted);"> | </span><span style="color:#C084FC;">fix/bug-123 [8]</span><span style="color:var(--text-muted);"> | </span><span style="color:#F97316;">112,640 (56.3%)</span><span style="color:var(--text-muted);"> | </span><span style="color:#F97316;">Dump</span><span style="color:var(--text-muted);"> | </span><span style="color:#06B6D4;">+198</span><span style="color:var(--text-muted);"> | Opus 4.6 (200k context) | </span><span style="color:#475569;">c58eab6e-9fd9-4a99-8fee-8de07b566b9a</span>
+          <div style="margin-top:8px;color:var(--text-muted);font-size:11px;">→ Quality declining. Wrap up now, prepare to export context.</div>
+        </div>
+      </div>
+
+      <!-- ExDump: 140,000 ≤ used < 150,000 on 200k model -->
+      <div class="sl-zone-block">
+        <div class="sl-zone-label">
+          <span class="sl-dot" style="background:#EF4444;box-shadow:0 0 6px #EF4444;"></span>
+          <span style="color:#EF4444;">ExDump</span>
+          <span style="color:var(--text-muted);font-weight:400;margin-left:auto;">140,000 ≤ used &lt; 150,000 &nbsp;·&nbsp; 70–75% used</span>
+        </div>
+        <div class="sl-terminal">
+          <span style="color:#06B6D4;">my-project</span><span style="color:var(--text-muted);"> | </span><span style="color:#C084FC;">fix/bug-123 [12]</span><span style="color:var(--text-muted);"> | </span><span style="color:#EF4444;">144,380 (72.2%)</span><span style="color:var(--text-muted);"> | </span><span style="color:#EF4444;">ExDump</span><span style="color:var(--text-muted);"> | </span><span style="color:#06B6D4;">+1,240</span><span style="color:var(--text-muted);"> | Opus 4.6 (200k context) | </span><span style="color:#475569;">d4e5f6a7-b8c9-0123-defa-234567890123</span>
+          <div style="margin-top:8px;color:var(--text-muted);font-size:11px;">→ Near hard limit. Start a new session immediately.</div>
+        </div>
+      </div>
+
+      <!-- Dead: used ≥ 150,000 on 200k model -->
+      <div class="sl-zone-block">
+        <div class="sl-zone-label">
+          <span class="sl-dot" style="background:#64748B;"></span>
+          <span style="color:#64748B;">Dead</span>
+          <span style="color:var(--text-muted);font-weight:400;margin-left:auto;">used ≥ 150,000 &nbsp;·&nbsp; ≥ 75% used</span>
+        </div>
+        <div class="sl-terminal">
+          <span style="color:#06B6D4;">my-project</span><span style="color:var(--text-muted);"> | </span><span style="color:#C084FC;">fix/bug-123 [15]</span><span style="color:var(--text-muted);"> | </span><span style="color:#64748B;">158,920 (79.5%)</span><span style="color:var(--text-muted);"> | </span><span style="color:#64748B;">Dead</span><span style="color:var(--text-muted);"> | </span><span style="color:#06B6D4;">+320</span><span style="color:var(--text-muted);"> | Opus 4.6 (200k context) | </span><span style="color:#475569;">e5f6a7b8-c9d0-1234-efab-345678901234</span>
+          <div style="margin-top:8px;color:var(--text-muted);font-size:11px;">→ Context exhausted. Stop — nothing productive remains.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <!-- ── HOW IT WORKS ───────────────────────────────────────────── -->
 <section id="how-it-works">
   <div class="container">
@@ -1076,106 +1502,53 @@
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <h3>Install the package</h3>
-        <p>One pip command, zero dependencies.</p>
-        <code>pip install context-stats</code>
+        <div class="step-body">
+          <h3>Install the package</h3>
+          <p>One pip command, zero dependencies.</p>
+          <code>pip install context-stats</code>
+        </div>
       </div>
+      <div class="step-arrow">↓</div>
       <div class="step">
         <div class="step-num">2</div>
-        <h3>Configure Claude Code</h3>
-        <p>Add the status line to <code>~/.claude/settings.json</code>.</p>
-        <code style="white-space:pre;">{
+        <div class="step-body">
+          <h3>Configure Claude Code</h3>
+          <p>Add the status line to <code>~/.claude/settings.json</code>.</p>
+          <code style="white-space:pre;">{
   "statusLine": {
     "type": "command",
     "command": "claude-statusline"
   }
 }</code>
+        </div>
       </div>
+      <div class="step-arrow">↓</div>
       <div class="step">
         <div class="step-num">3</div>
-        <h3>Start a session</h3>
-        <p>Your status line is live. Context zone, MI score, token delta — all visible.</p>
-        <code>claude  # or open Claude Code</code>
+        <div class="step-body">
+          <h3>Start a session</h3>
+          <p>Your status line is live. Context zone, MI score, token delta — all visible.</p>
+          <code>claude  # or open Claude Code</code>
+        </div>
       </div>
+      <div class="step-arrow">↓</div>
       <div class="step">
         <div class="step-num">4</div>
-        <h3>Explore the graphs</h3>
-        <p>Run <code>context-stats graph</code> any time for the live ASCII dashboard.</p>
-        <code>context-stats graph</code>
-      </div>
-    </div>
-  </div>
-</section>
+        <div class="step-body">
+          <h3>Explore & analyze</h3>
+          <p>Use any of these commands any time — no session ID needed.</p>
+          <code style="white-space:pre;"># Live ASCII dashboard — context, MI, cache, delta
+context-stats graph
 
-<!-- ── MI SECTION ────────────────────────────────────────────── -->
-<section id="mi">
-  <div class="container">
-    <span class="section-label">Model Intelligence</span>
-    <h2>Measure how smart Claude is<br/>right now — not yesterday.</h2>
-    <p class="lead">The MI score is a benchmark-calibrated metric that tracks effective model intelligence as context fills. Know when your session is costing more than it's producing.</p>
+# Export full session report to Markdown
+context-stats export &lt;session_id&gt;
 
-    <div class="mi-explainer">
-      <div>
-        <div class="mi-formula">
-          <div class="formula-line"><span class="comment">// MI formula — based on MRCR v2 8-needle benchmark</span></div>
-          <br/>
-          <div class="formula-line"><span class="fn">MI</span>(u) = max(0, 1 − u<sup>β</sup>)</div>
-          <br/>
-          <div class="formula-line"><span class="comment">// u = context usage (0.0 → 1.0)</span></div>
-          <div class="formula-line"><span class="comment">// β = model-specific degradation rate</span></div>
-          <br/>
-          <div class="formula-line"><span class="param">Opus</span>  β = 1.8  <span class="comment">// degrades faster</span></div>
-          <div class="formula-line"><span class="param">Sonnet</span> β = 1.5</div>
-          <div class="formula-line"><span class="param">Haiku</span>  β = 1.2  <span class="comment">// more resilient</span></div>
+# Multi-project analytics (last 30 days)
+context-stats report --since-days 30
+
+# Explain raw JSON from Claude Code stdin
+context-stats explain</code>
         </div>
-      </div>
-
-      <div>
-        <p style="font-size:14px;color:var(--text-muted);margin-bottom:20px;">
-          At 50% context used, an Opus session is already operating at significantly reduced capability. MI surfaces this — so you can act before you waste tokens on degraded output.
-        </p>
-
-        <div class="mi-bars">
-          <div class="mi-bar-row">
-            <span class="mi-bar-label" style="color:var(--green)">MI 0.92</span>
-            <div class="mi-bar-track">
-              <div class="mi-bar-fill" style="width:92%;background:var(--green)"></div>
-            </div>
-            <span class="mi-bar-val" style="color:var(--green)">92%</span>
-          </div>
-          <div class="mi-bar-row">
-            <span class="mi-bar-label" style="color:#84cc16">MI 0.75</span>
-            <div class="mi-bar-track">
-              <div class="mi-bar-fill" style="width:75%;background:#84cc16"></div>
-            </div>
-            <span class="mi-bar-val" style="color:#84cc16">75%</span>
-          </div>
-          <div class="mi-bar-row">
-            <span class="mi-bar-label" style="color:var(--yellow)">MI 0.55</span>
-            <div class="mi-bar-track">
-              <div class="mi-bar-fill" style="width:55%;background:var(--yellow)"></div>
-            </div>
-            <span class="mi-bar-val" style="color:var(--yellow)">55%</span>
-          </div>
-          <div class="mi-bar-row">
-            <span class="mi-bar-label" style="color:var(--orange)">MI 0.35</span>
-            <div class="mi-bar-track">
-              <div class="mi-bar-fill" style="width:35%;background:var(--orange)"></div>
-            </div>
-            <span class="mi-bar-val" style="color:var(--orange)">35%</span>
-          </div>
-          <div class="mi-bar-row">
-            <span class="mi-bar-label" style="color:var(--red)">MI 0.12</span>
-            <div class="mi-bar-track">
-              <div class="mi-bar-fill" style="width:12%;background:var(--red)"></div>
-            </div>
-            <span class="mi-bar-val" style="color:var(--red)">12%</span>
-          </div>
-        </div>
-
-        <p style="font-size:12px;color:var(--text-muted);margin-top:16px;">
-          Green (&gt;0.70) — Yellow (0.40–0.70) — Red (&lt;0.40)
-        </p>
       </div>
     </div>
   </div>
@@ -1287,6 +1660,7 @@
     </div>
   </div>
 </footer>
+
 
 </body>
 </html>
