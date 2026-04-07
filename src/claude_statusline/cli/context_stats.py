@@ -62,6 +62,7 @@ ACTIONS:
     export        Export session stats as a markdown report
     explain       Diagnostic dump of Claude Code's JSON context (pipe JSON to stdin)
     cache-warm    Keep session prompt cache alive via a background heartbeat
+    report        Generate comprehensive token usage analytics across all projects
 
 CACHE-WARM OPTIONS:
     on [duration]  Start heartbeat for the given duration (e.g. 30m, 1h). Default: 30m
@@ -119,6 +120,15 @@ EXAMPLES:
     # Output to file (no colors, single run)
     context-stats abc123def graph --no-watch --no-color > output.txt
 
+    # Generate comprehensive analytics report for all projects
+    context-stats report
+
+    # Generate report with output file specified
+    context-stats report --output my-report.md
+
+    # Generate report for last 30 days
+    context-stats report --since-days 30
+
 DATA SOURCE:
     Reads token history from ~/.claude/statusline/statusline.<session_id>.state
 """
@@ -126,7 +136,7 @@ DATA SOURCE:
 
 
 # Known action names — used to distinguish actions from session IDs in argv
-_KNOWN_ACTIONS = {"graph", "export", "explain", "cache-warm"}
+_KNOWN_ACTIONS = {"graph", "export", "explain", "cache-warm", "report"}
 
 
 def _normalize_argv(argv: list[str]) -> tuple[str, str, list[str]]:
@@ -135,8 +145,8 @@ def _normalize_argv(argv: list[str]) -> tuple[str, str, list[str]]:
     Requires the explicit pattern:
       context-stats <session_id> <action> [parameters]
 
-    Special case: explain can be called as 'context-stats explain' (without session_id).
-    When session_id is missing and action is 'explain', uses '-' as placeholder.
+    Special cases: explain and report can be called as 'context-stats <action>' (without session_id).
+    When session_id is missing and action is 'explain' or 'report', uses '-' as placeholder.
 
     Args:
         argv: sys.argv[1:] (arguments after the program name).
@@ -145,17 +155,23 @@ def _normalize_argv(argv: list[str]) -> tuple[str, str, list[str]]:
         Tuple of (action, session_id, remaining_args).
 
     Raises:
-        SystemExit: If session_id or action are missing (except for explain).
+        SystemExit: If session_id or action are missing (except for explain/report).
     """
     # Strip out global flags so they don't interfere with positional detection
     positionals = [a for a in argv if not a.startswith("-")]
 
-    # Special case: explain can be called with just 'explain' (reads from stdin)
-    if len(positionals) == 1 and positionals[0] == "explain":
-        remaining = list(argv)
-        remaining.remove("explain")
-        return "explain", "-", remaining
+    if not positionals:
+        sys.stderr.write("Error: Missing required arguments.\n\n")
+        show_help()
+        sys.exit(1)
 
+    # Special case: explain and report can be called with just the action (no session_id)
+    if positionals[0] in {"explain", "report"}:
+        remaining = list(argv)
+        remaining.remove(positionals[0])
+        return positionals[0], "-", remaining
+
+    # Standard case: <session_id> <action> [parameters]
     if len(positionals) < 2:
         sys.stderr.write("Error: Missing required arguments.\n\n")
         show_help()
@@ -622,6 +638,12 @@ def main() -> None:
         color_enabled = "--no-color" not in sys.argv and sys.stdout.isatty()
         colors = ColorManager(enabled=color_enabled)
         run_cache_warm(args.session_id, args.remaining, colors)
+        return
+
+    if args.action == "report":
+        from claude_statusline.cli.report import run_report
+
+        run_report(args.remaining)
         return
 
     # Default action: graph
