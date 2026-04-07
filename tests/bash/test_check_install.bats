@@ -19,7 +19,7 @@ setup() {
 @test "check-install.sh contains statusline check section" {
     grep -q "Statusline Command" "$SCRIPT"
     grep -q "claude-statusline" "$SCRIPT"
-    grep -q "statusline.sh" "$SCRIPT"
+    grep -q "statusline.py" "$SCRIPT"
 }
 
 @test "check-install.sh contains context-stats check section" {
@@ -33,9 +33,8 @@ setup() {
     grep -q "statusLine" "$SCRIPT"
 }
 
-@test "check-install.sh detects all three install methods" {
-    grep -q 'methods+=("bash")' "$SCRIPT"
-    grep -q 'methods+=("npm")' "$SCRIPT"
+@test "check-install.sh detects install methods" {
+    grep -q 'methods+=("shell")' "$SCRIPT"
     grep -q 'methods+=("pip")' "$SCRIPT"
 }
 
@@ -46,7 +45,6 @@ setup() {
 
 @test "check-install.sh provides fix guidance on failure" {
     grep -q "curl -fsSL" "$SCRIPT"
-    grep -q "npm list -g" "$SCRIPT"
     grep -q "pip show" "$SCRIPT"
 }
 

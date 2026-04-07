@@ -236,7 +236,9 @@ class StateFile:
                     if entry:
                         entries.append(entry)
         except OSError as e:
-            sys.stderr.write(f"[statusline] warning: failed to read state history {file_path}: {e}\n")
+            sys.stderr.write(
+                f"[statusline] warning: failed to read state history {file_path}: {e}\n"
+            )
 
         return entries
 
@@ -305,7 +307,9 @@ class StateFile:
                     pass
                 raise
         except OSError as e:
-            sys.stderr.write(f"[statusline] warning: failed to rotate state file {file_path}: {e}\n")
+            sys.stderr.write(
+                f"[statusline] warning: failed to rotate state file {file_path}: {e}\n"
+            )
 
     def list_sessions(self) -> list[str]:
         """List all available session IDs.

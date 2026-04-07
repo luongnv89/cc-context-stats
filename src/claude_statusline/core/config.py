@@ -196,8 +196,7 @@ class Config:
                             )
                     except ValueError:
                         sys.stderr.write(
-                            f"[statusline] warning: invalid integer for {key}: "
-                            f"'{raw_value}'\n"
+                            f"[statusline] warning: invalid integer for {key}: '{raw_value}'\n"
                         )
                 elif key in _ZONE_FLOAT_KEYS:
                     try:
@@ -211,8 +210,7 @@ class Config:
                             )
                     except ValueError:
                         sys.stderr.write(
-                            f"[statusline] warning: invalid number for {key}: "
-                            f"'{raw_value}'\n"
+                            f"[statusline] warning: invalid number for {key}: '{raw_value}'\n"
                         )
                 elif key in _COLOR_KEYS:
                     slot = _COLOR_KEYS[key]

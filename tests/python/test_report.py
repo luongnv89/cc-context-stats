@@ -1,6 +1,5 @@
 """Tests for the report command."""
 
-
 from claude_statusline.analytics import ProjectStats, SessionStats
 from claude_statusline.cli.report import generate_report
 

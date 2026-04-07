@@ -62,7 +62,7 @@ def detect_spike(deltas: list[int], context_window_size: int, window: int = 5) -
         return True
 
     # Check relative threshold: > 3x rolling average of previous deltas
-    previous = deltas[-(window + 1):-1] if len(deltas) > window else deltas[:-1]
+    previous = deltas[-(window + 1) : -1] if len(deltas) > window else deltas[:-1]
     if previous:
         avg = sum(previous) / len(previous)
         if avg > 0 and latest > avg * 3:

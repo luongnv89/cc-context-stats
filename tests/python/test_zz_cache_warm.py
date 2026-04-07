@@ -19,10 +19,8 @@ unix_only = pytest.mark.skipif(sys.platform == "win32", reason="os.fork not avai
 
 from claude_statusline.cli.cache_warm import (
     _clear_warm_state,
-    _is_process_alive,
     _parse_duration,
     _save_warm_state,
-    _warm_state_path,
     cmd_cache_warm_off,
     cmd_cache_warm_on,
     is_cache_warm_active,
@@ -50,6 +48,7 @@ def tmp_dir(monkeypatch):
 # Helper
 # ---------------------------------------------------------------------------
 
+
 def _mock_colors():
     c = SimpleNamespace()
     for attr in ("green", "yellow", "red", "dim", "bold", "reset", "cyan"):
@@ -60,6 +59,7 @@ def _mock_colors():
 # ---------------------------------------------------------------------------
 # _parse_duration
 # ---------------------------------------------------------------------------
+
 
 class TestParseDuration:
     def test_minutes(self):
@@ -89,6 +89,7 @@ class TestParseDuration:
 # State persistence helpers
 # ---------------------------------------------------------------------------
 
+
 class TestWarmStatePersistence:
     def test_save_and_load(self, tmp_dir):
         state = {"pid": 12345, "start_time": 1000, "expiry_time": 2000, "interval": 240}
@@ -111,6 +112,7 @@ class TestWarmStatePersistence:
 # ---------------------------------------------------------------------------
 # is_cache_warm_active
 # ---------------------------------------------------------------------------
+
 
 class TestIsCacheWarmActive:
     def test_no_state_returns_false(self, tmp_dir):
@@ -147,6 +149,7 @@ class TestIsCacheWarmActive:
 # ---------------------------------------------------------------------------
 # cmd_cache_warm_on / cmd_cache_warm_off
 # ---------------------------------------------------------------------------
+
 
 class TestCacheWarmOn:
     @unix_only
@@ -213,8 +216,10 @@ class TestCacheWarmOn:
         own_pid = os.getpid()
         _save_warm_state("sess", {"pid": own_pid, "expiry_time": future, "interval": 240})
 
-        with patch("os.fork", return_value=55, create=True), \
-             patch("os.kill"):  # suppress signal to own pid during off step
+        with (
+            patch("os.fork", return_value=55, create=True),
+            patch("os.kill"),
+        ):  # suppress signal to own pid during off step
             cmd_cache_warm_on("sess", "5m", colors)
 
         out = capsys.readouterr().out
@@ -232,8 +237,10 @@ class TestCacheWarmOff:
         future = int(time.time()) + 600
         _save_warm_state("sess", {"pid": 9999999, "expiry_time": future, "interval": 240})
 
-        with patch("claude_statusline.cli.cache_warm._is_process_alive", return_value=True), \
-             patch("os.kill"):
+        with (
+            patch("claude_statusline.cli.cache_warm._is_process_alive", return_value=True),
+            patch("os.kill"),
+        ):
             cmd_cache_warm_off("sess", colors)
 
         out = capsys.readouterr().out
@@ -258,6 +265,7 @@ class TestCacheWarmOff:
 # ---------------------------------------------------------------------------
 # run_cache_warm dispatcher
 # ---------------------------------------------------------------------------
+
 
 class TestRunCacheWarm:
     def test_no_args_shows_usage(self, tmp_dir, capsys):

@@ -22,7 +22,7 @@ graph TD
 ```
 ┌─────────────┐     JSON stdin      ┌──────────────────┐
 │ Claude Code  │ ──────────────────> │ Statusline Script │
-│   (host)     │ <────────────────── │  (sh/py/js)       │
+│   (host)     │ <────────────────── │     (Python)      │
 └─────────────┘     stdout text     └──────┬───────────┘
                                            │ writes
                                            ▼
@@ -35,44 +35,33 @@ graph TD
                                            ▼
                                     ┌──────────────────┐
                                     │ Context Stats CLI │
-                                    │  (Python/Bash)    │
+                                    │    (Python)       │
                                     └──────────────────┘
 ```
 
 ## Component Details
 
-### Status Line Scripts
+### Status Line Script
 
-Three implementation languages with identical output:
-
-| Script                 | Language   | Dependencies | State Writes |
-| ---------------------- | ---------- | ------------ | ------------ |
-| `statusline-full.sh`   | Bash       | `jq`         | No           |
-| `statusline-git.sh`    | Bash       | `jq`         | No           |
-| `statusline-minimal.sh`| Bash       | `jq`         | No           |
-| `statusline.py`        | Python 3   | None         | Yes          |
-| `statusline.js`        | Node.js 18+| None         | Yes          |
-
-> **Note:** Only the Python and Node.js scripts write state files. The bash scripts provide status line display only, without persisting data for the context-stats CLI.
+| Script          | Language | Dependencies | State Writes |
+| --------------- | -------- | ------------ | ------------ |
+| `statusline.py` | Python 3 | None         | Yes          |
 
 **Data flow:**
 1. Claude Code pipes JSON state via stdin on each refresh
 2. Script parses model info, context tokens, session data
 3. Script reads `~/.claude/statusline.conf` for user preferences
 4. Script checks git status for branch/changes info (5-second timeout)
-5. Python/Node.js scripts write state to `~/.claude/statusline/<session_id>.state`
+5. Script writes state to `~/.claude/statusline/<session_id>.state`
 6. Script outputs formatted ANSI text to stdout
 
 ### Context Stats CLI
 
-Two implementations of the live dashboard:
-
 | Script             | Language | Install Method            |
 | ------------------ | -------- | ------------------------- |
-| `context-stats.sh` | Bash     | Shell installer           |
 | `context_stats.py` | Python   | `pip install cc-context-stats` |
 
-The Python CLI (installed via pip or npm) is the primary implementation, providing live ASCII graphs with zone awareness. The bash script is a standalone alternative installed by the shell installer.
+The Python CLI provides live ASCII graphs with zone awareness. A thin shell wrapper (`context-stats.sh`) is also included for environments where the pip-installed `context-stats` command is not yet in PATH.
 
 ### Python Package (`src/claude_statusline/`)
 

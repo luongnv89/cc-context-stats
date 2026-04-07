@@ -44,6 +44,7 @@ def pytest_sessionfinish(session, exitstatus):
                 sys.stderr.write("[conftest] Forcing exit code 0 on Windows\n")
                 session.exitstatus = 0
 
+
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 FIXTURES_DIR = PROJECT_ROOT / "tests" / "fixtures" / "json"

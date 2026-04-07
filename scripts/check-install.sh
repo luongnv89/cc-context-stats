@@ -2,7 +2,7 @@
 #
 # cc-context-stats Installation Checker
 # Verifies that both the statusline and context-stats CLI are properly installed
-# regardless of installation method (bash, npm, or pip).
+# regardless of installation method (shell installer or pip).
 #
 # Usage:
 #   ./scripts/check-install.sh
@@ -44,14 +44,9 @@ info() {
 detect_install_method() {
     local methods=()
 
-    # Check bash installer artifacts
-    if [ -f "$HOME/.claude/statusline.sh" ]; then
-        methods+=("bash")
-    fi
-
-    # Check npm global install
-    if npm list -g cc-context-stats &>/dev/null 2>&1; then
-        methods+=("npm")
+    # Check shell installer artifacts
+    if [ -f "$HOME/.claude/statusline.py" ]; then
+        methods+=("shell")
     fi
 
     # Check pip install
@@ -89,7 +84,6 @@ if [ -z "$METHODS" ]; then
     fail "No installation detected"
     info "Install via one of:"
     info "  curl -fsSL https://raw.githubusercontent.com/luongnv89/cc-context-stats/main/install.sh | bash"
-    info "  npm install -g cc-context-stats"
     info "  pip install cc-context-stats"
     echo
     echo -e "${RED}Check failed: nothing is installed.${RESET}"
@@ -107,23 +101,13 @@ echo -e "${BLUE}2. Statusline Command${RESET}"
 STATUSLINE_CMD=""
 STATUSLINE_SOURCE=""
 
-# Check claude-statusline in PATH (npm/pip install)
+# Check claude-statusline in PATH (pip install)
 if command -v claude-statusline &>/dev/null; then
     STATUSLINE_CMD="claude-statusline"
     STATUSLINE_SOURCE="PATH ($(command -v claude-statusline))"
 fi
 
-# Check bash installer location
-if [ -x "$HOME/.claude/statusline.sh" ]; then
-    if [ -z "$STATUSLINE_CMD" ]; then
-        STATUSLINE_CMD="$HOME/.claude/statusline.sh"
-        STATUSLINE_SOURCE="bash installer ($HOME/.claude/statusline.sh)"
-    else
-        pass "Also found bash script: ~/.claude/statusline.sh"
-    fi
-fi
-
-# Check standalone Python script
+# Check standalone Python script (shell installer)
 if [ -f "$HOME/.claude/statusline.py" ]; then
     if [ -z "$STATUSLINE_CMD" ]; then
         STATUSLINE_CMD="python3 $HOME/.claude/statusline.py"
@@ -133,25 +117,13 @@ if [ -f "$HOME/.claude/statusline.py" ]; then
     fi
 fi
 
-# Check standalone Node.js script
-if [ -f "$HOME/.claude/statusline.js" ]; then
-    if [ -z "$STATUSLINE_CMD" ]; then
-        STATUSLINE_CMD="node $HOME/.claude/statusline.js"
-        STATUSLINE_SOURCE="standalone Node.js ($HOME/.claude/statusline.js)"
-    else
-        pass "Also found standalone Node.js: ~/.claude/statusline.js"
-    fi
-fi
-
 if [ -n "$STATUSLINE_CMD" ]; then
     pass "Statusline command found: $STATUSLINE_SOURCE"
 else
     fail "No statusline command found"
     info "Expected one of:"
-    info "  - 'claude-statusline' in PATH (npm/pip install)"
-    info "  - ~/.claude/statusline.sh (bash install)"
-    info "  - ~/.claude/statusline.py (manual Python)"
-    info "  - ~/.claude/statusline.js (manual Node.js)"
+    info "  - 'claude-statusline' in PATH (pip install)"
+    info "  - ~/.claude/statusline.py (shell installer or manual Python)"
 fi
 
 # Test that the statusline command actually works
@@ -197,8 +169,8 @@ else
     else
         fail "context-stats CLI not found"
         info "Expected one of:"
-        info "  - 'context-stats' in PATH (npm/pip install)"
-        info "  - ~/.local/bin/context-stats (bash install)"
+        info "  - 'context-stats' in PATH (pip install)"
+        info "  - ~/.local/bin/context-stats (shell installer)"
     fi
 fi
 
@@ -306,14 +278,12 @@ else
         echo -e "  ${BLUE}curl -fsSL https://raw.githubusercontent.com/luongnv89/cc-context-stats/main/install.sh | bash${RESET}"
     elif [ -z "$STATUSLINE_CMD" ]; then
         echo "The statusline is missing. Fix depends on your install method:"
-        echo "  npm:  Verify with 'npm list -g cc-context-stats' and check 'claude-statusline' is in PATH"
-        echo "  pip:  Verify with 'pip show cc-context-stats' and check 'claude-statusline' is in PATH"
-        echo "  bash: Re-run the installer: ./install.sh"
+        echo "  pip:    Verify with 'pip show cc-context-stats' and check 'claude-statusline' is in PATH"
+        echo "  shell:  Re-run the installer: ./install.sh"
     elif [ -z "$CONTEXT_STATS_CMD" ]; then
         echo "The context-stats CLI is missing. Fix depends on your install method:"
-        echo "  npm:  Verify with 'npm list -g cc-context-stats' and check 'context-stats' is in PATH"
-        echo "  pip:  Verify with 'pip show cc-context-stats' and check 'context-stats' is in PATH"
-        echo "  bash: Re-run the installer: ./install.sh"
+        echo "  pip:    Verify with 'pip show cc-context-stats' and check 'context-stats' is in PATH"
+        echo "  shell:  Re-run the installer: ./install.sh"
     else
         echo "Components found but settings may need updating."
         echo "Check the failed items above for specific fix instructions."
