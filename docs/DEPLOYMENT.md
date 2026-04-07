@@ -2,12 +2,12 @@
 
 ## Distribution Channels
 
-cc-context-stats is distributed through two channels:
+context-stats is distributed through two channels:
 
 | Channel      | Package Name      | Command                              |
 | ------------ | ----------------- | ------------------------------------ |
 | Shell script | N/A               | `curl -fsSL .../install.sh \| bash`  |
-| PyPI         | `cc-context-stats`| `pip install cc-context-stats`       |
+| PyPI         | `context-stats`| `pip install context-stats`       |
 
 The pip install provides the `claude-statusline` and `context-stats` CLI commands.
 

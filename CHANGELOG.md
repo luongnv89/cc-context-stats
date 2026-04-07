@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-04-07
+
+### Added
+
+- **Mermaid charts for visual analytics** — Added Mermaid-based charts to the `context-stats report` output, providing visual token usage analytics alongside the existing text summaries
+
+### Fixed
+
+- **Report period and session filtering** — Fixed `generate_report` to show the correct reporting period and filter sessions by `start_time` so reports reflect actual session boundaries
+- **Mermaid x-axis label overlap** — Shortened x-axis labels in Mermaid charts to prevent text overlap on busy timelines
+- **CI workflow cleanup** — Removed deleted `test_context_stats_subcommands.bats` reference from the CI workflow to prevent spurious test failures
+
+### Changed
+
+- **Report rewrite with full analytics** — Rewrote `generate_report` to produce comprehensive analytics matching the reference format: session summaries, token breakdowns, and chart data
+- **Python-only codebase finalised** — Completed removal of all remaining Node.js and Bash remnants; the project is now exclusively Python
+
 ## [1.17.0] - 2026-04-07
 
 ### Added

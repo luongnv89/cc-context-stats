@@ -5,13 +5,13 @@
 ### Python (pip) — Recommended
 
 ```bash
-pip install cc-context-stats
+pip install context-stats
 ```
 
 Or with uv:
 
 ```bash
-uv pip install cc-context-stats
+uv pip install context-stats
 ```
 
 After installation, add to `~/.claude/settings.json`:
@@ -36,14 +36,14 @@ pip install .
 ### Windows
 
 ```powershell
-pip install cc-context-stats
+pip install context-stats
 ```
 
 Or manually copy the script:
 
 ```powershell
 git clone https://github.com/luongnv89/cc-context-stats.git
-copy cc-context-stats\scripts\statusline.py %USERPROFILE%\.claude\statusline.py
+copy context-stats\scripts\statusline.py %USERPROFILE%\.claude\statusline.py
 ```
 
 ## Manual Installation

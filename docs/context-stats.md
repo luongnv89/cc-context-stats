@@ -43,7 +43,7 @@ context-stats <session_id> graph --type all         # Show all graphs including 
 
 ### Diagnostic Dump
 
-The `explain` action shows how cc-context-stats interprets Claude Code's JSON context. Pipe any session JSON to stdin:
+The `explain` action shows how context-stats interprets Claude Code's JSON context. Pipe any session JSON to stdin:
 
 ```bash
 echo '{"model":{"display_name":"Opus"},...}' | context-stats explain
@@ -86,7 +86,7 @@ Session Summary
   Model:               claude-sonnet-4-6
   Session Duration:    2h 29m
 
-Powered by cc-context-stats v1.17.0 - https://github.com/luongnv89/cc-context-stats
+Powered by context-stats v1.18.0 - https://github.com/luongnv89/cc-context-stats
 ```
 
 ## Features

@@ -57,7 +57,7 @@ echo {"model":{"display_name":"Test"}} | python %USERPROFILE%\.claude\statusline
 2. Reinstall if missing:
 
    ```bash
-   pip install cc-context-stats
+   pip install context-stats
    ```
 
 3. Check PATH if pip installed to user directory:
@@ -83,13 +83,13 @@ echo {"model":{"display_name":"Test"}} | python %USERPROFILE%\.claude\statusline
 2. Try with `--user` flag:
 
    ```bash
-   pip install --user cc-context-stats
+   pip install --user context-stats
    ```
 
 3. Or use `uv`:
 
    ```bash
-   uv pip install cc-context-stats
+   uv pip install context-stats
    ```
 
 ### No token graph data

@@ -52,7 +52,7 @@ _ZONE_FLOAT_KEYS: set[str] = {
 # ---------------------------------------------------------------------------
 
 _MINIMAL_CONFIG_FALLBACK = """\
-# cc-context-stats — statusline configuration
+# context-stats — statusline configuration
 # Full reference: https://github.com/luongnv89/cc-context-stats/blob/main/docs/configuration.md
 autocompact=false
 token_detail=true

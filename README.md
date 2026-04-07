@@ -1,10 +1,10 @@
 <div align="center">
-  <img src="assets/logo/logo-full.svg" alt="cc-context-stats" width="320"/>
+  <img src="assets/logo/logo-full.svg" alt="context-stats" width="320"/>
 
   <h1>Know your context zone. Act before Claude degrades.</h1>
 
-[![PyPI version](https://img.shields.io/pypi/v/cc-context-stats)](https://pypi.org/project/cc-context-stats/)
-[![PyPI Downloads](https://img.shields.io/pypi/dm/cc-context-stats)](https://pypi.org/project/cc-context-stats/)
+[![PyPI version](https://img.shields.io/pypi/v/context-stats)](https://pypi.org/project/context-stats/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/context-stats)](https://pypi.org/project/context-stats/)
 [![GitHub stars](https://img.shields.io/github/stars/luongnv89/cc-context-stats)](https://github.com/luongnv89/cc-context-stats)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -245,13 +245,13 @@ Heartbeats fire every 4 minutes (under the 5-min TTL). Runs as a detached backgr
 ### pip
 
 ```bash
-pip install cc-context-stats
+pip install context-stats
 ```
 
 ### uv
 
 ```bash
-uv pip install cc-context-stats
+uv pip install context-stats
 ```
 
 ### Claude Code setup
@@ -280,14 +280,14 @@ Yes. MIT licensed, zero external dependencies.
 No. Session data stays local in `~/.claude/statusline/`. Analytics read from `~/.claude/projects/`.
 
 **What runtimes does it support?**
-Python 3 only. Install via `pip install cc-context-stats`.
+Python 3 only. Install via `pip install context-stats`.
 
 ---
 
 ## Get Started
 
 ```bash
-pip install cc-context-stats
+pip install context-stats
 ```
 
 [Read the docs](docs/installation.md) · [View export example](context-stats-export-output.md) · MIT Licensed
@@ -339,7 +339,7 @@ pip uninstall cc-statusline
 ```
 
 ```bash
-pip install cc-context-stats
+pip install context-stats
 ```
 
 The `claude-statusline` command still works. The main change is `token-graph` is now `context-stats`.

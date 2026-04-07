@@ -5,7 +5,7 @@ Usage:
     echo '{"model":...}' | context-stats explain --no-color
 
 Reads the same JSON that Claude Code pipes to the statusline script,
-pretty-prints every field with labels, and shows how cc-context-stats
+pretty-prints every field with labels, and shows how context-stats
 interprets them. Useful for debugging blank or missing modules.
 """
 
@@ -214,10 +214,10 @@ def run_explain(data: dict, no_color: bool = False) -> None:
     color_enabled = not no_color and sys.stdout.isatty()
     colors = ColorManager(enabled=color_enabled, overrides=config.color_overrides)
 
-    print(f"\n{colors.bold}cc-context-stats explain{colors.reset}")
+    print(f"\n{colors.bold}context-stats explain{colors.reset}")
     print(f"{colors.dim}{'─' * 60}{colors.reset}")
     print(
-        f"{colors.dim}Shows how cc-context-stats interprets Claude Code's JSON context."
+        f"{colors.dim}Shows how context-stats interprets Claude Code's JSON context."
         f"{colors.reset}\n"
     )
 

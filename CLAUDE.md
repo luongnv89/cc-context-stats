@@ -2,7 +2,7 @@
 
 ## Project Purpose
 
-cc-context-stats provides real-time context window monitoring for Claude Code sessions. It tracks token consumption over time and displays live ASCII graphs so users can see how much context remains.
+context-stats provides real-time context window monitoring for Claude Code sessions. It tracks token consumption over time and displays live ASCII graphs so users can see how much context remains.
 
 ## Implementation
 

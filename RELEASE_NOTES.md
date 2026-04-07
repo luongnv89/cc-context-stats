@@ -1,13 +1,15 @@
-## v1.17.0 — 2026-04-07
+## v1.18.0 — 2026-04-07
 
 ### Features
-- **Cross-project token analytics** — `context-stats report` aggregates token usage and cost across all Claude Code projects and sessions, with breakdowns by project, model, and cache efficiency. Includes grand totals, per-project breakdown, top sessions, and cache read vs. creation ratios.
+- **Mermaid charts in report** — `context-stats report` now renders visual Mermaid charts for token usage, cost trends, and project analytics alongside the existing ASCII tables
+- **Full analytics rewrite** — `generate_report` rebuilt with complete analytics matching reference format; includes richer breakdowns, improved summaries, and consistent output
 
-### Refactors
-- **Python-only migration** — Removed the standalone `context-stats.sh` shell script; all functionality is now delivered through the Python package (`pip install cc-context-stats`)
-- **Dropped Bash and Node.js implementations** — `scripts/statusline.js`, `scripts/statusline-full.sh`, `scripts/statusline-git.sh`, and `scripts/statusline-minimal.sh` have been removed; only `scripts/statusline.py` and the `src/` package remain
+### Fixes
+- **Report period display** — Report header now correctly shows the date range covered by the data
+- **`--since-days` filtering** — `start_time` field is now correctly used for session filtering when `--since-days` is specified
+- **Mermaid x-axis labels** — Shortened x-axis labels in Mermaid charts to prevent label overlap on wide datasets
 
-### Documentation
-- Rewrote README to highlight key features, zones, Model Intelligence scoring, live graphs, session export, and cross-project analytics
+### Chore
+- **Remove Node.js and Bash remnants** — Deleted all remaining Node.js and Bash script files; Python-only codebase is now complete
 
-**Full Changelog**: https://github.com/luongnv89/cc-context-stats/compare/v1.16.1...v1.17.0
+**Full Changelog**: https://github.com/luongnv89/cc-context-stats/compare/v1.17.0...v1.18.0

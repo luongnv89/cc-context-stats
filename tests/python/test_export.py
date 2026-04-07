@@ -201,7 +201,7 @@ class TestGenerateMarkdown:
         md = _generate_markdown(entries, "test-id", config)
 
         assert __version__ in md
-        assert "cc-context-stats" in md
+        assert "context-stats" in md
 
     def test_mi_score_in_summary(self):
         entries = [

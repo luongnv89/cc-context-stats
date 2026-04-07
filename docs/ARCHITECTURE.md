@@ -2,7 +2,7 @@
 
 ## Overview
 
-cc-context-stats provides real-time context monitoring for Claude Code sessions. It consists of two main components:
+context-stats provides real-time context monitoring for Claude Code sessions. It consists of two main components:
 
 1. **Status Line** - A compact one-line display integrated into Claude Code's UI
 2. **Context Stats CLI** - A live terminal dashboard with ASCII graphs
@@ -59,9 +59,9 @@ graph TD
 
 | Script             | Language | Install Method            |
 | ------------------ | -------- | ------------------------- |
-| `context_stats.py` | Python   | `pip install cc-context-stats` |
+| `context_stats.py` | Python   | `pip install context-stats` |
 
-The Python CLI provides live ASCII graphs with zone awareness. Install via `pip install cc-context-stats` to get the `context-stats` command.
+The Python CLI provides live ASCII graphs with zone awareness. Install via `pip install context-stats` to get the `context-stats` command.
 
 ### Python Package (`src/claude_statusline/`)
 

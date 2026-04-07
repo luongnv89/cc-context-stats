@@ -242,7 +242,7 @@ def parse_args() -> argparse.Namespace:
     raw_argv = sys.argv[1:]
 
     if "--version" in raw_argv or "-V" in raw_argv:
-        print(f"cc-context-stats {__version__}")
+        print(f"context-stats {__version__}")
         sys.exit(0)
 
     if not raw_argv or raw_argv == ["--help"] or raw_argv == ["-h"]:

@@ -390,7 +390,7 @@ def read_config():
                 f.write(
                     """\
 # ============================================================================
-# cc-context-stats — statusline configuration
+# context-stats — statusline configuration
 # ============================================================================
 #
 # Copy this file to:   ~/.claude/statusline.conf

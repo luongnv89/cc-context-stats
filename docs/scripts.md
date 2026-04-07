@@ -10,7 +10,7 @@
 
 | Method | Statusline Command | Context Stats Command |
 | ------ | ------------------ | --------------------- |
-| `pip install cc-context-stats` | `claude-statusline` | `context-stats` |
+| `pip install context-stats` | `claude-statusline` | `context-stats` |
 
 ## statusline.py
 
@@ -25,7 +25,7 @@ Features:
 
 ## Context Stats CLI
 
-The `context-stats` command is installed as part of the `cc-context-stats` Python package (`pip install cc-context-stats`). See [Context Stats](context-stats.md) for details.
+The `context-stats` command is installed as part of the `context-stats` Python package (`pip install context-stats`). See [Context Stats](context-stats.md) for details.
 
 ## Output Format
 

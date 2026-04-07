@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "cc-context-stats"
-version = "1.17.0"
+name = "context-stats"
+version = "1.18.0"
 description = "Monitor your Claude Code session context in real-time - track token usage and never run out of context"
 readme = "README.md"
 license = { text = "MIT" }
