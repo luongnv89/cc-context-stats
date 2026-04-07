@@ -262,7 +262,7 @@ pip install cc-context-stats
 <details>
 <summary><strong>Documentation</strong></summary>
 
-- [Installation Guide](docs/installation.md) - Platform-specific setup (shell, pip, npm)
+- [Installation Guide](docs/installation.md) - Platform-specific setup (shell, pip)
 - [Context Stats Guide](docs/context-stats.md) - Detailed CLI usage guide
 - [Configuration Options](docs/configuration.md) - All settings explained
 - [Available Scripts](docs/scripts.md) - Script variants and features
@@ -288,7 +288,7 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 <details>
 <summary><strong>How It Works (Architecture)</strong></summary>
 
-Context Stats hooks into Claude Code's status line feature to track token usage across sessions. The Python and Node.js statusline scripts write state data to local CSV files, which the `context-stats` CLI reads to render live graphs. Data is stored locally in `~/.claude/statusline/` and never sent anywhere.
+Context Stats hooks into Claude Code's status line feature to track token usage across sessions. The Python statusline script writes state data to local CSV files, which the `context-stats` CLI reads to render live graphs. Data is stored locally in `~/.claude/statusline/` and never sent anywhere.
 
 The statusline is implemented in Python. Claude Code invokes the statusline script via stdin JSON pipe — the script reads JSON from stdin and writes formatted text to stdout.
 

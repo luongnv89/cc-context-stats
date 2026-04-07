@@ -35,7 +35,7 @@ graph TD
                                            ▼
                                     ┌──────────────────┐
                                     │ Context Stats CLI │
-                                    │  (Python/Bash)    │
+                                    │    (Python)       │
                                     └──────────────────┘
 ```
 
@@ -57,14 +57,11 @@ graph TD
 
 ### Context Stats CLI
 
-Two implementations of the live dashboard:
-
 | Script             | Language | Install Method            |
 | ------------------ | -------- | ------------------------- |
-| `context-stats.sh` | Bash     | Shell installer           |
 | `context_stats.py` | Python   | `pip install cc-context-stats` |
 
-The Python CLI (installed via pip) provides live ASCII graphs with zone awareness. The bash script (`context-stats.sh`) is a standalone alternative.
+The Python CLI provides live ASCII graphs with zone awareness. A thin shell wrapper (`context-stats.sh`) is also included for environments where the pip-installed `context-stats` command is not yet in PATH.
 
 ### Python Package (`src/claude_statusline/`)
 

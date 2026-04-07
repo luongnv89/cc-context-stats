@@ -36,7 +36,7 @@ cc-context-stats/
 │   └── ui/                   #   Icons, waiting animation
 ├── scripts/                  # Standalone scripts
 │   ├── statusline.py         #   Python standalone statusline
-│   └── context-stats.sh      #   Bash context-stats CLI
+│   └── context-stats.sh      #   Shell wrapper for context-stats CLI
 ├── tests/
 │   ├── bash/                 # Bats tests (install/check scripts)
 │   └── python/               # Pytest tests

@@ -2,15 +2,14 @@
 
 ## Distribution Channels
 
-cc-context-stats is distributed through three channels:
+cc-context-stats is distributed through two channels:
 
 | Channel      | Package Name      | Command                              |
 | ------------ | ----------------- | ------------------------------------ |
 | Shell script | N/A               | `curl -fsSL .../install.sh \| bash`  |
 | PyPI         | `cc-context-stats`| `pip install cc-context-stats`       |
-| npm          | `cc-context-stats`| `npm install -g cc-context-stats`    |
 
-Both pip and npm installs provide the `claude-statusline` and `context-stats` CLI commands.
+The pip install provides the `claude-statusline` and `context-stats` CLI commands.
 
 ## Publishing to PyPI
 
@@ -28,16 +27,6 @@ twine check dist/*
 twine upload dist/*
 ```
 
-## Publishing to npm
-
-```bash
-# Verify package.json
-npm pack --dry-run
-
-# Publish
-npm publish
-```
-
 ## Release Workflow
 
 The project uses GitHub Actions for automated releases (`.github/workflows/release.yml`):
@@ -46,8 +35,8 @@ The project uses GitHub Actions for automated releases (`.github/workflows/relea
 2. Update `CHANGELOG.md` with the new version entry
 3. Create and push a version tag: `git tag v1.x.x && git push --tags`
 4. The release workflow automatically:
-   - Runs the full test suite (Python, Node.js, Bash)
-   - Builds Python and npm packages
+   - Runs the full test suite (Python and Bash)
+   - Builds the Python package
    - Creates a GitHub Release with release notes
 
 CI is also run on every push and PR via `.github/workflows/ci.yml`.

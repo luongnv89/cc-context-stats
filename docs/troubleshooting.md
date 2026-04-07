@@ -4,18 +4,18 @@
 
 ### Status line not appearing
 
-**macOS/Linux:**
+**macOS/Linux (shell installer):**
 
 1. Check script is executable:
 
    ```bash
-   chmod +x ~/.claude/statusline.sh
+   chmod +x ~/.claude/statusline.py
    ```
 
 2. Test the script:
 
    ```bash
-   echo '{"model":{"display_name":"Test"}}' | ~/.claude/statusline.sh
+   echo '{"model":{"display_name":"Test"}}' | python3 ~/.claude/statusline.py
    ```
 
 3. Verify settings.json configuration:
