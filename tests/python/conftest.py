@@ -11,18 +11,23 @@ import pytest
 def pytest_sessionfinish(session, exitstatus):
     """On Windows, fix spurious exit code 1 from coverage/pytest-cov teardown.
 
-    pytest-cov 7.x on Windows can set session.testsfailed += 1 in certain edge
-    cases related to Windows-specific coverage teardown behavior, even when all
-    tests actually passed. This hook runs last (trylast) and resets the exit
-    status to 0 when no tests actually failed.
+    On Windows, the coverage C extension's sys.settrace tracer can cause a
+    KeyboardInterrupt in pytest's cleanup_numbered_dir atexit handler. This
+    happens because cleanup_numbered_dir runs before coverage's own atexit
+    (LIFO order) while the tracer is still active.
 
-    Also clears the coverage C extension tracer to prevent KeyboardInterrupt in
-    pytest's cleanup_numbered_dir atexit handler on Windows.
+    Fix: register a final atexit handler (runs first in LIFO) that clears the
+    tracer so cleanup_numbered_dir executes without interference.
     """
     if sys.platform == "win32":
-        sys.settrace(None)
-        sys.setprofile(None)
-        # If no tests failed or errored, force exit code 0
+        import atexit
+
+        def _clear_coverage_tracer():
+            sys.settrace(None)
+            sys.setprofile(None)
+
+        atexit.register(_clear_coverage_tracer)
+        # If no tests failed or errored, ensure exit code 0
         if session.testsfailed == 0 and session.testscollected > 0:
             session.exitstatus = 0
 
