@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-04-07
+
+### Added
+
+- **Cache-warm subcommand** — Added `context-stats <session_id> cache-warm` to keep a Claude Code session's prompt cache alive by periodically touching the cache via a background daemon. Supports fork/detach on Unix and subprocess fallback on Windows (#49, #54)
+- **Cache graph type** — Added `--type cache` to the `context-stats` graph command to visualize cache creation and cache read token activity over time (#48)
+- **E2E install smoke tests in pre-commit hook** — Added clean end-to-end install smoke tests that run before each commit to catch install regressions early (#51, #53)
+
+### Changed
+
+- **Action-based CLI interface** — Redesigned `context-stats` to use a strict `<session_id> <action>` pattern (e.g. `context-stats <id> graph`, `context-stats <id> export`), replacing the previous flag-based interface for improved composability and discoverability (#50, #52)
+
+### Fixed
+
+- **Windows CI pytest-cov exit code** — Resolved spurious exit code 1 from `pytest-cov` on Windows by clearing the coverage tracer before process exit and using terminal reporter stats to determine final exit code (#54)
+- **Windows CI failures in cache-warm tests** — Fixed fork simulation tests (skipped on Windows), replaced `tmp_path` with `mkdtemp` to avoid coverage tracer conflicts, and added a SIGCHLD guard for Unix-only signal handling (#49)
+- **E2E test robustness** — Fixed eval injection, dead tmpdir usage, `set -e` abort on npm pack, and ShellCheck warnings in `e2e-install-test.sh` (#51)
+- **ESLint upgrade** — Bumped eslint from 8.57.1 to 10.2.0 (dependabot)
+
 ## [1.15.1] - 2026-04-02
 
 ### Fixed
