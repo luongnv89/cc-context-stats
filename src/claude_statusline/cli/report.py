@@ -179,7 +179,7 @@ def run_report(argv: list[str]) -> None:
     projects_stats = load_all_projects(since_days=args.since_days)
 
     if not projects_stats:
-        print("No project data found in ~/.claude/projects/", file=sys.stderr)
+        print("No project data found in ~/.claude/statusline/", file=sys.stderr)
         sys.exit(1)
 
     # Generate report
@@ -190,7 +190,7 @@ def run_report(argv: list[str]) -> None:
         output_path = Path(args.output)
     else:
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        output_path = Path.home() / f"context-stats-report-{timestamp}.md"
+        output_path = Path.cwd() / f"context-stats-report-{timestamp}.md"
 
     # Write report
     try:

@@ -1,15 +1,13 @@
 """Data loading and aggregation for token usage analytics.
 
 This module provides utilities to:
-- Discover project directories in ~/.claude/projects/
-- Load session state files and aggregate token usage
-- Parse project metadata and subagent information
+- Load session state files from ~/.claude/statusline/
+- Aggregate token usage by project
 - Filter sessions by date range
 """
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -80,71 +78,32 @@ class ProjectStats:
         )
 
 
-def _discover_projects() -> list[Path]:
-    """Discover all project directories in ~/.claude/projects/.
+def _discover_state_files() -> list[Path]:
+    """Discover all state files in ~/.claude/statusline/.
 
     Returns:
-        List of project directory paths.
+        List of state file paths.
     """
-    projects_dir = Path.home() / ".claude" / "projects"
-    if not projects_dir.exists():
+    state_dir = StateFile.STATE_DIR
+    if not state_dir.exists():
         return []
 
-    projects = []
-    for item in projects_dir.iterdir():
-        if item.is_dir():
-            projects.append(item)
-    return sorted(projects)
+    state_files = []
+    for file in state_dir.glob("statusline.*.state"):
+        if file.is_file():
+            state_files.append(file)
+    return sorted(state_files)
 
 
-def _decode_project_dir(encoded: str) -> str:
-    """Decode project directory name.
-
-    Project directories in ~/.claude/projects/ are encoded with underscores
-    replacing path separators (e.g., /path/to/project → _path_to_project).
+def _load_session_stats(state_file_path: Path) -> SessionStats | None:
+    """Load statistics for a single session from a state file.
 
     Args:
-        encoded: Encoded project directory name.
+        state_file_path: Path to the state file.
 
     Returns:
-        Decoded project directory path.
+        SessionStats object or None if unable to load.
     """
-    # Remove leading underscore if present
-    if encoded.startswith("_"):
-        encoded = encoded[1:]
-    # Replace remaining underscores with path separators
-    return "/" + encoded.replace("_", "/")
-
-
-def _load_session_stats(session_dir: Path, project_dir: str) -> SessionStats | None:
-    """Load statistics for a single session.
-
-    Args:
-        session_dir: Path to session directory (UUID).
-        project_dir: Decoded project directory path.
-
-    Returns:
-        SessionStats object or None if no state file found.
-    """
-    # Find state file for this session (typically sessionid.state or similar)
-    state_file = StateFile(session_dir.name)
-    state_file.session_id = session_dir.name
-
-    # Try to read from the session-specific state file
-    # The StateFile uses a glob pattern internally, so we need to match it
-    from claude_statusline.core.state import _validate_session_id
-
-    try:
-        _validate_session_id(session_dir.name)
-    except ValueError:
-        return None
-
-    # Find the state file
-    state_files = list(Path.home().glob(f".claude/statusline/statusline.{session_dir.name}.state"))
-    if not state_files:
-        return None
-
-    state_file_path = state_files[0]
     entries = []
     try:
         with open(state_file_path) as f:
@@ -158,9 +117,15 @@ def _load_session_stats(session_dir: Path, project_dir: str) -> SessionStats | N
     if not entries:
         return None
 
+    # Extract session ID from filename (statusline.<session_id>.state)
+    session_id = state_file_path.stem.replace("statusline.", "")
+
+    # Get project_dir from the first entry's workspace_project_dir field
+    project_dir = entries[0].workspace_project_dir or "Unknown"
+
     # Aggregate stats
     stats = SessionStats(
-        session_id=session_dir.name,
+        session_id=session_id,
         project_dir=project_dir,
         model_id=entries[-1].model_id,
         start_time=entries[0].timestamp,
@@ -176,92 +141,46 @@ def _load_session_stats(session_dir: Path, project_dir: str) -> SessionStats | N
     stats.total_cache_read = final_entry.cache_read
     stats.cost_usd = final_entry.cost_usd
 
-    # Load subagent data
-    _load_subagents(session_dir, stats)
-
     return stats
 
 
-def _load_subagents(session_dir: Path, stats: SessionStats) -> None:
-    """Load subagent data for a session.
+def _group_sessions_by_project(
+    sessions: list[SessionStats], since_days: int | None = None
+) -> dict[str, ProjectStats]:
+    """Group sessions by project directory.
 
     Args:
-        session_dir: Path to session directory.
-        stats: SessionStats object to populate.
-    """
-    subagents_dir = session_dir / "subagents"
-    if not subagents_dir.exists():
-        return
-
-    agent_data: dict[str, dict] = {}
-
-    for jsonl_file in subagents_dir.glob("*.jsonl"):
-        try:
-            with open(jsonl_file) as f:
-                for line in f:
-                    try:
-                        data = json.loads(line.strip())
-                        agent_id = data.get("agentId", "unknown")
-                        if agent_id not in agent_data:
-                            agent_data[agent_id] = {"count": 0}
-                        agent_data[agent_id]["count"] += 1
-                    except json.JSONDecodeError:
-                        pass
-        except OSError:
-            pass
-
-    # Convert to SubagentStats (simple count-based tracking)
-    for agent_id, _data in agent_data.items():
-        stats.subagents[agent_id] = SubagentStats(agent_id=agent_id)
-
-
-def _load_project_stats(project_dir: Path, since_days: int | None = None) -> ProjectStats | None:
-    """Load all session statistics for a project.
-
-    Args:
-        project_dir: Path to project directory.
+        sessions: List of SessionStats objects.
         since_days: Only include sessions from the last N days.
 
     Returns:
-        ProjectStats object or None if no sessions found.
+        Dictionary mapping project_dir to ProjectStats.
     """
-    decoded_dir = _decode_project_dir(project_dir.name)
+    cutoff_time = None
+    if since_days:
+        cutoff_time = int((datetime.now() - timedelta(days=since_days)).timestamp())
 
-    stats = ProjectStats(project_dir=decoded_dir)
+    projects: dict[str, ProjectStats] = {}
 
-    # Iterate over session directories (UUIDs)
-    for session_dir in project_dir.iterdir():
-        if not session_dir.is_dir():
-            continue
-
-        session_stats = _load_session_stats(session_dir, decoded_dir)
-        if not session_stats:
-            continue
-
+    for session in sessions:
         # Apply date filter if specified
-        if since_days:
-            cutoff_time = int((datetime.now() - timedelta(days=since_days)).timestamp())
-            if session_stats.end_time < cutoff_time:
-                continue
+        if cutoff_time and session.end_time < cutoff_time:
+            continue
 
-        # Aggregate into project stats
-        stats.total_input_tokens += session_stats.total_input_tokens
-        stats.total_output_tokens += session_stats.total_output_tokens
-        stats.total_cache_creation += session_stats.total_cache_creation
-        stats.total_cache_read += session_stats.total_cache_read
-        stats.cost_usd += session_stats.cost_usd
-        stats.session_count += 1
+        # Create project entry if needed
+        if session.project_dir not in projects:
+            projects[session.project_dir] = ProjectStats(project_dir=session.project_dir)
 
-        # Aggregate subagent stats
-        for agent_id, _agent_stats in session_stats.subagents.items():
-            if agent_id not in stats.subagents:
-                stats.subagents[agent_id] = SubagentStats(agent_id=agent_id)
-            proj_agent = stats.subagents[agent_id]
-            proj_agent.session_count += 1
+        proj = projects[session.project_dir]
+        proj.total_input_tokens += session.total_input_tokens
+        proj.total_output_tokens += session.total_output_tokens
+        proj.total_cache_creation += session.total_cache_creation
+        proj.total_cache_read += session.total_cache_read
+        proj.cost_usd += session.cost_usd
+        proj.session_count += 1
+        proj.sessions.append(session)
 
-        stats.sessions.append(session_stats)
-
-    return stats if stats.session_count > 0 else None
+    return projects
 
 
 def load_all_projects(since_days: int | None = None) -> list[ProjectStats]:
@@ -273,14 +192,19 @@ def load_all_projects(since_days: int | None = None) -> list[ProjectStats]:
     Returns:
         List of ProjectStats objects, sorted by total tokens (descending).
     """
-    projects = _discover_projects()
-    all_stats = []
+    state_files = _discover_state_files()
 
-    for project_dir in projects:
-        stats = _load_project_stats(project_dir, since_days)
-        if stats:
-            all_stats.append(stats)
+    # Load all sessions from state files
+    sessions = []
+    for state_file in state_files:
+        session = _load_session_stats(state_file)
+        if session:
+            sessions.append(session)
 
-    # Sort by total tokens (descending)
+    # Group sessions by project and apply date filtering
+    projects_dict = _group_sessions_by_project(sessions, since_days)
+
+    # Convert to sorted list
+    all_stats = list(projects_dict.values())
     all_stats.sort(key=lambda s: s.total_tokens(), reverse=True)
     return all_stats
