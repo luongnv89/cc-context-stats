@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <!-- Three-level palette -->
+    <!-- Arc 1 (live):    #10B981 green  -->
+    <!-- Arc 2 (session): #06B6D4 cyan   -->
+    <!-- Arc 3 (report):  #818CF8 indigo -->
+  </defs>
+
+  <!-- Background -->
+  <rect width="64" height="64" rx="14" fill="#0F172A"/>
+
+  <!-- Origin dot — "current moment" cursor -->
+  <circle cx="14" cy="50" r="3" fill="#10B981"/>
+  <circle cx="14" cy="50" r="5.5" fill="#10B981" opacity="0.15"/>
+
+  <!-- Arc 1 — Live (innermost, green) -->
+  <!-- Sweeps from origin upward-right, small radius ~18 -->
+  <path d="M 14 50 C 14 38, 24 28, 36 28"
+        stroke="#10B981" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Arc 2 — Session (middle, cyan) -->
+  <!-- Sweeps from origin upward-right, medium radius ~28 -->
+  <path d="M 14 50 C 14 30, 28 14, 46 14"
+        stroke="#06B6D4" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+
+  <!-- Arc 3 — Report (outermost, indigo) -->
+  <!-- Sweeps from origin upward-right, large radius ~38 -->
+  <path d="M 14 50 C 14 22, 34 6, 56 6"
+        stroke="#818CF8" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- Terminal dots at arc ends (subtle) -->
+  <circle cx="36" cy="28" r="2" fill="#10B981" opacity="0.6"/>
+  <circle cx="46" cy="14" r="2" fill="#06B6D4" opacity="0.5"/>
+  <circle cx="56" cy="6" r="2" fill="#818CF8" opacity="0.4"/>
+</svg>

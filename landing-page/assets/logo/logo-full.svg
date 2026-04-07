@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 72" width="320" height="72">
+  <!-- Background pill -->
+  <rect width="320" height="72" rx="14" fill="#0F172A"/>
+
+  <!-- Mark: three-arc analytics symbol, translated to fit 64x64 within 72px height (4px padding each side) -->
+  <g transform="translate(4, 4)">
+    <!-- Origin dot -->
+    <circle cx="14" cy="50" r="3" fill="#10B981"/>
+    <circle cx="14" cy="50" r="5.5" fill="#10B981" opacity="0.15"/>
+
+    <!-- Arc 1 — Live (green) -->
+    <path d="M 14 50 C 14 38, 24 28, 36 28"
+          stroke="#10B981" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+    <!-- Arc 2 — Session (cyan) -->
+    <path d="M 14 50 C 14 30, 28 14, 46 14"
+          stroke="#06B6D4" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+
+    <!-- Arc 3 — Report (indigo) -->
+    <path d="M 14 50 C 14 22, 34 6, 56 6"
+          stroke="#818CF8" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+
+    <!-- Terminal dots -->
+    <circle cx="36" cy="28" r="2" fill="#10B981" opacity="0.6"/>
+    <circle cx="46" cy="14" r="2" fill="#06B6D4" opacity="0.5"/>
+    <circle cx="56" cy="6" r="2" fill="#818CF8" opacity="0.4"/>
+  </g>
+
+  <!-- Divider -->
+  <line x1="80" y1="16" x2="80" y2="56" stroke="#334155" stroke-width="1" opacity="0.6"/>
+
+  <!-- Wordmark -->
+  <text x="94" y="38" font-family="'Inter', 'SF Pro Display', system-ui, sans-serif" font-size="20" font-weight="700" fill="#F1F5F9" letter-spacing="-0.5">Context</text>
+  <text x="94" y="58" font-family="'Inter', 'SF Pro Display', system-ui, sans-serif" font-size="13" font-weight="500" fill="#10B981" letter-spacing="3.5">STATS</text>
+</svg>
