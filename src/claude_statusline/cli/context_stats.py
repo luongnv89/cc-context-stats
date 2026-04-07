@@ -160,12 +160,18 @@ def _normalize_argv(argv: list[str]) -> tuple[str, str, list[str]]:
     # Strip out global flags so they don't interfere with positional detection
     positionals = [a for a in argv if not a.startswith("-")]
 
+    if not positionals:
+        sys.stderr.write("Error: Missing required arguments.\n\n")
+        show_help()
+        sys.exit(1)
+
     # Special case: explain and report can be called with just the action (no session_id)
-    if len(positionals) == 1 and positionals[0] in {"explain", "report"}:
+    if positionals[0] in {"explain", "report"}:
         remaining = list(argv)
         remaining.remove(positionals[0])
         return positionals[0], "-", remaining
 
+    # Standard case: <session_id> <action> [parameters]
     if len(positionals) < 2:
         sys.stderr.write("Error: Missing required arguments.\n\n")
         show_help()
