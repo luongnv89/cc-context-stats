@@ -13,7 +13,7 @@ from __future__ import annotations
 import argparse
 import sys
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from claude_statusline import __version__
@@ -88,7 +88,7 @@ def _all_sessions(projects: list[ProjectStats]) -> list[SessionStats]:
     return sessions
 
 
-def generate_report(projects_stats: list[ProjectStats]) -> str:
+def generate_report(projects_stats: list[ProjectStats], since_days: int | None = None) -> str:
     lines: list[str] = []
 
     all_sessions = _all_sessions(projects_stats)
@@ -110,10 +110,22 @@ def generate_report(projects_stats: list[ProjectStats]) -> str:
     most_expensive_session = max(all_sessions, key=lambda s: s.cost_usd, default=None)
     most_expensive_project = max(projects_stats, key=lambda p: p.cost_usd, default=None)
 
+    # Compute report time scope from session data
+    all_end_times = [s.end_time for s in all_sessions if s.end_time > 0]
+    if since_days is not None:
+        cutoff = datetime.now() - timedelta(days=since_days)
+        scope_from = cutoff.strftime("%Y-%m-%d")
+    else:
+        all_start_times = [s.start_time for s in all_sessions if s.start_time > 0]
+        scope_from = datetime.fromtimestamp(min(all_start_times)).strftime("%Y-%m-%d") if all_start_times else "unknown"
+    scope_to = datetime.fromtimestamp(max(all_end_times)).strftime("%Y-%m-%d") if all_end_times else "unknown"
+    time_scope = f"{scope_from} → {scope_to}"
+
     # Header
     lines.append("# Token Usage Analytics Report")
     lines.append("")
     lines.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    lines.append(f"Period: {time_scope}")
     lines.append(f"Source: cc-context-stats v{__version__}")
     lines.append("")
 
@@ -122,6 +134,7 @@ def generate_report(projects_stats: list[ProjectStats]) -> str:
     lines.append("")
     lines.append("| Metric | Value |")
     lines.append("|--------|-------|")
+    lines.append(f"| Report Period | {time_scope} |")
     lines.append(f"| Total Spend | ${total_cost:.2f} |")
     lines.append(f"| Total Sessions | {total_sessions} |")
     lines.append(f"| Projects Analyzed | {total_projects} |")
@@ -509,7 +522,7 @@ def run_report(argv: list[str]) -> None:
         print("No project data found in ~/.claude/statusline/", file=sys.stderr)
         sys.exit(1)
 
-    report = generate_report(projects_stats)
+    report = generate_report(projects_stats, since_days=args.since_days)
 
     if args.output:
         output_path = Path(args.output)

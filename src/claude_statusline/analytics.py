@@ -192,7 +192,7 @@ def _group_sessions_by_project(
 
     for session in sessions:
         # Apply date filter if specified
-        if cutoff_time and session.end_time < cutoff_time:
+        if cutoff_time and session.start_time < cutoff_time:
             continue
 
         # Create project entry if needed
