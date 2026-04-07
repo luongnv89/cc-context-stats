@@ -219,36 +219,11 @@ jobs:
           echo "✓ statusline.py handles high utilization"
 
   # ============================================
-  # BASH TESTS (install/check scripts only)
-  # ============================================
-  bash-test:
-    name: Bash Tests (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Bats
-        run: |
-          if [[ "$RUNNER_OS" == "Linux" ]]; then
-            sudo apt-get install -y bats
-          elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            brew install bats-core
-          fi
-
-      - name: Run Bats tests
-        run: bats tests/bash/test_check_install.bats tests/bash/test_e2e_install.bats tests/bash/test_install.bats
-
-  # ============================================
   # FINAL STATUS CHECK
   # ============================================
   ci-success:
     name: CI Success
-    needs: [python-lint, python-test, integration-test, e2e-install-pip, e2e-exec, bash-test]
+    needs: [python-lint, python-test, integration-test, e2e-install-pip, e2e-exec]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -258,8 +233,7 @@ jobs:
              [[ "${{ needs.python-test.result }}" != "success" ]] || \
              [[ "${{ needs.integration-test.result }}" != "success" ]] || \
              [[ "${{ needs.e2e-install-pip.result }}" != "success" ]] || \
-             [[ "${{ needs.e2e-exec.result }}" != "success" ]] || \
-             [[ "${{ needs.bash-test.result }}" != "success" ]]; then
+             [[ "${{ needs.e2e-exec.result }}" != "success" ]]; then
             echo "One or more jobs failed"
             exit 1
           fi

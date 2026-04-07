@@ -22,7 +22,7 @@ Fixes #(issue number)
 - [ ] My changes generate no new warnings
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] New and existing unit tests pass locally with my changes
-- [ ] All three implementations (bash, Python, Node.js) produce consistent output (if applicable)
+- [ ] Python implementation produces correct output (if applicable)
 
 ## Screenshots (if applicable)
 

@@ -30,11 +30,6 @@ build/
 htmlcov/
 coverage.xml
 
-# Node.js
-node_modules/
-npm-debug.log*
-coverage/
-
 # Pre-commit
 .pre-commit-cache/
 
@@ -42,12 +37,6 @@ coverage/
 statusline.conf
 !examples/statusline.conf
 blogs/
-
-# Local dev/publishing scripts
-publish.sh
-npm-publish.sh
-PUBLISHING_GUIDE.md
-show_raw_claude_code_api.js
 
 # Ruff
 .ruff_cache/

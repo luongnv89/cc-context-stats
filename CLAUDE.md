@@ -25,11 +25,8 @@ State files are append-only CSV at `~/.claude/statusline/statusline.<session_id>
 source venv/bin/activate
 pytest tests/python/ -v
 
-# Bash integration tests (install/check scripts)
-bats tests/bash/test_check_install.bats tests/bash/test_context_stats_subcommands.bats tests/bash/test_e2e_install.bats tests/bash/test_install.bats
-
 # All tests
-pytest && bats tests/bash/test_check_install.bats tests/bash/test_context_stats_subcommands.bats tests/bash/test_e2e_install.bats tests/bash/test_install.bats
+pytest tests/python/ -v
 ```
 
 ## Key Architectural Decisions

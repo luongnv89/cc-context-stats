@@ -60,7 +60,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq bats
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Install Python dependencies
         run: |
@@ -69,9 +69,6 @@ jobs:
 
       - name: Run Python tests
         run: pytest tests/python/ -v
-
-      - name: Run Bash tests
-        run: bats tests/bash/*.bats
 
   create-release:
     name: Create GitHub Release
