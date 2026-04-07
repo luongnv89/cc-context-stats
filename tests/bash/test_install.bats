@@ -14,9 +14,9 @@ setup() {
 
 @test "install.sh contains expected functions" {
     grep -q "check_jq" "$SCRIPT"
-    grep -q "select_script" "$SCRIPT"
+    grep -q "check_pip" "$SCRIPT"
     grep -q "ensure_claude_dir" "$SCRIPT"
-    grep -q "install_script" "$SCRIPT"
+    grep -q "install_package" "$SCRIPT"
     grep -q "update_settings" "$SCRIPT"
 }
 

@@ -55,24 +55,6 @@ cp scripts/statusline.py ~/.claude/statusline.py
 chmod +x ~/.claude/statusline.py
 ```
 
-### Context Stats CLI (Optional)
-
-```bash
-cp scripts/context-stats.sh ~/.local/bin/context-stats
-chmod +x ~/.local/bin/context-stats
-```
-
-Ensure `~/.local/bin` is in your PATH:
-
-```bash
-# For zsh
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
-
-# For bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-```
 
 ## Configure Claude Code
 

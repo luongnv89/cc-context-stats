@@ -61,7 +61,7 @@ graph TD
 | ------------------ | -------- | ------------------------- |
 | `context_stats.py` | Python   | `pip install cc-context-stats` |
 
-The Python CLI provides live ASCII graphs with zone awareness. A thin shell wrapper (`context-stats.sh`) is also included for environments where the pip-installed `context-stats` command is not yet in PATH.
+The Python CLI provides live ASCII graphs with zone awareness. Install via `pip install cc-context-stats` to get the `context-stats` command.
 
 ### Python Package (`src/claude_statusline/`)
 

@@ -35,8 +35,7 @@ cc-context-stats/
 │   ├── graphs/               #   ASCII graph rendering
 │   └── ui/                   #   Icons, waiting animation
 ├── scripts/                  # Standalone scripts
-│   ├── statusline.py         #   Python standalone statusline
-│   └── context-stats.sh      #   Shell wrapper for context-stats CLI
+│   └── statusline.py         #   Python standalone statusline
 ├── tests/
 │   ├── bash/                 # Bats tests (install/check scripts)
 │   └── python/               # Pytest tests

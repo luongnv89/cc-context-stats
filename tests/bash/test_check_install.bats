@@ -19,7 +19,6 @@ setup() {
 @test "check-install.sh contains statusline check section" {
     grep -q "Statusline Command" "$SCRIPT"
     grep -q "claude-statusline" "$SCRIPT"
-    grep -q "statusline.py" "$SCRIPT"
 }
 
 @test "check-install.sh contains context-stats check section" {
@@ -34,7 +33,6 @@ setup() {
 }
 
 @test "check-install.sh detects install methods" {
-    grep -q 'methods+=("shell")' "$SCRIPT"
     grep -q 'methods+=("pip")' "$SCRIPT"
 }
 

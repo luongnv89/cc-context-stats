@@ -44,12 +44,6 @@ info() {
 detect_install_method() {
     local methods=()
 
-    # Check shell installer artifacts
-    if [ -f "$HOME/.claude/statusline.py" ]; then
-        methods+=("shell")
-    fi
-
-    # Check pip install
     if pip show cc-context-stats &>/dev/null 2>&1 || pip3 show cc-context-stats &>/dev/null 2>&1; then
         methods+=("pip")
     fi
@@ -107,23 +101,12 @@ if command -v claude-statusline &>/dev/null; then
     STATUSLINE_SOURCE="PATH ($(command -v claude-statusline))"
 fi
 
-# Check standalone Python script (shell installer)
-if [ -f "$HOME/.claude/statusline.py" ]; then
-    if [ -z "$STATUSLINE_CMD" ]; then
-        STATUSLINE_CMD="python3 $HOME/.claude/statusline.py"
-        STATUSLINE_SOURCE="standalone Python ($HOME/.claude/statusline.py)"
-    else
-        pass "Also found standalone Python: ~/.claude/statusline.py"
-    fi
-fi
-
 if [ -n "$STATUSLINE_CMD" ]; then
     pass "Statusline command found: $STATUSLINE_SOURCE"
 else
     fail "No statusline command found"
-    info "Expected one of:"
-    info "  - 'claude-statusline' in PATH (pip install)"
-    info "  - ~/.claude/statusline.py (shell installer or manual Python)"
+    info "Install with: pip install cc-context-stats"
+    info "Then ensure 'claude-statusline' is in PATH"
 fi
 
 # Test that the statusline command actually works
@@ -143,35 +126,13 @@ echo -e "${BLUE}3. Context-Stats CLI${RESET}"
 CONTEXT_STATS_CMD=""
 CONTEXT_STATS_SOURCE=""
 
-# Check context-stats in PATH (npm/pip install or bash installer with ~/.local/bin in PATH)
 if command -v context-stats &>/dev/null; then
     CONTEXT_STATS_CMD="context-stats"
     CONTEXT_STATS_SOURCE="PATH ($(command -v context-stats))"
-fi
-
-# Check bash installer location specifically
-if [ -x "$HOME/.local/bin/context-stats" ]; then
-    if [ -z "$CONTEXT_STATS_CMD" ]; then
-        CONTEXT_STATS_CMD="$HOME/.local/bin/context-stats"
-        CONTEXT_STATS_SOURCE="$HOME/.local/bin/context-stats (not in PATH)"
-        warn "context-stats found at ~/.local/bin/ but not in PATH"
-        if [[ "$SHELL" == *"zsh"* ]]; then
-            info "Add to PATH: echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.zshrc && source ~/.zshrc"
-        else
-            info "Add to PATH: echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc && source ~/.bashrc"
-        fi
-    else
-        pass "context-stats in PATH: $CONTEXT_STATS_SOURCE"
-    fi
+    pass "context-stats in PATH: $CONTEXT_STATS_SOURCE"
 else
-    if [ -n "$CONTEXT_STATS_CMD" ]; then
-        pass "context-stats in PATH: $CONTEXT_STATS_SOURCE"
-    else
-        fail "context-stats CLI not found"
-        info "Expected one of:"
-        info "  - 'context-stats' in PATH (pip install)"
-        info "  - ~/.local/bin/context-stats (shell installer)"
-    fi
+    fail "context-stats CLI not found"
+    info "Install with: pip install cc-context-stats"
 fi
 
 # Test context-stats --help
@@ -274,16 +235,16 @@ else
 
     # Provide targeted fix guidance
     if [ -z "$STATUSLINE_CMD" ] && [ -z "$CONTEXT_STATS_CMD" ]; then
-        echo "Neither component is installed. Run the full installer:"
-        echo -e "  ${BLUE}curl -fsSL https://raw.githubusercontent.com/luongnv89/cc-context-stats/main/install.sh | bash${RESET}"
+        echo "cc-context-stats is not installed. Install it with:"
+        echo -e "  ${BLUE}pip install cc-context-stats${RESET}"
     elif [ -z "$STATUSLINE_CMD" ]; then
-        echo "The statusline is missing. Fix depends on your install method:"
-        echo "  pip:    Verify with 'pip show cc-context-stats' and check 'claude-statusline' is in PATH"
-        echo "  shell:  Re-run the installer: ./install.sh"
+        echo "claude-statusline not found in PATH. Verify:"
+        echo "  pip show cc-context-stats"
+        echo "  Ensure pip's bin directory is in your PATH"
     elif [ -z "$CONTEXT_STATS_CMD" ]; then
-        echo "The context-stats CLI is missing. Fix depends on your install method:"
-        echo "  pip:    Verify with 'pip show cc-context-stats' and check 'context-stats' is in PATH"
-        echo "  shell:  Re-run the installer: ./install.sh"
+        echo "context-stats not found in PATH. Verify:"
+        echo "  pip show cc-context-stats"
+        echo "  Ensure pip's bin directory is in your PATH"
     else
         echo "Components found but settings may need updating."
         echo "Check the failed items above for specific fix instructions."

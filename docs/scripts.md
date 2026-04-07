@@ -2,10 +2,9 @@
 
 ## Overview
 
-| Script             | Platform | Requirements | State Writes | Features                      |
-| ------------------ | -------- | ------------ | ------------ | ----------------------------- |
-| `statusline.py`    | All      | Python 3     | Yes          | Cross-platform, full-featured |
-| `context-stats.sh` | macOS, Linux | Bash     | No           | Token usage visualization (CLI) |
+| Script          | Platform | Requirements | State Writes | Features                      |
+| --------------- | -------- | ------------ | ------------ | ----------------------------- |
+| `statusline.py` | All      | Python 3     | Yes          | Cross-platform, full-featured |
 
 ## Installation Methods
 
@@ -24,11 +23,9 @@ Features:
 - Model Intelligence (MI) with per-model profiles
 - 5-second git command timeout
 
-## Utility Scripts
+## Context Stats CLI
 
-### context-stats.sh
-
-Standalone bash CLI tool for visualizing token consumption. Reads state files written by the Python statusline script. See [Context Stats](context-stats.md) for details.
+The `context-stats` command is installed as part of the `cc-context-stats` Python package (`pip install cc-context-stats`). See [Context Stats](context-stats.md) for details.
 
 ## Output Format
 
