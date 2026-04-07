@@ -13,7 +13,6 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 from claude_statusline.core.state import StateEntry, StateFile
 
@@ -117,7 +116,7 @@ def _decode_project_dir(encoded: str) -> str:
     return "/" + encoded.replace("_", "/")
 
 
-def _load_session_stats(session_dir: Path, project_dir: str) -> Optional[SessionStats]:
+def _load_session_stats(session_dir: Path, project_dir: str) -> SessionStats | None:
     """Load statistics for a single session.
 
     Args:
@@ -153,7 +152,7 @@ def _load_session_stats(session_dir: Path, project_dir: str) -> Optional[Session
                 entry = StateEntry.from_csv_line(line)
                 if entry:
                     entries.append(entry)
-    except (IOError, ValueError):
+    except (OSError, ValueError):
         return None
 
     if not entries:
@@ -208,15 +207,15 @@ def _load_subagents(session_dir: Path, stats: SessionStats) -> None:
                         agent_data[agent_id]["count"] += 1
                     except json.JSONDecodeError:
                         pass
-        except IOError:
+        except OSError:
             pass
 
     # Convert to SubagentStats (simple count-based tracking)
-    for agent_id, data in agent_data.items():
+    for agent_id, _data in agent_data.items():
         stats.subagents[agent_id] = SubagentStats(agent_id=agent_id)
 
 
-def _load_project_stats(project_dir: Path, since_days: Optional[int] = None) -> Optional[ProjectStats]:
+def _load_project_stats(project_dir: Path, since_days: int | None = None) -> ProjectStats | None:
     """Load all session statistics for a project.
 
     Args:
@@ -254,7 +253,7 @@ def _load_project_stats(project_dir: Path, since_days: Optional[int] = None) -> 
         stats.session_count += 1
 
         # Aggregate subagent stats
-        for agent_id, agent_stats in session_stats.subagents.items():
+        for agent_id, _agent_stats in session_stats.subagents.items():
             if agent_id not in stats.subagents:
                 stats.subagents[agent_id] = SubagentStats(agent_id=agent_id)
             proj_agent = stats.subagents[agent_id]
@@ -265,7 +264,7 @@ def _load_project_stats(project_dir: Path, since_days: Optional[int] = None) -> 
     return stats if stats.session_count > 0 else None
 
 
-def load_all_projects(since_days: Optional[int] = None) -> list[ProjectStats]:
+def load_all_projects(since_days: int | None = None) -> list[ProjectStats]:
     """Load statistics for all projects.
 
     Args:

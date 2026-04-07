@@ -1,8 +1,5 @@
 """Tests for the report command."""
 
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 from claude_statusline.analytics import ProjectStats, SessionStats, SubagentStats
 from claude_statusline.cli.report import generate_report

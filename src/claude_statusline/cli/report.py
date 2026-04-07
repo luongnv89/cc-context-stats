@@ -197,6 +197,6 @@ def run_report(argv: list[str]) -> None:
         with open(output_path, "w") as f:
             f.write(report)
         print(f"✓ Report generated: {output_path}")
-    except IOError as e:
+    except OSError as e:
         print(f"✗ Failed to write report: {e}", file=sys.stderr)
         sys.exit(1)
