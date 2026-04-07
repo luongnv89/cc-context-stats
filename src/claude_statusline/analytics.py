@@ -16,18 +16,6 @@ from claude_statusline.core.state import StateEntry, StateFile
 
 
 @dataclass
-class SubagentStats:
-    """Statistics for a single subagent across sessions."""
-
-    agent_id: str
-    total_input_tokens: int = 0
-    total_output_tokens: int = 0
-    total_cache_creation: int = 0
-    total_cache_read: int = 0
-    session_count: int = 0
-
-
-@dataclass
 class SessionStats:
     """Statistics for a single session."""
 
@@ -42,7 +30,6 @@ class SessionStats:
     start_time: int = 0
     end_time: int = 0
     entry_count: int = 0
-    subagents: dict[str, SubagentStats] = field(default_factory=dict)
 
     def total_tokens(self) -> int:
         """Total tokens (input + output + cache)."""
@@ -66,7 +53,6 @@ class ProjectStats:
     cost_usd: float = 0.0
     session_count: int = 0
     sessions: list[SessionStats] = field(default_factory=list)
-    subagents: dict[str, SubagentStats] = field(default_factory=dict)
 
     def total_tokens(self) -> int:
         """Total tokens (input + output + cache)."""
@@ -118,7 +104,8 @@ def _load_session_stats(state_file_path: Path) -> SessionStats | None:
         return None
 
     # Extract session ID from filename (statusline.<session_id>.state)
-    session_id = state_file_path.stem.replace("statusline.", "")
+    stem = state_file_path.stem
+    session_id = stem.removeprefix("statusline.")
 
     # Get project_dir from the first entry's workspace_project_dir field
     project_dir = entries[0].workspace_project_dir or "Unknown"
@@ -157,7 +144,7 @@ def _group_sessions_by_project(
         Dictionary mapping project_dir to ProjectStats.
     """
     cutoff_time = None
-    if since_days:
+    if since_days is not None:
         cutoff_time = int((datetime.now() - timedelta(days=since_days)).timestamp())
 
     projects: dict[str, ProjectStats] = {}

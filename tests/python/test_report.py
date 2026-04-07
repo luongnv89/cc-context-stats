@@ -1,7 +1,7 @@
 """Tests for the report command."""
 
 
-from claude_statusline.analytics import ProjectStats, SessionStats, SubagentStats
+from claude_statusline.analytics import ProjectStats, SessionStats
 from claude_statusline.cli.report import generate_report
 
 
@@ -45,10 +45,6 @@ def test_generate_report_with_projects():
         cost_usd=0.23,
         session_count=2,
         sessions=[session1, session2],
-        subagents={
-            "agent-1": SubagentStats(agent_id="agent-1", session_count=1),
-            "agent-2": SubagentStats(agent_id="agent-2", session_count=1),
-        },
     )
 
     report = generate_report([project1])
@@ -60,9 +56,7 @@ def test_generate_report_with_projects():
     assert "/home/user/project1" in report
     assert "abc123" in report
     assert "def456" in report
-    assert "agent-1" in report
     assert "Sessions" in report
-    assert "Subagents" in report
 
 
 def test_generate_report_empty():
