@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -65,9 +64,7 @@ class TestNormalizeArgv:
         assert "mi" in remaining
 
     def test_session_and_flags(self):
-        action, session_id, remaining = _normalize_argv(
-            ["abc123", "graph", "--no-watch"]
-        )
+        action, session_id, remaining = _normalize_argv(["abc123", "graph", "--no-watch"])
         assert action == "graph"
         assert session_id == "abc123"
         assert "--no-watch" in remaining
@@ -79,9 +76,7 @@ class TestNormalizeArgv:
         assert "--no-color" in remaining
 
     def test_sessions_with_minutes(self):
-        action, session_id, remaining = _normalize_argv(
-            ["sessions", "--minutes", "30"]
-        )
+        action, session_id, remaining = _normalize_argv(["sessions", "--minutes", "30"])
         assert action == "sessions"
         assert session_id is None
         assert "--minutes" in remaining

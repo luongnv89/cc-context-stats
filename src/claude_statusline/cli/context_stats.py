@@ -699,7 +699,7 @@ def run_sessions(minutes: int, colors: ColorManager) -> None:
         f"{colors.dim}(last {minutes} min){colors.reset}\n"
     )
 
-    for mtime, session_id, file_path in sessions:
+    for mtime, session_id, _file_path in sessions:
         # Read last entry for metadata
         sf = StateFile(session_id)
         last_entry = sf.read_last_entry()
@@ -816,9 +816,7 @@ def main() -> None:
                 try:
                     minutes = int(remaining[i + 1])
                 except ValueError:
-                    sys.stderr.write(
-                        f"Error: Invalid value for --minutes: '{remaining[i + 1]}'\n"
-                    )
+                    sys.stderr.write(f"Error: Invalid value for --minutes: '{remaining[i + 1]}'\n")
                     sys.exit(1)
                 i += 2
             else:
