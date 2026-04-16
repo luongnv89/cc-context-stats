@@ -963,7 +963,7 @@
       <img src="assets/logo/logo-full.svg" alt="context-stats" />
     </div>
     <ul class="nav-links">
-      <li><a href="#whats-new">v1.19.0</a></li>
+      <li><a href="#whats-new">v1.20.0</a></li>
       <li><a href="#features">Features</a></li>
       <li><a href="#cache-warm">Cache Warm</a></li>
       <li><a href="#how-it-works">Install</a></li>
@@ -980,7 +980,7 @@
   <div class="container">
     <div class="hero-badge">
       <span class="dot"></span>
-      v1.19.0 — Now with compaction detection & zone recommendations
+      v1.20.0 — One-command session discovery & smarter defaults
     </div>
 
     <h1>
@@ -1017,7 +1017,7 @@
         </div>
         <div class="terminal-body">
           <div><span class="t-prompt">$ </span><span class="t-cmd">pip install context-stats</span></div>
-          <div class="t-muted">Successfully installed context-stats-1.19.0</div>
+          <div class="t-muted">Successfully installed context-stats-1.20.0</div>
           <br/>
           <div><span class="t-prompt">$ </span><span class="t-cmd">context-stats graph</span></div>
           <br/>
@@ -1147,34 +1147,34 @@
 <section id="whats-new">
   <div class="container">
     <span class="section-label">What's New</span>
-    <h2>v1.19.0 — Compaction visibility<br/>& smarter zone guidance.</h2>
-    <p class="lead">Four new features that make context degradation visible and actionable, shipped April 2026.</p>
+    <h2>v1.20.0 — Session discovery<br/>& smarter defaults.</h2>
+    <p class="lead">Stop hunting for session IDs. Three improvements that make the CLI feel instant, shipped April 2026.</p>
 
     <div class="problem-grid">
       <div class="pain-card" style="border-color:rgba(0,255,65,0.2);">
-        <div class="pain-icon">▼</div>
-        <h3 style="color:var(--green);">Compaction event detection</h3>
-        <p>Detect <code>/compact</code> events automatically — a <code>▼</code> marker appears in your graphs at the exact step where Claude compacted, so you can see session history at a glance.</p>
+        <div class="pain-icon">📋</div>
+        <h3 style="color:var(--green);">New <code>sessions</code> command</h3>
+        <p>Run <code>context-stats sessions</code> to list recent sessions with project, model, token count, and last-activity time. Use <code>--minutes N</code> to widen the window.</p>
       </div>
       <div class="pain-card" style="border-color:rgba(0,255,65,0.2);">
-        <div class="pain-icon">⚠</div>
-        <h3 style="color:var(--yellow);">MI quality flag at compaction</h3>
-        <p>When compaction happens at low model intelligence (&lt;0.6 MI), the summary is flagged as <em>potentially lossy</em>. Now you always know if you can trust the compacted context.</p>
+        <div class="pain-icon">⚡</div>
+        <h3 style="color:var(--cyan);">Session ID is now optional</h3>
+        <p>Every command — <code>graph</code>, <code>report</code>, <code>export</code>, <code>cache-warm</code> — auto-detects the most recent session when you omit the ID. Just run <code>context-stats</code> and go.</p>
       </div>
       <div class="pain-card" style="border-color:rgba(0,255,65,0.2);">
-        <div class="pain-icon">💡</div>
-        <h3 style="color:var(--cyan);">Actionable zone recommendations</h3>
-        <p>Every zone now ships with a brief recommended action — "Avoid new file reads; complete what's in progress" — so you always know what to do next without consulting docs.</p>
+        <div class="pain-icon">🛡</div>
+        <h3 style="color:var(--yellow);">Stricter <code>sessions</code> validation</h3>
+        <p>Missing, zero, or negative <code>--minutes</code> values now fail fast with a clear error instead of silently falling back to the default. Stray positionals are rejected too.</p>
       </div>
       <div class="pain-card" style="border-color:rgba(0,255,65,0.2);">
-        <div class="pain-icon">🎯</div>
-        <h3 style="color:var(--indigo);">Recalibrated 1M zone thresholds</h3>
-        <p>Zone boundaries for 1M-context models have been recalibrated to match real-world degradation onset (300–400k tokens), eliminating a 25–120k false-alarm window.</p>
+        <div class="pain-icon">🧹</div>
+        <h3 style="color:var(--indigo);">Modernized internals</h3>
+        <p>Swapped legacy <code>.replace("statusline.", "")</code> and slice-based prefix stripping for Python 3.9+ <code>removeprefix()</code> across the CLI and state modules.</p>
       </div>
     </div>
 
     <div style="text-align:center;margin-top:32px;">
-      <a href="https://github.com/luongnv89/context-stats/releases/tag/v1.19.0" class="btn-secondary" style="display:inline-flex;">
+      <a href="https://github.com/luongnv89/context-stats/releases/tag/v1.20.0" class="btn-secondary" style="display:inline-flex;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
         Full changelog on GitHub
       </a>
@@ -1507,7 +1507,7 @@
 <div class="t-green">  Exported → session-abc-1234-2026-04-07.md</div>
 <br/>
 <div class="t-h1">  # Session Export — abc-1234</div>
-<div class="t-muted">  Generated: 2026-04-07 12:30:15  |  context-stats v1.19.0</div>
+<div class="t-muted">  Generated: 2026-04-07 12:30:15  |  context-stats v1.20.0</div>
 <br/>
 <div class="t-h2">  ## Executive Summary</div>
 <br/>
@@ -1557,7 +1557,7 @@
 <div class="t-green">  Analyzing 312 sessions across 18 projects...</div>
 <br/>
 <div class="t-h1">  # Token Usage Analytics Report</div>
-<div class="t-muted">  Generated: 2026-04-07 12:00:00  |  context-stats v1.19.0</div>
+<div class="t-muted">  Generated: 2026-04-07 12:00:00  |  context-stats v1.20.0</div>
 <br/>
 <div class="t-h2">  ## Executive Summary (last 30 days)</div>
 <br/>

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-04-16
+
+### Added
+
+- **Default to latest session** — Session ID is now optional for all commands. When omitted, the most recent session from `~/.claude/statusline/` is auto-detected and used (#60, #68)
+- **`sessions` subcommand** — New `context-stats sessions` command lists recent sessions with project, model, token count, and last-activity time. Supports `--minutes N` to widen the search window (#60, #68)
+
+### Fixed
+
+- **Stricter `sessions` argument validation** — Reject missing, zero, or negative `--minutes` values and stray positional arguments instead of silently ignoring them
+
+### Changed
+
+- **Modernized prefix stripping** — Replaced `.replace("statusline.", "")` and `name[11:]` with `removeprefix("statusline.")` (Python 3.9+) across the CLI and state modules
+
+[1.20.0]: https://github.com/luongnv89/context-stats/compare/v1.19.0...v1.20.0
+
 ## [1.19.0] - 2026-04-16
 
 ### Added
