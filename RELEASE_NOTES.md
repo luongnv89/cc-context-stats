@@ -1,15 +1,19 @@
-## v1.18.0 — 2026-04-07
+## v1.19.0 — 2026-04-16
 
 ### Features
-- **Mermaid charts in report** — `context-stats report` now renders visual Mermaid charts for token usage, cost trends, and project analytics alongside the existing ASCII tables
-- **Full analytics rewrite** — `generate_report` rebuilt with complete analytics matching reference format; includes richer breakdowns, improved summaries, and consistent output
+- **Compaction event detection** — Detect `/compact` events (>50% context drop) and annotate graphs with `▼` markers so users can see exactly when compaction occurred (#62, #65)
+- **MI quality flagging at compaction** — Flag the MI score at compaction time to warn users of potentially lossy summaries (#65)
+- **Actionable zone recommendations** — Zone indicators now include brief recommendations so users know what action to take in each zone (#63)
+- **Landing page** — Static GitHub Pages landing page highlighting the cache keep-warm feature (#66)
 
 ### Fixes
-- **Report period display** — Report header now correctly shows the date range covered by the data
-- **`--since-days` filtering** — `start_time` field is now correctly used for session filtering when `--since-days` is specified
-- **Mermaid x-axis labels** — Shortened x-axis labels in Mermaid charts to prevent label overlap on wide datasets
+- **1M zone thresholds recalibrated** — Updated `ZONE_1M_*` constants to match observed context degradation patterns, reducing false-alarm window by 25-120k tokens (#64)
+- **Landing page timeline arrows** — Made cache-warm timeline arrows visible
+- **Zone percentage thresholds** — Corrected zone percentages in landing page to match code
 
-### Chore
-- **Remove Node.js and Bash remnants** — Deleted all remaining Node.js and Bash script files; Python-only codebase is now complete
+### Documentation
+- Added anonymized 30-day example report
+- Updated README messaging to three-level analytics framework
+- Fresh logo for ContextStats rebrand
 
-**Full Changelog**: https://github.com/luongnv89/cc-context-stats/compare/v1.17.0...v1.18.0
+**Full Changelog**: https://github.com/luongnv89/context-stats/compare/v1.18.0...v1.19.0

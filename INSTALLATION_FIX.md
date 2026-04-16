@@ -32,7 +32,7 @@ This function is now called automatically during installation, right after the b
 ```
 ✓ Installed: /Users/montimage/.claude/statusline.sh (v1.17.0)
 ✓ Installed: /Users/montimage/.local/bin/context-stats (v1.17.0)
-✓ Python package installed: context-stats==1.18.0
+✓ Python package installed: context-stats==1.19.0
 ✓ Config file exists: /Users/montimage/.claude/statusline.conf
 ```
 
@@ -49,7 +49,7 @@ Updated the `dispatch_python_subcommand()` function in `scripts/context-stats.sh
 If package is missing entirely:
 ```
 ✗ Python package 'context-stats' is not installed.
-  Install it with: pip3 install context-stats==1.18.0
+  Install it with: pip3 install context-stats==1.19.0
 ```
 
 If there's a version mismatch:

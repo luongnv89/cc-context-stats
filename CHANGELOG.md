@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-04-16
+
+### Added
+
+- **Compaction event detection** — Detect `/compact` events (>50% context drop) in session state and annotate graphs with `▼` markers so users can see exactly when and where compaction occurred (#62, #67)
+- **MI quality flagging at compaction** — When a compaction event is detected, the MI score at that point is captured and flagged if below the warning threshold — alerting users to potentially lossy summaries (#65, #67)
+- **Actionable zone recommendations** — Zone indicators (Plan/Code/Dump/ExDump/Dead) now include a brief recommendation so users know what action to take in each zone (#63, #66)
+- **Landing page** — Added static GitHub Pages landing page highlighting the cache keep-warm feature and ContextStats rebrand (#66)
+
+### Fixed
+
+- **Zone percentage thresholds** — Corrected zone percentage thresholds in landing page to match actual code implementation (#64, #66)
+- **Landing page timeline arrows** — Made cache-warm timeline arrows visible in landing page design
+
+### Changed
+
+- **1M model zone thresholds recalibrated** — Updated `ZONE_1M_*` constants to better reflect observed context degradation onset (300-400k tokens), reducing the false-alarm window by 25-120k tokens (#64, #66)
+- **README messaging** — Pivoted to three-level analytics framework for improved clarity
+- **Brand identity** — Fresh logo for ContextStats rebrand
+
+### Documentation
+
+- **Example report** — Added anonymized 30-day example report for reference
+
 ## [1.18.0] - 2026-04-07
 
 ### Added
