@@ -165,7 +165,7 @@ DATA SOURCE:
 _KNOWN_ACTIONS = {"graph", "export", "explain", "cache-warm", "report", "sessions"}
 
 
-def _normalize_argv(argv: list[str]) -> tuple[str, str, list[str]]:
+def _normalize_argv(argv: list[str]) -> tuple[str, str | None, list[str]]:
     """Determine action, session_id, and remaining args from raw argv.
 
     Supported patterns:
